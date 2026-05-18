@@ -6,7 +6,9 @@ Personal cannabis journal: photograph a NJ-CRC dispensary label, get structured 
 
 ## Status
 
-Just spun up (2026-05-09). No Xcode project yet. This repo is the pickup point for the iOS build after a pivot away from a Next.js + Supabase + Claude vision PWA. See `docs/legacy/` for the full discovery / PRD / architecture work that informed the pivot.
+**Canary spike scaffolded** (2026-05-09). The Xcode project lives in `weedlabel.xcodeproj/`, generated from `project.yml` via `xcodegen` (`brew install xcodegen` if rebuilding). Source files cover: `CannabisLabel` `@Generable` schema (NJAC §17:30-16.3 fields), productType-aware `LabelSanityChecker`, `AvailabilityGate` for Foundation Models triple-state probe, `ExtractionService` and `SummaryService` actors (with the P6 regex/regen/fallback validator pipeline), `DataScannerView` UIKit bridge, and a Variant C-styled `PostScanView` from `/design-shotgun`. The active design doc lives at `~/.gstack/projects/nickdnj-weedlabel/`. Build the spike by opening `weedlabel.xcodeproj`, setting your Team in the `weedlabel` target → Signing & Capabilities, and running on an iOS 26 device with Apple Intelligence enabled.
+
+The repo's own pivot story: this is the pickup point for the iOS build after a pivot away from a Next.js + Supabase + Claude vision PWA. See `docs/legacy/` for the discovery / PRD / architecture work that informed the pivot.
 
 ## Architecture (high level)
 
@@ -19,15 +21,15 @@ Just spun up (2026-05-09). No Xcode project yet. This repo is the pickup point f
 | Storage | SwiftData (local), optional iCloud sync |
 | Optional enrichment | COA fetch if QR resolves to a Certificate of Analysis URL |
 
-**Device gating:** Foundation Models requires iPhone 15 Pro / 16 series / M-series iPad on iOS 18.1+. Older devices get scan + structured data view (still useful), AI features gated to capable hardware.
+**Device gating:** **iOS 26.0+ minimum** (Foundation Models' public stable `@Generable` macro is `@available(iOS 26.0, *)` — confirmed during the canary spike build attempt 2026-05-09). Within iOS 26, Foundation Models additionally requires Apple-Intelligence-capable hardware (iPhone 15 Pro / 16 / 17 series / M-series iPad). Hardware-incapable or AI-disabled iOS 26 users get scan + structured data view; AI features gated to capable hardware. iOS 18-25 users cannot install the app at all.
 
-**Cost model:** $0 ongoing. $99/yr Apple Developer Program only if shipping to App Store; TestFlight is free for personal use.
+**Cost model:** $0 ongoing infrastructure. $99/yr Apple Developer Program required for **both TestFlight and App Store** (TestFlight access goes through App Store Connect, which requires the paid program). The free path before signing up is sideloading via Xcode with a personal Apple ID (3-app limit, 7-day re-signing cadence).
 
 ## Why iOS native (not web)
 
 The original direction was a Next.js PWA with Claude Sonnet 4.6 vision through a Supabase Edge Function. PRD v0.1 + SAD v0.1 are preserved in `docs/legacy/`. Pivoted because:
 
-- **Foundation Models** (iOS 18.1+) gives a free on-device LLM with structured `Generable` output — collapses the entire backend.
+- **Foundation Models** (iOS 26.0+ for stable public API; the framework existed in iOS 18.1 in beta but `@Generable` ships at iOS 26) gives a free on-device LLM with structured `Generable` output — collapses the entire backend.
 - **VisionKit DataScannerViewController** does live OCR + barcode in one component; far better than browser OCR.
 - **Privacy** — "100% on-device" is a real selling point for cannabis users.
 - **$0 ongoing infrastructure** — no Supabase, no Vercel, no Anthropic API bills.
@@ -56,7 +58,7 @@ NJ-CRC labels are colon-delimited key:value structured. Foundation Models extrac
 
 Start a fresh Claude Code session in this directory. Don't write v0.2 docs yet — prototype the critical path first:
 
-1. Scaffold a SwiftUI Xcode project (iOS 18.1+ target, single-target app).
+1. Scaffold a SwiftUI Xcode project (iOS 26.0+ target, single-target app).
 2. Wire `DataScannerViewController` → capture text + barcodes → display raw OCR.
 3. Define a `CannabisLabel` `Generable` type matching the Zips label structure (cannabinoids + terpenes + provenance + metrc + dates).
 4. Pipe OCR text into Foundation Models with the `Generable` schema; render the parsed object.

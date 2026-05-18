@@ -1,0 +1,488 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01F2D240B3CA3DEE50224D43 /* ScanModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C644794E83AC6B1EF2967DF /* ScanModel.swift */; };
+		0250A8E6324AE4DC94A32182 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CBC43ECFC65FC5558775200 /* Assets.xcassets */; };
+		1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */; };
+		2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */; };
+		288B220A9D089C5D1039EE46 /* DataScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240631CA58BB0C2F38763B93 /* DataScannerView.swift */; };
+		7D22C8B5C7D12E8379824BB7 /* LabelSanityCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */; };
+		910B62143DE508BB33BDFFD5 /* ExtractionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99D93418105C99800D9CC8F /* ExtractionService.swift */; };
+		97F362F5C00BF8B53E560277 /* LabelSanityChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */; };
+		9EE63D408E3780CA6D5ED3FF /* SummaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D06527F36A2DD990AB0C5E9E /* SummaryService.swift */; };
+		9FE4DD4A3C080230DBFE65FE /* CannabisLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */; };
+		BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6931CE4F5C707585B52846C9 /* PostScanView.swift */; };
+		CA0A3CFCFCEC0CC1BD4EF368 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5009B08A5116D6385CA5FBCD /* ContentView.swift */; };
+		DEFB9A95D843368A33260F60 /* AvailabilityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A017FE0A3BE9AF3C389904C0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FA3A1CF5F0261ACB0398A675 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1ED4F763E9F1BC608D43D03D;
+			remoteInfo = weedlabel;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		240631CA58BB0C2F38763B93 /* DataScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataScannerView.swift; sourceTree = "<group>"; };
+		4C644794E83AC6B1EF2967DF /* ScanModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanModel.swift; sourceTree = "<group>"; };
+		4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P6ValidatorTests.swift; sourceTree = "<group>"; };
+		5009B08A5116D6385CA5FBCD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		6931CE4F5C707585B52846C9 /* PostScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostScanView.swift; sourceTree = "<group>"; };
+		6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelSanityCheckerTests.swift; sourceTree = "<group>"; };
+		77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelSanityChecker.swift; sourceTree = "<group>"; };
+		7A0E68E5A62C53EEF4BD1ADA /* weedlabelTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = weedlabelTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CannabisLabel.swift; sourceTree = "<group>"; };
+		9CBC43ECFC65FC5558775200 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = weedlabelApp.swift; sourceTree = "<group>"; };
+		B1F64514D58748BA02013447 /* weedlabel.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = weedlabel.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D06527F36A2DD990AB0C5E9E /* SummaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryService.swift; sourceTree = "<group>"; };
+		E99D93418105C99800D9CC8F /* ExtractionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractionService.swift; sourceTree = "<group>"; };
+		FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvailabilityGate.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0B109386AAF82E35FE67F2B7 = {
+			isa = PBXGroup;
+			children = (
+				5F0D85F3604871F1A0E76C24 /* weedlabel */,
+				55BDB1E848555387B5942417 /* weedlabelTests */,
+				5A27B7E1BEF63224D7230978 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		15174BCF376026B606C6537D /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5009B08A5116D6385CA5FBCD /* ContentView.swift */,
+				240631CA58BB0C2F38763B93 /* DataScannerView.swift */,
+				6931CE4F5C707585B52846C9 /* PostScanView.swift */,
+				4C644794E83AC6B1EF2967DF /* ScanModel.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		27C7226D33A9C37E082C535B /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */,
+				77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		55BDB1E848555387B5942417 /* weedlabelTests */ = {
+			isa = PBXGroup;
+			children = (
+				6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */,
+				4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */,
+			);
+			path = weedlabelTests;
+			sourceTree = "<group>";
+		};
+		5A27B7E1BEF63224D7230978 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B1F64514D58748BA02013447 /* weedlabel.app */,
+				7A0E68E5A62C53EEF4BD1ADA /* weedlabelTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5F0D85F3604871F1A0E76C24 /* weedlabel */ = {
+			isa = PBXGroup;
+			children = (
+				9CBC43ECFC65FC5558775200 /* Assets.xcassets */,
+				A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */,
+				27C7226D33A9C37E082C535B /* Models */,
+				6AA5E3CAA19CFDD29D8D8480 /* Services */,
+				15174BCF376026B606C6537D /* Views */,
+			);
+			path = weedlabel;
+			sourceTree = "<group>";
+		};
+		6AA5E3CAA19CFDD29D8D8480 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */,
+				E99D93418105C99800D9CC8F /* ExtractionService.swift */,
+				D06527F36A2DD990AB0C5E9E /* SummaryService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1ED4F763E9F1BC608D43D03D /* weedlabel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7B27FDAE65E5DF88DC5A6171 /* Build configuration list for PBXNativeTarget "weedlabel" */;
+			buildPhases = (
+				7E0689A0B26DBDBCF3C0B1AD /* Sources */,
+				916B1D23023025C1B5F1F11C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = weedlabel;
+			packageProductDependencies = (
+			);
+			productName = weedlabel;
+			productReference = B1F64514D58748BA02013447 /* weedlabel.app */;
+			productType = "com.apple.product-type.application";
+		};
+		EB6182AFEEFEBF5F979FF21D /* weedlabelTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9712E270A447B690CBD192B6 /* Build configuration list for PBXNativeTarget "weedlabelTests" */;
+			buildPhases = (
+				9AF25E1D5F9FAC42FB63B36A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				674BB22E9244E37B89833A0C /* PBXTargetDependency */,
+			);
+			name = weedlabelTests;
+			packageProductDependencies = (
+			);
+			productName = weedlabelTests;
+			productReference = 7A0E68E5A62C53EEF4BD1ADA /* weedlabelTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FA3A1CF5F0261ACB0398A675 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					1ED4F763E9F1BC608D43D03D = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					EB6182AFEEFEBF5F979FF21D = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = C9C12470D37CEDBFDFC67852 /* Build configuration list for PBXProject "weedlabel" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 0B109386AAF82E35FE67F2B7;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5A27B7E1BEF63224D7230978 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1ED4F763E9F1BC608D43D03D /* weedlabel */,
+				EB6182AFEEFEBF5F979FF21D /* weedlabelTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		916B1D23023025C1B5F1F11C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0250A8E6324AE4DC94A32182 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7E0689A0B26DBDBCF3C0B1AD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DEFB9A95D843368A33260F60 /* AvailabilityGate.swift in Sources */,
+				9FE4DD4A3C080230DBFE65FE /* CannabisLabel.swift in Sources */,
+				CA0A3CFCFCEC0CC1BD4EF368 /* ContentView.swift in Sources */,
+				288B220A9D089C5D1039EE46 /* DataScannerView.swift in Sources */,
+				910B62143DE508BB33BDFFD5 /* ExtractionService.swift in Sources */,
+				97F362F5C00BF8B53E560277 /* LabelSanityChecker.swift in Sources */,
+				BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */,
+				01F2D240B3CA3DEE50224D43 /* ScanModel.swift in Sources */,
+				9EE63D408E3780CA6D5ED3FF /* SummaryService.swift in Sources */,
+				1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9AF25E1D5F9FAC42FB63B36A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7D22C8B5C7D12E8379824BB7 /* LabelSanityCheckerTests.swift in Sources */,
+				2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		674BB22E9244E37B89833A0C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1ED4F763E9F1BC608D43D03D /* weedlabel */;
+			targetProxy = A017FE0A3BE9AF3C389904C0 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		177D05926A40E8C18C54BBF3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.demarconet.weedlabel;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		5BB6515D1715F2EB946E9AB8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "weedlabel uses the camera to read NJ cannabis dispensary labels. Nothing leaves your device.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		68021E05926FC3DF19D78753 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "weedlabel uses the camera to read NJ cannabis dispensary labels. Nothing leaves your device.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		852D1DEFA24BF004F0AAA171 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.demarconet.weedlabelTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/weedlabel.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/weedlabel";
+			};
+			name = Debug;
+		};
+		9E6C0E4CEAD91E4DA6D64B83 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.demarconet.weedlabelTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/weedlabel.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/weedlabel";
+			};
+			name = Release;
+		};
+		AAEF27E45FDE14F3BEDE4988 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.demarconet.weedlabel;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7B27FDAE65E5DF88DC5A6171 /* Build configuration list for PBXNativeTarget "weedlabel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				177D05926A40E8C18C54BBF3 /* Debug */,
+				AAEF27E45FDE14F3BEDE4988 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9712E270A447B690CBD192B6 /* Build configuration list for PBXNativeTarget "weedlabelTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				852D1DEFA24BF004F0AAA171 /* Debug */,
+				9E6C0E4CEAD91E4DA6D64B83 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C9C12470D37CEDBFDFC67852 /* Build configuration list for PBXProject "weedlabel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68021E05926FC3DF19D78753 /* Debug */,
+				5BB6515D1715F2EB946E9AB8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FA3A1CF5F0261ACB0398A675 /* Project object */;
+}
