@@ -79,6 +79,7 @@ final class ScanModel {
     private let availability: AvailabilityProviding
     private let strainOverrides: StrainOverrideStoring
     private let productTypeOverrides: ProductTypeOverrideStoring
+    private let nameOverrides: StrainNameOverrideStoring
     private var pipelineTask: Task<Void, Never>?
     private var autoCaptureTask: Task<Void, Never>?
 
@@ -87,13 +88,15 @@ final class ScanModel {
         summary: LabelSummarizing = SummaryService(),
         availability: AvailabilityProviding = DefaultAvailabilityProvider(),
         strainOverrides: StrainOverrideStoring = FileStrainOverrideStore(),
-        productTypeOverrides: ProductTypeOverrideStoring = FileProductTypeOverrideStore()
+        productTypeOverrides: ProductTypeOverrideStoring = FileProductTypeOverrideStore(),
+        nameOverrides: StrainNameOverrideStoring = FileStrainNameOverrideStore()
     ) {
         self.extraction = extraction
         self.summary = summary
         self.availability = availability
         self.strainOverrides = strainOverrides
         self.productTypeOverrides = productTypeOverrides
+        self.nameOverrides = nameOverrides
         self.phase = .idle(availability: availability.current())
     }
 
@@ -367,16 +370,33 @@ final class ScanModel {
         phase = .ready(label: updated, summary: summary, sanityWarning: warning, strainInsight: insight)
     }
 
+    // MARK: - Strain-name correction
+
+    /// Apply a user correction to the strain name (the model can mis-read names
+    /// on worst-case OCR). Persists keyed by the *extracted* name, so future
+    /// scans that produce the same misread auto-correct. In-session it updates
+    /// the displayed name; the existing strain insight and product type stand.
+    func setStrainName(_ newName: String) {
+        guard case .ready(let label, let summary, let warning, let insight) = phase else { return }
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != label.strainName else { return }
+        nameOverrides.setCorrectedName(trimmed, forExtractedName: label.strainName)
+        var updated = label
+        updated.strainName = trimmed
+        phase = .ready(label: updated, summary: summary, sanityWarning: warning, strainInsight: insight)
+    }
+
     // MARK: - Local data
 
-    /// Wipe all locally-saved corrections (strain lean + product type). Backs
-    /// the "Clear local data" action. Strain overrides are cleared through the
-    /// existing protocol so this stays decoupled from that store's internals.
+    /// Wipe all locally-saved corrections (strain lean, product type, and name).
+    /// Backs the "Clear local data" action. Strain overrides are cleared through
+    /// the existing protocol so this stays decoupled from that store's internals.
     func clearLocalData() {
         for override in strainOverrides.allOverrides() {
             strainOverrides.removeOverride(forStrainName: override.displayName)
         }
         productTypeOverrides.removeAll()
+        nameOverrides.removeAll()
     }
 
     // MARK: - Capture handoff
@@ -419,6 +439,17 @@ final class ScanModel {
                     canaryLog("Strain post-fix: '\(withQRs.strainName)' → '\(fixedStrain.strain)'")
                     #endif
                     withQRs.strainName = fixedStrain.strain
+                }
+                // Apply a saved name correction (chained, so re-edits compose),
+                // keyed by the extracted name — fixes worst-case OCR names the
+                // model can't reassemble. Done first so the corrected name drives
+                // the product-type and strain-lean lookups below.
+                let resolvedName = self.nameOverrides.resolve(extractedName: withQRs.strainName)
+                if resolvedName != withQRs.strainName {
+                    #if DEBUG
+                    canaryLog("Name override applied: '\(withQRs.strainName)' → '\(resolvedName)'")
+                    #endif
+                    withQRs.strainName = resolvedName
                 }
                 // Deterministic product-type correction from explicit label
                 // wording (e.g. "Inhalable Product" → not an edible), overriding

@@ -58,6 +58,7 @@ struct ContentView: View {
                         onSetStrainClass: { model.setStrainClass($0) },
                         onClearStrainClass: { model.clearStrainClass() },
                         onSetProductType: { model.setProductType($0) },
+                        onSetStrainName: { model.setStrainName($0) },
                         onReset: { model.cancel() }
                     )
 

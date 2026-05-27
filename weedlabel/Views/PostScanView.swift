@@ -22,11 +22,15 @@ struct PostScanView: View {
     var onClearStrainClass: () -> Void = {}
     /// Apply a user correction to the inferred product type.
     var onSetProductType: (ProductType) -> Void = { _ in }
+    /// Apply a user correction to the strain name (worst-case OCR misreads).
+    var onSetStrainName: (String) -> Void = { _ in }
     let onReset: () -> Void
 
     @State private var sourceDataExpanded: Bool = false
     @State private var editingStrainClass: Bool = false
     @State private var editingProductType: Bool = false
+    @State private var editingName: Bool = false
+    @State private var nameDraft: String = ""
 
     var body: some View {
         ScrollView {
@@ -86,9 +90,20 @@ struct PostScanView: View {
     private var productHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(label.strainName)
-                    .font(.callout.weight(.medium))
-                    .foregroundStyle(.primary)
+                HStack(spacing: 6) {
+                    Text(label.strainName)
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(.primary)
+                    Button {
+                        nameDraft = label.strainName
+                        editingName = true
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Edit strain name")
+                }
                 Text(label.cultivator)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -96,6 +111,16 @@ struct PostScanView: View {
             productTypePill
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .alert("Edit strain name", isPresented: $editingName) {
+            TextField("Strain name", text: $nameDraft)
+            Button("Save") {
+                let trimmed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty { onSetStrainName(trimmed) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Fix a name the scanner misread. Your correction sticks for future scans of this product.")
+        }
     }
 
     /// The inferred product type, tappable to correct — the FM sometimes
