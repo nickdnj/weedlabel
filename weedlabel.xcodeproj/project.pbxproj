@@ -34,6 +34,7 @@
 		9FE4DD4A3C080230DBFE65FE /* CannabisLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */; };
 		A168ABD618665CC776B199A7 /* PromptLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C744C653A93A5A423F7ADF /* PromptLabView.swift */; };
 		AE804BD1E7E9974B4E658028 /* StrainOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */; };
+		AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */ = {isa = PBXBuildFile; fileRef = C599ED0461A67389D4F940CA /* ProductType+Display.swift */; };
 		BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6931CE4F5C707585B52846C9 /* PostScanView.swift */; };
 		CA0A3CFCFCEC0CC1BD4EF368 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5009B08A5116D6385CA5FBCD /* ContentView.swift */; };
 		DBF56BE240DB0B3206C43FFF /* PipelineProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */; };
@@ -81,6 +82,7 @@
 		B1F64514D58748BA02013447 /* weedlabel.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = weedlabel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8D7529EFA0E55694A6D2D38 /* StaticImageOCR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticImageOCR.swift; sourceTree = "<group>"; };
 		C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessor.swift; sourceTree = "<group>"; };
+		C599ED0461A67389D4F940CA /* ProductType+Display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProductType+Display.swift"; sourceTree = "<group>"; };
 		D06527F36A2DD990AB0C5E9E /* SummaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryService.swift; sourceTree = "<group>"; };
 		D1C744C653A93A5A423F7ADF /* PromptLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptLabView.swift; sourceTree = "<group>"; };
 		D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainOverrideStoreTests.swift; sourceTree = "<group>"; };
@@ -120,6 +122,7 @@
 			children = (
 				92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */,
 				77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */,
+				C599ED0461A67389D4F940CA /* ProductType+Display.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -297,6 +300,7 @@
 				DBF56BE240DB0B3206C43FFF /* PipelineProtocols.swift in Sources */,
 				BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */,
 				50C638528C7663A356E1A8E2 /* ProductLinks.swift in Sources */,
+				AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */,
 				A168ABD618665CC776B199A7 /* PromptLabView.swift in Sources */,
 				01F2D240B3CA3DEE50224D43 /* ScanModel.swift in Sources */,
 				4647AD2F4648D37B0FA3B78E /* StaticImageOCR.swift in Sources */,

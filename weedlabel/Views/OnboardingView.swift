@@ -53,6 +53,8 @@ struct OnboardingView: View {
                                 detail: "No accounts, no analytics, no ad junk. Ever.")
                         promise(emoji: "🌐", title: "Links go to the web",
                                 detail: "Tap a link and you'll leave the app — that's the only thing that goes outside.")
+                        promise(emoji: "🧠", title: "Smart, still learning",
+                                detail: "Apple Intelligence reads each label on-device. It's not perfect yet — if it gets something wrong, fix it in a tap. It only gets better from here.")
                     }
                     .padding(.horizontal, 20)
 

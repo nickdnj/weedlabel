@@ -347,6 +347,22 @@ final class ScanModel {
         phase = .ready(label: label, summary: summary, sanityWarning: warning, strainInsight: insight)
     }
 
+    // MARK: - Product-type correction
+
+    /// Apply a user correction to the product type (the FM occasionally mis-reads
+    /// e.g. a flower package as an edible) and re-run the productType-aware
+    /// sanity check, since the cannabinoid ceilings differ by type. In-session
+    /// only — the AI summary isn't regenerated.
+    func setProductType(_ type: ProductType) {
+        guard case .ready(let label, let summary, _, let insight) = phase else { return }
+        var updated = label
+        updated.productType = type
+        let verdict = LabelSanityChecker.check(updated)
+        let warning: String?
+        if case .verifyHint(let reason) = verdict { warning = reason } else { warning = nil }
+        phase = .ready(label: updated, summary: summary, sanityWarning: warning, strainInsight: insight)
+    }
+
     // MARK: - Capture handoff
 
     func handleCapture(ocr: String, qrCodes: [String]) {

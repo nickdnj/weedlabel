@@ -26,6 +26,8 @@ struct AboutView: View {
                                     detail: "No accounts, no analytics, no ad junk.")
                             promise(emoji: "🌐", title: "Links go to the web",
                                     detail: "Tapping a link is the only thing that leaves the app.")
+                            promise(emoji: "🧠", title: "Smart, still learning",
+                                    detail: "Apple Intelligence reads labels on-device. When it slips up, correct it in a tap — it only gets better.")
                         }
 
                         replayButton

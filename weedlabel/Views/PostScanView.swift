@@ -20,10 +20,13 @@ struct PostScanView: View {
     var onSetStrainClass: (StrainLean) -> Void = { _ in }
     /// Remove a saved correction, reverting to marker/lineage inference.
     var onClearStrainClass: () -> Void = {}
+    /// Apply a user correction to the inferred product type.
+    var onSetProductType: (ProductType) -> Void = { _ in }
     let onReset: () -> Void
 
     @State private var sourceDataExpanded: Bool = false
     @State private var editingStrainClass: Bool = false
+    @State private var editingProductType: Bool = false
 
     var body: some View {
         ScrollView {
@@ -46,6 +49,10 @@ struct PostScanView: View {
 
                 if editingStrainClass {
                     strainClassPicker
+                }
+
+                if editingProductType {
+                    productTypePicker
                 }
 
                 heroCard
@@ -77,15 +84,42 @@ struct PostScanView: View {
     }
 
     private var productHeader: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label.strainName)
-                .font(.callout.weight(.medium))
-                .foregroundStyle(.primary)
-            Text(label.cultivator)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label.strainName)
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(.primary)
+                Text(label.cultivator)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            productTypePill
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The inferred product type, tappable to correct — the FM sometimes
+    /// mis-reads it (e.g. flower as edible). Mirrors the strain-type correction.
+    private var productTypePill: some View {
+        Button {
+            withAnimation { editingProductType.toggle() }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: label.productType.iconName)
+                    .font(.caption2)
+                Text(label.productType.displayName)
+                    .font(.caption.weight(.medium))
+                Image(systemName: "pencil")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.secondary.opacity(0.12), in: Capsule())
+            .foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Product type: \(label.productType.displayName). Tap to correct.")
     }
 
     private var heroCard: some View {
@@ -324,6 +358,45 @@ struct PostScanView: View {
                         .font(.caption)
                 }
                 .padding(.top, 2)
+            }
+        }
+        .padding(14)
+        .background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    /// Product-type picker shown while correcting. Selecting hands off to the
+    /// model, which re-runs the productType-aware sanity check.
+    private var productTypePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("WHAT KIND OF PRODUCT IS THIS?")
+                .font(.caption2.weight(.semibold))
+                .tracking(0.6)
+                .foregroundStyle(.secondary)
+            ForEach(ProductType.allCases, id: \.self) { type in
+                Button {
+                    onSetProductType(type)
+                    withAnimation { editingProductType = false }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: type.iconName)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        Text(type.displayName)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if label.productType == type {
+                            Image(systemName: "checkmark")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.tint)
+                        }
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(14)

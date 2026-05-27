@@ -70,6 +70,7 @@ struct ContentView: View {
                         strainInsight: strainInsight,
                         onSetStrainClass: { model.setStrainClass($0) },
                         onClearStrainClass: { model.clearStrainClass() },
+                        onSetProductType: { model.setProductType($0) },
                         onReset: { model.cancel() }
                     )
 
