@@ -14,11 +14,13 @@
 		1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */; };
 		2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */; };
 		288B220A9D089C5D1039EE46 /* DataScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240631CA58BB0C2F38763B93 /* DataScannerView.swift */; };
+		2F4C447F91EEB40E68565D1F /* ProductTypeInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 802A72828911CF48B262245C /* ProductTypeInference.swift */; };
 		2FB4B46D19113FA8F911C015 /* StrainOverrideStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2E3B0F92071D4FC7640A4C /* StrainOverrideStore.swift */; };
 		30FB7933E51E18AB7F499320 /* ProductTypeOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDED767113EC4C6265A346A3 /* ProductTypeOverrideStoreTests.swift */; };
 		37E80C2CA9520B8DCDCA7485 /* OCRPreprocessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */; };
 		39915F48CF1FFA8C4D67EB05 /* StrainKnowledgeBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1543B6AC44F3A9D66434A274 /* StrainKnowledgeBase.swift */; };
 		39BCAE803B2C2359027379A9 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0AACC7BB1DA221E34688C0E /* Brand.swift */; };
+		427AEA992DB5DA8C92838EAE /* ProductTypeInferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AFA1C72E21FB7293A6B2DD /* ProductTypeInferenceTests.swift */; };
 		4647AD2F4648D37B0FA3B78E /* StaticImageOCR.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8D7529EFA0E55694A6D2D38 /* StaticImageOCR.swift */; };
 		50C638528C7663A356E1A8E2 /* ProductLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20578EBF5F54B3112658919F /* ProductLinks.swift */; };
 		598F7CFF0A45BA978DA77A60 /* validation in Resources */ = {isa = PBXBuildFile; fileRef = 2254C8B63EA407653E87208D /* validation */; };
@@ -64,6 +66,7 @@
 		240631CA58BB0C2F38763B93 /* DataScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataScannerView.swift; sourceTree = "<group>"; };
 		303060CD4222C3426F7446A2 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3C6F9E8F085BB50271753BB3 /* StrainNameFixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameFixer.swift; sourceTree = "<group>"; };
+		41AFA1C72E21FB7293A6B2DD /* ProductTypeInferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTypeInferenceTests.swift; sourceTree = "<group>"; };
 		4C644794E83AC6B1EF2967DF /* ScanModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanModel.swift; sourceTree = "<group>"; };
 		4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P6ValidatorTests.swift; sourceTree = "<group>"; };
 		5009B08A5116D6385CA5FBCD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -74,6 +77,7 @@
 		77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelSanityChecker.swift; sourceTree = "<group>"; };
 		7A0E68E5A62C53EEF4BD1ADA /* weedlabelTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = weedlabelTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A67F0AADA564CD133E4F413 /* StrainKnowledgeBaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainKnowledgeBaseTests.swift; sourceTree = "<group>"; };
+		802A72828911CF48B262245C /* ProductTypeInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTypeInference.swift; sourceTree = "<group>"; };
 		8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineProtocols.swift; sourceTree = "<group>"; };
 		8FF994512D20FED9C21B78D6 /* ProductLinksTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductLinksTests.swift; sourceTree = "<group>"; };
 		92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CannabisLabel.swift; sourceTree = "<group>"; };
@@ -144,6 +148,7 @@
 				DD5A78E90BF0C10B14291DC4 /* OCRPreprocessorTests.swift */,
 				4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */,
 				8FF994512D20FED9C21B78D6 /* ProductLinksTests.swift */,
+				41AFA1C72E21FB7293A6B2DD /* ProductTypeInferenceTests.swift */,
 				DDED767113EC4C6265A346A3 /* ProductTypeOverrideStoreTests.swift */,
 				0BD5E4DA48E32745BBDAE20E /* ScanModelTests.swift */,
 				7A67F0AADA564CD133E4F413 /* StrainKnowledgeBaseTests.swift */,
@@ -184,6 +189,7 @@
 				C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */,
 				8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */,
 				20578EBF5F54B3112658919F /* ProductLinks.swift */,
+				802A72828911CF48B262245C /* ProductTypeInference.swift */,
 				10EDF9F131951B71C3B0A9B5 /* ProductTypeOverrideStore.swift */,
 				B8D7529EFA0E55694A6D2D38 /* StaticImageOCR.swift */,
 				1543B6AC44F3A9D66434A274 /* StrainKnowledgeBase.swift */,
@@ -304,6 +310,7 @@
 				BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */,
 				50C638528C7663A356E1A8E2 /* ProductLinks.swift in Sources */,
 				AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */,
+				2F4C447F91EEB40E68565D1F /* ProductTypeInference.swift in Sources */,
 				6752F2738636EFB7365AF8C9 /* ProductTypeOverrideStore.swift in Sources */,
 				01F2D240B3CA3DEE50224D43 /* ScanModel.swift in Sources */,
 				4647AD2F4648D37B0FA3B78E /* StaticImageOCR.swift in Sources */,
@@ -324,6 +331,7 @@
 				8FE824E10518DE78AF98B649 /* OCRPreprocessorTests.swift in Sources */,
 				2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */,
 				7B6DD1EB2F3E1595698F27DF /* ProductLinksTests.swift in Sources */,
+				427AEA992DB5DA8C92838EAE /* ProductTypeInferenceTests.swift in Sources */,
 				30FB7933E51E18AB7F499320 /* ProductTypeOverrideStoreTests.swift in Sources */,
 				FA367F8E468F984BB97ED058 /* ScanModelTests.swift in Sources */,
 				860D65289692E1185199273B /* StrainKnowledgeBaseTests.swift in Sources */,

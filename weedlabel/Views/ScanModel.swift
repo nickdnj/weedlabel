@@ -420,6 +420,15 @@ final class ScanModel {
                     #endif
                     withQRs.strainName = fixedStrain.strain
                 }
+                // Deterministic product-type correction from explicit label
+                // wording (e.g. "Inhalable Product" → not an edible), overriding
+                // a name-biased FM guess. A saved user override still wins below.
+                if let inferredType = ProductTypeInference.infer(ocrText: ocr), inferredType != withQRs.productType {
+                    #if DEBUG
+                    canaryLog("Product-type inference: \(withQRs.productType.storageKey) → \(inferredType.storageKey) (from label text)")
+                    #endif
+                    withQRs.productType = inferredType
+                }
                 // Apply a saved product-type correction for this strain, if any,
                 // so the user's fix survives across future scans.
                 if let savedType = self.productTypeOverrides.productType(forStrainName: withQRs.strainName) {

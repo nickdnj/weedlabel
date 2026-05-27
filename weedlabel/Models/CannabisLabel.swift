@@ -52,7 +52,7 @@ struct CannabisLabel: Sendable {
 
 @Generable
 struct LabelMetadata: Sendable {
-    @Guide(description: "Strain/cultivar name. NEVER a terpene or cannabinoid name.")
+    @Guide(description: "Full strain/product name. May wrap across two lines or sit between the brand and the weight — reassemble it (e.g. \"Blue Candy\" + \"Rain\" → \"Blue Candy Rain\"). NEVER a terpene, cannabinoid, or lot-code line.")
     var strainName: String
     @Guide(description: "Cultivator business name")
     var cultivator: String
@@ -66,7 +66,7 @@ struct LabelMetadata: Sendable {
     var harvestDate: String?
     @Guide(description: "Expiration date, ISO YYYY-MM-DD")
     var expirationDate: String?
-    @Guide(description: "Product type")
+    @Guide(description: "Product type from the printed dosage form. \"Inhalable Product\" or a gram weight (e.g. 28g) = flower/vape/pre-roll, never edible; milligram dosing or gummies/chocolate = edible.")
     var productType: ProductType
     @Guide(description: "Barcode payloads (e.g. Metrc tag). Never readable text.")
     var qrCodes: [String]

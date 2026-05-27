@@ -95,10 +95,11 @@ actor ExtractionService {
     static let metadataInstructions: String = """
     Extract NJ-CRC cannabis label metadata from OCR text. Rules:
     1. Dates → ISO YYYY-MM-DD format.
-    2. Strain: cultivar name only — strip brand prefix and weight. NEVER a terpene or cannabinoid name.
-    3. Net weight includes the unit, e.g. "28g".
-    4. qrCodes: include only opaque barcode payloads such as Metrc seed-to-sale tags. Do not include phone numbers, addresses, license numbers, or other readable text. Do not invent or echo example values.
-    5. Null when not printed. Copy values verbatim.
+    2. Strain: the full cultivar name only — strip the brand prefix and the weight. The name may wrap across two lines (e.g. "Blue Candy" then "Rain" → "Blue Candy Rain"); reassemble it into the complete name. NEVER a terpene or cannabinoid name, and never a lot/batch-code line.
+    3. productType: use the dosage form printed on the label. "Inhalable Product", or a net weight in grams (e.g. 28g, 3.5g), means an inhalable type — flower unless it explicitly says pre-roll or vape — and is NEVER an edible. Milligram dosing or words like gummies/chocolate/lozenge mean edible.
+    4. Net weight includes the unit, e.g. "28g".
+    5. qrCodes: include only opaque barcode payloads such as Metrc seed-to-sale tags. Do not include phone numbers, addresses, license numbers, or other readable text. Do not invent or echo example values.
+    6. Null when not printed. Copy values verbatim.
     """
 
     static let chemistryInstructions: String = """
