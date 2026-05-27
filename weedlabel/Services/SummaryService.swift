@@ -22,13 +22,13 @@ actor SummaryService {
         }
     }
 
-    func summarize(_ label: CannabisLabel) async throws -> SummaryOutcome {
+    func summarize(_ label: CannabisLabel, strainInsight: StrainInsight? = nil) async throws -> SummaryOutcome {
         if session == nil {
             session = LanguageModelSession(instructions: SummaryService.systemInstructions)
         }
         guard let session else { throw SummaryError.noSession }
 
-        let promptText = Self.buildUserPrompt(label)
+        let promptText = Self.buildUserPrompt(label, strainInsight: strainInsight)
 
         // First attempt
         var responseText = try await session.respond(to: Prompt(promptText)).content
@@ -46,65 +46,121 @@ actor SummaryService {
         }
 
         if Self.firstViolation(in: responseText) != nil {
-            return .deterministicFallback(text: Self.buildFallback(label), regenerationsTried: attempts)
+            return .deterministicFallback(text: Self.buildFallback(label, strainInsight: strainInsight), regenerationsTried: attempts)
+        }
+
+        // Hallucination guard: every "NN.N%" figure the summary mentions must
+        // appear in the parsed label (within ±0.5% rounding tolerance).
+        // Otherwise the model has invented numbers, and we fall back to the
+        // deterministic summary that's grounded in real data only.
+        if Self.summaryMentionsHallucinatedPercentages(responseText, against: label) {
+            return .deterministicFallback(text: Self.buildFallback(label, strainInsight: strainInsight), regenerationsTried: attempts)
         }
 
         return .ai(text: responseText, regenerationsTried: attempts)
     }
 
+#if DEBUG
+    /// Debug-only: run summarization with custom system instructions. Returns
+    /// the raw model response plus the violation outcome from the P6 validator.
+    /// Used by the in-app Prompt Lab.
+    struct CustomRunResult: Sendable {
+        let rawResponse: String
+        let violation: String?
+        let outcome: SummaryOutcome
+        let promptSent: String
+    }
+
+    func summarizeWithCustomInstructions(
+        _ label: CannabisLabel,
+        instructions: String
+    ) async throws -> CustomRunResult {
+        let promptText = Self.buildUserPrompt(label)
+        let oneShot = LanguageModelSession(instructions: instructions)
+        let response = try await oneShot.respond(to: Prompt(promptText)).content
+        let violation = Self.firstViolation(in: response)
+        let hallucinated = Self.summaryMentionsHallucinatedPercentages(response, against: label)
+        let outcome: SummaryOutcome
+        let combinedReason: String?
+        if let v = violation {
+            outcome = .deterministicFallback(text: Self.buildFallback(label), regenerationsTried: 0)
+            combinedReason = v
+        } else if hallucinated {
+            outcome = .deterministicFallback(text: Self.buildFallback(label), regenerationsTried: 0)
+            combinedReason = "hallucinated percentage(s)"
+        } else {
+            outcome = .ai(text: response, regenerationsTried: 0)
+            combinedReason = nil
+        }
+        return CustomRunResult(rawResponse: response, violation: combinedReason, outcome: outcome, promptSent: promptText)
+    }
+#endif
+
     // MARK: - System instructions
 
-    private static let systemInstructions: String = """
-    You write short informational summaries about NJ-CRC cannabis product labels \
-    based on parsed cannabinoid and terpene data. You are a knowledgeable friend \
-    describing chemistry, not a clinician. Rules:
+    static let systemInstructions: String = """
+    You write a short, factual reference description of a cannabis product's \
+    aroma and chemistry for an informational catalog. Neutral and descriptive — \
+    not promotional, not advice. Describe; do not recommend or encourage use. \
+    Rules:
 
-    1. Ground every claim strictly in the parsed fields you are given.
-    2. No medical claims (no "treats," "cures," "heals," "relieves," "prevents," \
+    1. Ground every statement strictly in the parsed fields provided. If aroma \
+       notes are given for a terpene, describe them factually (e.g. bright \
+       citrus, earthy musk, peppery spice, soft floral, fresh pine).
+    2. Open with the dominant aroma or the strain's chemotype, then note the \
+       significant figures present. Keep it plain and informative.
+    3. If chemistry data is sparse, describe the terpene/aroma profile and the \
+       sativa/indica/hybrid classification factually. NEVER invent or estimate \
+       percentages that weren't provided.
+    4. No medical claims ("treats," "cures," "heals," "relieves," "prevents," \
        "reduces pain/anxiety/insomnia/nausea/symptoms").
-    3. No helping-claim phrases ("will help," "helps with," "good for," "useful \
+    5. No helping-claim phrases ("will help," "helps with," "good for," "useful \
        for," "may help/relieve/reduce/treat").
-    4. No second-person directives ("you should," "you'll feel," "you can take," \
-       "take this when/if/for").
-    5. No dosing language ("recommended dose," milligram dosing, "prescription").
-    6. You may state effect direction in factual third-person terms based on \
-       terpene profile: sedative-leaning, energizing-leaning, relaxing-leaning.
-    7. Keep responses to 2-3 sentences total. Plain prose, no markdown.
+    6. No second-person directives. Describe in neutral third person.
+    7. No dosing language ("recommended dose," milligram dosing, "prescription").
+    8. You may note effect direction in factual third-person terms from the \
+       terpene profile or the Classification line (sativa/indica/hybrid, \
+       energizing/relaxing/balanced, daytime/evening).
+    9. Keep it to 2-3 plain sentences. No markdown, no emoji.
     """
 
     // MARK: - User prompt
 
-    private static func buildUserPrompt(_ label: CannabisLabel) -> String {
+    private static func buildUserPrompt(_ label: CannabisLabel, strainInsight: StrainInsight? = nil) -> String {
         var lines: [String] = []
         lines.append("Strain: \(label.strainName)")
         lines.append("Cultivator: \(label.cultivator)")
         lines.append("Product type: \(String(describing: label.productType))")
-
-        let c = label.cannabinoids
-        var cannas: [String] = []
-        if let v = c.thca { cannas.append("THCA \(format(v))%") }
-        if let v = c.delta9thc { cannas.append("Δ9-THC \(format(v))%") }
-        if let v = c.cbd { cannas.append("CBD \(format(v))%") }
-        if let v = c.cbda { cannas.append("CBDA \(format(v))%") }
-        if let v = c.cbg { cannas.append("CBG \(format(v))%") }
-        if let v = c.cbga { cannas.append("CBGA \(format(v))%") }
-        if let v = c.totalCannabinoids { cannas.append("total cannabinoids \(format(v))%") }
-        if let v = label.computedTotalThc { cannas.append("computed Total THC \(format(v))%") }
-        lines.append("Cannabinoids: \(cannas.joined(separator: ", "))")
-
-        let t = label.terpenes
-        var terps: [String] = []
-        if let v = t.myrcene { terps.append("myrcene \(format(v))%") }
-        if let v = t.limonene { terps.append("limonene \(format(v))%") }
-        if let v = t.linalool { terps.append("linalool \(format(v))%") }
-        if let v = t.betaCaryophyllene { terps.append("β-caryophyllene \(format(v))%") }
-        if let v = t.pinene { terps.append("pinene \(format(v))%") }
-        if let v = t.humulene { terps.append("humulene \(format(v))%") }
-        for entry in t.other {
-            terps.append("\(entry.name) \(format(entry.percent))%")
+        if let strainInsight {
+            // Deterministic, trustworthy classification + flavor character. Fed
+            // as grounded facts the summary may reference (qualitative, so they
+            // pass the percentage-based hallucination guard untouched).
+            lines.append("Classification: \(strainInsight.lean.displayName), \(strainInsight.lean.effectLanguage), suited to \(strainInsight.lean.timeOfDay)")
+            lines.append("Typical character: \(strainInsight.characterNote)")
         }
-        if let v = t.total { terps.append("total \(format(v))%") }
-        lines.append("Terpenes: \(terps.joined(separator: ", "))")
+
+        var cannas: [String] = []
+        if let v = label.thca { cannas.append("THCA \(format(v))%") }
+        if let v = label.delta9thc { cannas.append("Δ9-THC \(format(v))%") }
+        if let v = label.cbd { cannas.append("CBD \(format(v))%") }
+        if let v = label.cbg { cannas.append("CBG \(format(v))%") }
+        if let v = label.totalCannabinoids { cannas.append("total cannabinoids \(format(v))%") }
+        if let v = label.computedTotalThc { cannas.append("computed Total THC \(format(v))%") }
+        if !cannas.isEmpty {
+            lines.append("Cannabinoids: \(cannas.joined(separator: ", "))")
+        }
+
+        var terps: [String] = []
+        if let v = label.myrcene { terps.append("myrcene \(format(v))% (\(aroma("myrcene")))") }
+        if let v = label.limonene { terps.append("limonene \(format(v))% (\(aroma("limonene")))") }
+        if let v = label.linalool { terps.append("linalool \(format(v))% (\(aroma("linalool")))") }
+        if let v = label.betaCaryophyllene { terps.append("β-caryophyllene \(format(v))% (\(aroma("caryophyllene")))") }
+        if let v = label.pinene { terps.append("pinene \(format(v))% (\(aroma("pinene")))") }
+        if let v = label.humulene { terps.append("humulene \(format(v))% (\(aroma("humulene")))") }
+        if let v = label.totalTerpenes { terps.append("total \(format(v))%") }
+        if !terps.isEmpty {
+            lines.append("Terpenes: \(terps.joined(separator: ", "))")
+        }
 
         if let chemo = label.chemotype {
             lines.append("Chemotype (per NJAC §17:30-16.3(b)(11)): \(chemo)")
@@ -112,8 +168,9 @@ actor SummaryService {
 
         let body = lines.joined(separator: "\n")
         return """
-        Write a 2-3 sentence informational summary about this product's chemistry. \
-        Apply the rules in your instructions strictly.
+        Write a 2-3 sentence factual description of this product's aroma and \
+        chemistry. Lead with the aroma or chemotype, then note the significant \
+        figures. Apply the rules in your instructions strictly.
 
         Parsed label:
         \(body)
@@ -122,6 +179,72 @@ actor SummaryService {
 
     private static func format(_ d: Double) -> String {
         String(format: "%.2f", d)
+    }
+
+    /// Factual aroma/flavor notes per terpene. Fed into the prompt so the
+    /// summary's sensory language stays grounded rather than invented. These
+    /// are well-established descriptors, not effect/medical claims.
+    static func aroma(_ terpene: String) -> String {
+        switch terpene.lowercased() {
+        case "myrcene": return "earthy, musky, herbal"
+        case "limonene": return "bright citrus"
+        case "linalool": return "soft floral, lavender"
+        case "caryophyllene", "betacaryophyllene", "beta-caryophyllene": return "peppery, spicy, woody"
+        case "pinene": return "fresh pine, herbal"
+        case "humulene": return "hoppy, earthy, woody"
+        case "terpinolene": return "fruity, piney"
+        default: return "subtle herbal"
+        }
+    }
+
+    // MARK: - Hallucination guard
+
+    /// True if the summary mentions any "NN.N%" figure that isn't present
+    /// (within ±0.5% rounding tolerance) in the parsed label's numeric
+    /// fields. Used to reject summaries that invent percentages on labels
+    /// where FM extraction returned mostly nulls.
+    ///
+    /// Tolerates the model rounding 27.52 → "27.5" or "28" but rejects
+    /// completely fabricated figures like "18.3% THC" when the label has
+    /// no cannabinoid data at all.
+    static func summaryMentionsHallucinatedPercentages(
+        _ summary: String,
+        against label: CannabisLabel
+    ) -> Bool {
+        let summaryPercents = extractPercentages(from: summary)
+        if summaryPercents.isEmpty { return false } // no claims to verify
+        let labelPercents = collectAllPercentages(from: label)
+        for sp in summaryPercents {
+            // Allow ±0.5% rounding tolerance.
+            let found = labelPercents.contains { abs($0 - sp) <= 0.5 }
+            if !found { return true }
+        }
+        return false
+    }
+
+    /// Pull every "NN" / "NN.N" / "NN.NN" number that appears immediately
+    /// before a percent sign in the text. Tolerates an optional space.
+    static func extractPercentages(from text: String) -> [Double] {
+        guard let regex = try? NSRegularExpression(pattern: #"(\d+(?:\.\d+)?)\s*%"#) else { return [] }
+        let range = NSRange(text.startIndex..., in: text)
+        let matches = regex.matches(in: text, options: [], range: range)
+        return matches.compactMap { m in
+            Range(m.range(at: 1), in: text).flatMap { Double(text[$0]) }
+        }
+    }
+
+    /// Every numeric percent-bearing field on the label. Used as the
+    /// "ground truth" set the summary's percent claims are checked against.
+    static func collectAllPercentages(from label: CannabisLabel) -> [Double] {
+        let fields: [Double?] = [
+            label.thca, label.delta9thc, label.cbd, label.cbg,
+            label.totalCannabinoids, label.totalThc, label.totalCbd,
+            label.myrcene, label.limonene, label.linalool,
+            label.betaCaryophyllene, label.pinene, label.humulene,
+            label.totalTerpenes,
+            label.computedTotalThc, label.computedTotalCbd
+        ]
+        return fields.compactMap { $0 }
     }
 
     // MARK: - Validator (P6 regex denylist)
@@ -162,49 +285,83 @@ actor SummaryService {
     ]
 
     // MARK: - Deterministic fallback (P6)
+    //
+    // Used when the FM summary is unavailable, trips a guardrail, hits a P6
+    // violation, or hallucinates. Composed entirely from trustworthy parsed
+    // data — no generation, no hallucination risk. Leads with the strain's
+    // character/classification (which we can infer from the name even with zero
+    // chemistry) so the result screen stays compelling rather than going blank.
 
-    static func buildFallback(_ label: CannabisLabel) -> String {
+    static func buildFallback(_ label: CannabisLabel, strainInsight: StrainInsight? = nil) -> String {
+        var sentences: [String] = []
+        let name = label.strainName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let strainLabel = name.isEmpty ? "This product" : name
+
+        // Sentence 1 — strain character + classification (always available when
+        // we have an insight; this is the "infer from the name" win).
+        if let insight = strainInsight {
+            sentences.append(
+                "\(strainLabel) is \(insight.lean.displayName.lowercased()) — "
+                + "\(insight.characterNote) in character, "
+                + "\(insight.lean.effectLanguage), suited to \(insight.lean.timeOfDay)."
+            )
+        }
+
+        // Sentence 2 — chemistry highlights, if any were extracted.
+        let chemistryPiece = chemistryHighlights(label)
+        if let chemistryPiece {
+            sentences.append(chemistryPiece)
+        }
+
+        // Sentence 3 — honest note when the lab figures weren't legible.
+        if chemistryPiece == nil {
+            if sentences.isEmpty {
+                // No insight and no chemistry — last resort, but still name the product.
+                sentences.append(
+                    "\(strainLabel): the lab figures and strain type weren't legible in this scan. "
+                    + "Check the printed label for exact percentages."
+                )
+            } else {
+                sentences.append("The lab figures weren't legible in this scan — check the printed label for exact percentages.")
+            }
+        }
+
+        return sentences.joined(separator: " ")
+    }
+
+    /// One clause describing the standout cannabinoids + dominant terpene, or
+    /// nil if no chemistry was extracted.
+    private static func chemistryHighlights(_ label: CannabisLabel) -> String? {
         var pieces: [String] = []
 
-        // Top 2 cannabinoids by percentage
         let allCannas: [(String, Double)] = [
-            ("THCA", label.cannabinoids.thca ?? 0),
-            ("Δ9-THC", label.cannabinoids.delta9thc ?? 0),
-            ("CBG", label.cannabinoids.cbg ?? 0),
-            ("CBD", label.cannabinoids.cbd ?? 0),
-            ("CBDA", label.cannabinoids.cbda ?? 0),
-            ("CBGA", label.cannabinoids.cbga ?? 0)
+            ("THCA", label.thca ?? 0),
+            ("Δ9-THC", label.delta9thc ?? 0),
+            ("CBG", label.cbg ?? 0),
+            ("CBD", label.cbd ?? 0)
         ]
-        let nonZero: [(String, Double)] = allCannas.filter { $0.1 > 0 }
-        let cannaPairs: [(String, Double)] = nonZero.sorted { $0.1 > $1.1 }
-
-        let topCannas: [String] = cannaPairs.prefix(2).map { pair in
-            "\(pair.0) \(format(pair.1))%"
-        }
+        let cannaPairs = allCannas.filter { $0.1 > 0 }.sorted { $0.1 > $1.1 }
+        let topCannas = cannaPairs.prefix(2).map { "\($0.0) \(format($0.1))%" }
         if !topCannas.isEmpty {
-            pieces.append(topCannas.joined(separator: ", "))
+            pieces.append("Standout cannabinoids: \(topCannas.joined(separator: ", "))")
         }
 
-        // Effect-direction lookup based on dominant terpenes
         let terpEntries: [(String, Double)] = {
             var arr: [(String, Double)] = []
-            if let v = label.terpenes.myrcene { arr.append(("myrcene", v)) }
-            if let v = label.terpenes.limonene { arr.append(("limonene", v)) }
-            if let v = label.terpenes.linalool { arr.append(("linalool", v)) }
-            if let v = label.terpenes.betaCaryophyllene { arr.append(("β-caryophyllene", v)) }
-            if let v = label.terpenes.pinene { arr.append(("pinene", v)) }
-            if let v = label.terpenes.humulene { arr.append(("humulene", v)) }
-            return arr.sorted { $0.1 > $1.1 }
+            if let v = label.myrcene { arr.append(("myrcene", v)) }
+            if let v = label.limonene { arr.append(("limonene", v)) }
+            if let v = label.linalool { arr.append(("linalool", v)) }
+            if let v = label.betaCaryophyllene { arr.append(("β-caryophyllene", v)) }
+            if let v = label.pinene { arr.append(("pinene", v)) }
+            if let v = label.humulene { arr.append(("humulene", v)) }
+            return arr.filter { $0.1 > 0 }.sorted { $0.1 > $1.1 }
         }()
 
         if let top = terpEntries.first {
-            let direction = effectDirection(for: top.0)
-            pieces.append("\(direction)-leaning terpene profile dominated by \(top.0)")
+            pieces.append("a \(effectDirection(for: top.0))-leaning profile led by \(top.0) (\(aroma(top.0)))")
         }
 
-        if pieces.isEmpty {
-            return "Numbers look unusual — verify against the printed label."
-        }
+        guard !pieces.isEmpty else { return nil }
         return pieces.joined(separator: "; ") + "."
     }
 

@@ -60,3 +60,6 @@ fastlane/test_output
 
 # Logs
 *.log
+
+# Canary run artifacts (logs + screenshots from headless simulator runs)
+.canary-runs/

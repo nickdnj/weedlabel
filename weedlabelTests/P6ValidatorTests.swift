@@ -2,6 +2,95 @@ import Testing
 import Foundation
 @testable import weedlabel
 
+// MARK: - Hallucination guard
+
+@Suite("SummaryHallucinationGuard")
+struct SummaryHallucinationGuardTests {
+
+    /// Build a CannabisLabel with arbitrary numeric overrides. All metadata
+    /// fields stay null/empty.
+    static func label(
+        thca: Double? = nil,
+        delta9thc: Double? = nil,
+        cbd: Double? = nil,
+        totalCannabinoids: Double? = nil,
+        totalThc: Double? = nil,
+        myrcene: Double? = nil,
+        limonene: Double? = nil
+    ) -> CannabisLabel {
+        CannabisLabel(
+            strainName: "X", cultivator: "Y",
+            licenseNumber: nil, metrcTag: nil, netWeight: nil,
+            harvestDate: nil, expirationDate: nil,
+            productType: .flower,
+            thca: thca, delta9thc: delta9thc, cbd: cbd, cbg: nil,
+            totalCannabinoids: totalCannabinoids,
+            totalThc: totalThc, totalCbd: nil,
+            myrcene: myrcene, limonene: limonene, linalool: nil,
+            betaCaryophyllene: nil, pinene: nil, humulene: nil,
+            totalTerpenes: nil,
+            qrCodes: []
+        )
+    }
+
+    // MARK: - Extraction
+
+    @Test func extractsAllPercentagesFromSummary() {
+        let text = "Contains 22.5% THC and 0.8% myrcene with 14% limonene."
+        let pcts = SummaryService.extractPercentages(from: text)
+        #expect(pcts.sorted() == [0.8, 14.0, 22.5])
+    }
+
+    @Test func returnsEmptyWhenNoPercentages() {
+        let text = "Plain prose with no numeric claims."
+        #expect(SummaryService.extractPercentages(from: text).isEmpty)
+    }
+
+    // MARK: - Guard behavior
+
+    @Test func passesWhenAllPercentagesAreInLabel() {
+        let lbl = Self.label(thca: 22.5, myrcene: 0.8, limonene: 1.0)
+        let summary = "Contains 22.5% THCA and 0.8% myrcene."
+        #expect(!SummaryService.summaryMentionsHallucinatedPercentages(summary, against: lbl))
+    }
+
+    @Test func toleratesRoundingWithinHalfPercent() {
+        // Label has 22.5%, summary rounds to 22%. Should still pass.
+        let lbl = Self.label(thca: 22.5)
+        let summary = "Contains about 22% THC."
+        #expect(!SummaryService.summaryMentionsHallucinatedPercentages(summary, against: lbl))
+    }
+
+    @Test func rejectsHallucinatedNumberOutsideLabel() {
+        let lbl = Self.label(thca: 22.5)
+        let summary = "Contains 50% THC."
+        #expect(SummaryService.summaryMentionsHallucinatedPercentages(summary, against: lbl))
+    }
+
+    @Test func rejectsAnyPercentageWhenLabelHasNoChemistry() {
+        // This is the device-observed case: all chemistry null, model invents
+        // numbers like "18.3% THC and 1.6% CBD".
+        let lbl = Self.label()
+        let summary = "Contains 18.3% THC and 1.6% CBD, with 22.2% limonene."
+        #expect(SummaryService.summaryMentionsHallucinatedPercentages(summary, against: lbl))
+    }
+
+    @Test func passesNonChemistrySummaryWithEmptyLabel() {
+        // Summary makes no numeric claims — fine even on an empty label.
+        let lbl = Self.label()
+        let summary = "We couldn't read chemistry data; verify the printed label."
+        #expect(!SummaryService.summaryMentionsHallucinatedPercentages(summary, against: lbl))
+    }
+
+    @Test func usesComputedTotalThcAsValidSource() {
+        // THCA × 0.877 + Δ9-THC = 29.73 × 0.877 + 1.45 = 27.5147
+        // A summary saying "27.5% Total THC" should be allowed via computed value.
+        let lbl = Self.label(thca: 29.73, delta9thc: 1.45)
+        let summary = "Computed total THC is 27.5%."
+        #expect(!SummaryService.summaryMentionsHallucinatedPercentages(summary, against: lbl))
+    }
+}
+
 // P6 validator (regex denylist) tests. These run on simulator without
 // Foundation Models — they validate the safety floor regardless of FM behavior.
 

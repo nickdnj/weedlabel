@@ -8,17 +8,44 @@ import SwiftUI
 struct PostScanView: View {
     let label: CannabisLabel
     let summary: SummaryOutcome?
+    /// Non-nil when the sanity checker flagged something suspect about the
+    /// parsed label (e.g. Total THC formula mismatch). Rendered as a warning
+    /// banner — doesn't block the AI summary, just tells the user to verify
+    /// against the printed label before trusting the numbers.
+    let sanityWarning: String?
+    /// Deterministic sativa/indica/hybrid read from the name + label marker.
+    /// Rendered as a trustworthy "Profile" card distinct from the AI summary.
+    let strainInsight: StrainInsight?
+    /// Save a user correction for this strain's classification.
+    var onSetStrainClass: (StrainLean) -> Void = { _ in }
+    /// Remove a saved correction, reverting to marker/lineage inference.
+    var onClearStrainClass: () -> Void = {}
     let onReset: () -> Void
 
     @State private var sourceDataExpanded: Bool = false
+    @State private var editingStrainClass: Bool = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 productHeader
 
+                if let sanityWarning {
+                    verifyBanner(reason: sanityWarning)
+                }
+
                 if label.isHighPotency {
                     highPotencyWarning
+                }
+
+                if let strainInsight {
+                    profileCard(strainInsight)
+                } else {
+                    setStrainClassPrompt
+                }
+
+                if editingStrainClass {
+                    strainClassPicker
                 }
 
                 heroCard
@@ -26,6 +53,8 @@ struct PostScanView: View {
                 if !chipPairs.isEmpty {
                     chips
                 }
+
+                learnMoreSection
 
                 disclaimer
 
@@ -114,17 +143,18 @@ struct PostScanView: View {
         if let summary {
             return summary.text
         }
-        // No AI run (older device, AI off, or summary failed) — show a deterministic
-        // field-only line so the hero card is never empty.
-        return SummaryService.buildFallback(label)
+        // No AI run (older device, AI off, or summary failed) — show a
+        // deterministic line built from the strain character + any chemistry,
+        // so the hero card stays compelling rather than blank.
+        return SummaryService.buildFallback(label, strainInsight: strainInsight)
     }
 
     private var chipPairs: [(String, ChipPalette)] {
         var pairs: [(String, ChipPalette)] = []
-        if let v = label.terpenes.myrcene { pairs.append(("myrcene \(format(v))%", .lavender)) }
-        if let v = label.cannabinoids.thca { pairs.append(("THCA \(format(v))%", .mint)) }
-        if let v = label.terpenes.linalool { pairs.append(("linalool \(format(v))%", .peach)) }
-        if let v = label.terpenes.betaCaryophyllene { pairs.append(("β-caryophyllene \(format(v))%", .sky)) }
+        if let v = label.myrcene { pairs.append(("myrcene \(format(v))%", .lavender)) }
+        if let v = label.thca { pairs.append(("THCA \(format(v))%", .mint)) }
+        if let v = label.linalool { pairs.append(("linalool \(format(v))%", .peach)) }
+        if let v = label.betaCaryophyllene { pairs.append(("β-caryophyllene \(format(v))%", .sky)) }
         return pairs
     }
 
@@ -138,6 +168,48 @@ struct PostScanView: View {
         }
     }
 
+    @ViewBuilder
+    private var learnMoreSection: some View {
+        let links = ProductLinks.links(for: label)
+        if !links.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("LEARN MORE")
+                    .font(.caption2.weight(.semibold))
+                    .tracking(0.6)
+                    .foregroundStyle(.secondary)
+                ForEach(links) { link in
+                    Link(destination: link.url) {
+                        HStack(spacing: 10) {
+                            Image(systemName: link.kind == .labelLink ? "qrcode" : "magnifyingglass")
+                                .font(.callout)
+                                .foregroundStyle(.tint)
+                                .frame(width: 24)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(link.title)
+                                    .font(.callout.weight(.medium))
+                                    .foregroundStyle(.primary)
+                                Text(link.subtitle)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(12)
+                        .background(.background.opacity(0.6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(.primary.opacity(0.06), lineWidth: 1)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     private var disclaimer: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("AI Summary — informational only. Verify against the printed label. This statement has not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.")
@@ -145,6 +217,174 @@ struct PostScanView: View {
                 .foregroundStyle(.secondary)
                 .lineSpacing(2)
         }
+    }
+
+    private func profileCard(_ insight: StrainInsight) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: profileIcon(insight.lean))
+                .font(.title3)
+                .foregroundStyle(profileTint(insight.lean))
+                .frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(insight.lean.displayName)
+                        .font(.subheadline.weight(.semibold))
+                    Text("· \(insight.lean.timeOfDay)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Text(insight.lean.effectLanguage.capitalizingFirstLetter())
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(insight.sourceNote)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer()
+            Button {
+                withAnimation { editingStrainClass.toggle() }
+            } label: {
+                Image(systemName: "pencil.circle")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+            }
+            .accessibilityLabel("Correct strain type")
+        }
+        .padding(14)
+        .background(profileTint(insight.lean).opacity(0.10), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(profileTint(insight.lean).opacity(0.25), lineWidth: 1)
+        )
+    }
+
+    /// Shown when we have no classification at all — invites the user to tag it.
+    private var setStrainClassPrompt: some View {
+        Button {
+            withAnimation { editingStrainClass = true }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "questionmark.circle")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Strain type unknown")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                    Text("Tap to set sativa, indica, or hybrid")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+            }
+            .padding(14)
+            .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(.primary.opacity(0.08), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The strain-type picker shown while editing. Vertical list so all five
+    /// options (including the two hybrid-leaning variants) read clearly. Saves
+    /// on selection and collapses.
+    private var strainClassPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("SET STRAIN TYPE")
+                .font(.caption2.weight(.semibold))
+                .tracking(0.6)
+                .foregroundStyle(.secondary)
+            ForEach(StrainLean.allCases, id: \.self) { lean in
+                Button {
+                    onSetStrainClass(lean)
+                    withAnimation { editingStrainClass = false }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: profileIcon(lean))
+                            .font(.callout)
+                            .foregroundStyle(profileTint(lean))
+                            .frame(width: 24)
+                        Text(lean.shortLabel)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if strainInsight?.lean == lean {
+                            Image(systemName: "checkmark")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(profileTint(lean))
+                        }
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .background(profileTint(lean).opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(profileTint(lean).opacity(0.25), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            if strainInsight?.isUserOverride == true {
+                Button(role: .destructive) {
+                    onClearStrainClass()
+                    withAnimation { editingStrainClass = false }
+                } label: {
+                    Label("Remove my correction", systemImage: "arrow.uturn.backward")
+                        .font(.caption)
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(14)
+        .background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func profileIcon(_ lean: StrainLean) -> String {
+        switch lean {
+        case .sativa: return "sun.max.fill"
+        case .indica: return "moon.fill"
+        case .hybrid: return "circle.lefthalf.filled"
+        case .hybridSativa: return "sun.horizon.fill"
+        case .hybridIndica: return "moon.haze.fill"
+        }
+    }
+
+    private func profileTint(_ lean: StrainLean) -> Color {
+        switch lean {
+        case .sativa: return Color(red: 0.90, green: 0.62, blue: 0.10)       // warm amber — daytime
+        case .indica: return Color(red: 0.42, green: 0.38, blue: 0.78)       // indigo — evening
+        case .hybrid: return Color(red: 0.20, green: 0.60, blue: 0.50)       // teal — balanced
+        case .hybridSativa: return Color(red: 0.55, green: 0.62, blue: 0.25) // amber-teal — day-leaning
+        case .hybridIndica: return Color(red: 0.34, green: 0.48, blue: 0.66) // indigo-teal — evening-leaning
+        }
+    }
+
+    private func verifyBanner(reason: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label {
+                Text("Verify against the printed label")
+                    .font(.caption.weight(.semibold))
+            } icon: {
+                Image(systemName: "exclamationmark.circle.fill")
+            }
+            .foregroundStyle(Color(red: 0.76, green: 0.45, blue: 0.05))
+            Text(reason)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineSpacing(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.orange.opacity(0.30), lineWidth: 1)
+        )
     }
 
     private var highPotencyWarning: some View {
@@ -204,6 +444,13 @@ struct PostScanView: View {
 
     private func format(_ d: Double) -> String {
         String(format: "%.2f", d)
+    }
+}
+
+private extension String {
+    func capitalizingFirstLetter() -> String {
+        guard let first else { return self }
+        return first.uppercased() + dropFirst()
     }
 }
 

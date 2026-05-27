@@ -4,9 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo state
 
-**Canary spike scaffolded** (2026-05-09). Xcode project at `weedlabel.xcodeproj/` (generated from `project.yml` by `xcodegen` — `brew install xcodegen` to regenerate). Sources in `weedlabel/` cover the entire spike pipeline (Generable schema, sanity checker, FM availability gate, extraction + summary services with P6 validator, VisionKit bridge, Variant C post-scan view from `/design-shotgun`). Tests in `weedlabelTests/` cover the P6 regex denylist and the productType-aware sanity rules. The canary image (`assets/validation/zips-blue-candy-rain.jpeg`) is **not yet dropped in** — that's the gate to actually validating P1.
+**Device-tested v1 spike** (updated 2026-05-27). The product is now **HighNotes — "Your AI budtender"** (repo/target still named `weedlabel`; rename deferred). On-device scan → two-pass Foundation Models extraction → strain intelligence → grounded AI summary, with high-res capture, a user-correctable strain DB, and learn-more links. 199 tests passing.
 
-The active design doc is `~/.gstack/projects/nickdnj-weedlabel/nickd-main-design-20260509-144715.md` — the durable source of truth for v1 architecture decisions, premises, and validator specs. Read that before any non-trivial change.
+**The current specs live in `docs/` — read these first:**
+- `docs/PRD-v1.md` — product requirements
+- `docs/SAD-v1.md` — software architecture (pipeline, components, safety layers, build/signing)
+- `docs/UXD-v1.md` — UX flows and screens
+- `docs/EXECUTION-LOG-2026-05.md` — how the spike became v1, every scope change, open issues
+- `docs/legacy/` — the dead Next.js/Supabase PWA v0.1 (read only for the durable *why*)
+
+The older `.gstack` design doc and the v0.1 docs predate the native pivot and the reliability-first reshaping — defer to `docs/*-v1.md`.
+
+**Signing:** `project.yml` sets `DEVELOPMENT_TEAM: 5VPR237YHV`, so xcodegen regens no longer break device signing.
 
 ## Architecture (target)
 
