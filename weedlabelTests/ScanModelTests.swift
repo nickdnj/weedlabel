@@ -61,6 +61,28 @@ struct ScanModelTests {
         #expect(text == "fine.")
     }
 
+    @Test func saveToLogBookPersistsThenReturnsToIdle() async throws {
+        let logStore = InMemoryLogStore()
+        let model = ScanModel(
+            extraction: MockExtractor(result: .success(Self.cleanFlowerLabel())),
+            summary: MockSummarizer(result: .success(.ai(text: "fine.", regenerationsTried: 0))),
+            availability: MockAvailability(value: .available),
+            logStore: logStore
+        )
+        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        try await waitForPipeline(model)
+        #expect(logStore.entries().isEmpty) // nothing saved until the user opts in
+
+        model.saveToLogBook()
+        let entries = logStore.entries()
+        #expect(entries.count == 1)
+        #expect(entries.first?.label.strainName == "Test Strain")
+        #expect(entries.first?.summaryText == "fine.")
+        if case .idle = model.phase {} else {
+            Issue.record("expected .idle after save, got \(model.phase)")
+        }
+    }
+
     @Test func sanityFailStillRunsSummaryAndPassesWarning() async throws {
         // Behavior changed 2026-05-27: a sanity failure no longer routes to
         // a dead-end verifyHint screen. Instead the pipeline always continues

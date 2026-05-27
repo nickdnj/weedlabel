@@ -44,6 +44,12 @@ struct CannabisLabel: Sendable {
     var qrCodes: [String]
 }
 
+// Codable + Equatable for Log Book persistence. Synthesis works because every
+// stored property already conforms (ProductType is Codable; the composing
+// `init(metadata:chemistry:)` lives in an extension, so the memberwise and
+// Codable inits still synthesize). Computed properties aren't encoded.
+extension CannabisLabel: Codable, Equatable {}
+
 // MARK: - FM extraction passes
 //
 // Each is a focused @Generable schema. Keeping them separate halves the

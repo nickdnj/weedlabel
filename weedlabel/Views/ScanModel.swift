@@ -80,6 +80,7 @@ final class ScanModel {
     private let strainOverrides: StrainOverrideStoring
     private let productTypeOverrides: ProductTypeOverrideStoring
     private let nameOverrides: StrainNameOverrideStoring
+    private let logStore: LogStoring
     private var pipelineTask: Task<Void, Never>?
     private var autoCaptureTask: Task<Void, Never>?
 
@@ -89,7 +90,8 @@ final class ScanModel {
         availability: AvailabilityProviding = DefaultAvailabilityProvider(),
         strainOverrides: StrainOverrideStoring = FileStrainOverrideStore(),
         productTypeOverrides: ProductTypeOverrideStoring = FileProductTypeOverrideStore(),
-        nameOverrides: StrainNameOverrideStoring = FileStrainNameOverrideStore()
+        nameOverrides: StrainNameOverrideStoring = FileStrainNameOverrideStore(),
+        logStore: LogStoring = FileLogStore()
     ) {
         self.extraction = extraction
         self.summary = summary
@@ -97,6 +99,7 @@ final class ScanModel {
         self.strainOverrides = strainOverrides
         self.productTypeOverrides = productTypeOverrides
         self.nameOverrides = nameOverrides
+        self.logStore = logStore
         self.phase = .idle(availability: availability.current())
     }
 
@@ -384,6 +387,25 @@ final class ScanModel {
         var updated = label
         updated.strainName = trimmed
         phase = .ready(label: updated, summary: summary, sanityWarning: warning, strainInsight: insight)
+    }
+
+    // MARK: - Log Book
+
+    /// Save the current result to the Log Book ("your HighNotes"), then return
+    /// to idle. Stores the label + the summary text as shown + the strain lean;
+    /// the user adds a note/rating later in the entry detail.
+    func saveToLogBook() {
+        guard case .ready(let label, let summary, _, let insight) = phase else { return }
+        let text = summary?.text ?? SummaryService.buildFallback(label, strainInsight: insight)
+        let entry = LogEntry(
+            label: label,
+            summaryText: text,
+            summaryDidFallback: summary?.didFallback ?? true,
+            strainLean: insight?.lean,
+            strainSourceNote: insight?.sourceNote
+        )
+        logStore.add(entry)
+        cancel()
     }
 
     // MARK: - Local data

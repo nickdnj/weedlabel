@@ -24,6 +24,8 @@ struct PostScanView: View {
     var onSetProductType: (ProductType) -> Void = { _ in }
     /// Apply a user correction to the strain name (worst-case OCR misreads).
     var onSetStrainName: (String) -> Void = { _ in }
+    /// Persist the current scan to the Log Book, then reset.
+    var onSave: () -> Void = {}
     let onReset: () -> Void
 
     @State private var sourceDataExpanded: Bool = false
@@ -501,24 +503,32 @@ struct PostScanView: View {
     }
 
     private var saveButton: some View {
-        Button(action: onReset) {
-            Text("Save & scan another")
+        HStack(spacing: 10) {
+            Button(action: onReset) {
+                Text("Discard")
+                    .font(.callout.weight(.medium))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color.secondary.opacity(0.14))
+                    )
+                    .foregroundStyle(.primary)
+            }
+            .frame(maxWidth: 120)
+
+            Button(action: onSave) {
+                HStack {
+                    Image(systemName: "books.vertical.fill")
+                    Text("Save to Log Book")
+                }
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.72, green: 0.71, blue: 1.0),
-                            Color(red: 0.69, green: 0.90, blue: 0.82)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                )
-                .foregroundStyle(.primary)
-                .shadow(color: Color(red: 0.42, green: 0.38, blue: 1.0).opacity(0.25), radius: 8, x: 0, y: 4)
+                .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .foregroundStyle(.white)
+                .shadow(color: Brand.violet.opacity(0.22), radius: 8, x: 0, y: 4)
+            }
         }
         .padding(.horizontal, 18)
         .padding(.bottom, 12)

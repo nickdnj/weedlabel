@@ -7,6 +7,11 @@ import PhotosUI
 
 struct ContentView: View {
     @State private var model = ScanModel()
+    #if DEBUG
+    // Launch with `-ShowLogBook` to open the Log Book sheet directly (fast
+    // visual iteration), mirroring `-AutoRunCanary` / `-ShowTipJar`.
+    @State private var showLogBookDebug = false
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -59,6 +64,7 @@ struct ContentView: View {
                         onClearStrainClass: { model.clearStrainClass() },
                         onSetProductType: { model.setProductType($0) },
                         onSetStrainName: { model.setStrainName($0) },
+                        onSave: { model.saveToLogBook() },
                         onReset: { model.cancel() }
                     )
 
@@ -77,8 +83,12 @@ struct ContentView: View {
                 print("[CANARY] Auto-run flag detected — invoking runBundledCanary()")
                 model.runBundledCanary()
             }
+            if CommandLine.arguments.contains("-ShowLogBook") { showLogBookDebug = true }
             #endif
         }
+        #if DEBUG
+        .sheet(isPresented: $showLogBookDebug) { LogBookView() }
+        #endif
     }
 
 }
@@ -341,6 +351,7 @@ private struct IdleView: View {
     let onImport: (UIImage) -> Void
     let onClearData: () -> Void
     @State private var showAbout = false
+    @State private var showLogBook = false
     @State private var pickedItem: PhotosPickerItem?
 
     var body: some View {
@@ -407,6 +418,25 @@ private struct IdleView: View {
                     pickedItem = nil
                 }
             }
+
+            Button { showLogBook = true } label: {
+                HStack {
+                    Image(systemName: "books.vertical")
+                    Text("Log Book")
+                }
+                .font(.callout.weight(.medium))
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.secondary.opacity(0.12))
+                )
+                .foregroundStyle(.primary)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 10)
+
             Spacer().frame(height: 32)
         }
         .overlay(alignment: .topTrailing) {
@@ -419,6 +449,7 @@ private struct IdleView: View {
             .accessibilityLabel("About HighNotes")
         }
         .sheet(isPresented: $showAbout) { AboutView(onClearData: onClearData) }
+        .sheet(isPresented: $showLogBook) { LogBookView() }
     }
 }
 
