@@ -78,6 +78,7 @@ final class ScanModel {
     private let summary: LabelSummarizing
     private let availability: AvailabilityProviding
     private let strainOverrides: StrainOverrideStoring
+    private let productTypeOverrides: ProductTypeOverrideStoring
     private var pipelineTask: Task<Void, Never>?
     private var autoCaptureTask: Task<Void, Never>?
 
@@ -85,12 +86,14 @@ final class ScanModel {
         extraction: LabelExtracting = ExtractionService(),
         summary: LabelSummarizing = SummaryService(),
         availability: AvailabilityProviding = DefaultAvailabilityProvider(),
-        strainOverrides: StrainOverrideStoring = FileStrainOverrideStore()
+        strainOverrides: StrainOverrideStoring = FileStrainOverrideStore(),
+        productTypeOverrides: ProductTypeOverrideStoring = FileProductTypeOverrideStore()
     ) {
         self.extraction = extraction
         self.summary = summary
         self.availability = availability
         self.strainOverrides = strainOverrides
+        self.productTypeOverrides = productTypeOverrides
         self.phase = .idle(availability: availability.current())
     }
 
@@ -355,12 +358,25 @@ final class ScanModel {
     /// only — the AI summary isn't regenerated.
     func setProductType(_ type: ProductType) {
         guard case .ready(let label, let summary, _, let insight) = phase else { return }
+        productTypeOverrides.setProductType(type, forStrainName: label.strainName)
         var updated = label
         updated.productType = type
         let verdict = LabelSanityChecker.check(updated)
         let warning: String?
         if case .verifyHint(let reason) = verdict { warning = reason } else { warning = nil }
         phase = .ready(label: updated, summary: summary, sanityWarning: warning, strainInsight: insight)
+    }
+
+    // MARK: - Local data
+
+    /// Wipe all locally-saved corrections (strain lean + product type). Backs
+    /// the "Clear local data" action. Strain overrides are cleared through the
+    /// existing protocol so this stays decoupled from that store's internals.
+    func clearLocalData() {
+        for override in strainOverrides.allOverrides() {
+            strainOverrides.removeOverride(forStrainName: override.displayName)
+        }
+        productTypeOverrides.removeAll()
     }
 
     // MARK: - Capture handoff
@@ -403,6 +419,16 @@ final class ScanModel {
                     canaryLog("Strain post-fix: '\(withQRs.strainName)' → '\(fixedStrain.strain)'")
                     #endif
                     withQRs.strainName = fixedStrain.strain
+                }
+                // Apply a saved product-type correction for this strain, if any,
+                // so the user's fix survives across future scans.
+                if let savedType = self.productTypeOverrides.productType(forStrainName: withQRs.strainName) {
+                    #if DEBUG
+                    if savedType != withQRs.productType {
+                        canaryLog("Product-type override applied: \(withQRs.productType.storageKey) → \(savedType.storageKey)")
+                    }
+                    #endif
+                    withQRs.productType = savedType
                 }
                 label = withQRs
                 #if DEBUG

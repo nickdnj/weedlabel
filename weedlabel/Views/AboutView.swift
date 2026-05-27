@@ -10,6 +10,10 @@ struct AboutView: View {
     @AppStorage("highnotes.hasSeenWelcome.v1") private var hasSeenWelcome = false
     @Environment(\.dismiss) private var dismiss
 
+    /// Wipe locally-saved corrections (strain lean + product type).
+    var onClearData: () -> Void = {}
+    @State private var showClearDataConfirm = false
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -31,6 +35,8 @@ struct AboutView: View {
                         }
 
                         replayButton
+
+                        clearDataButton
 
                         Text("Built by one person who figured this out and wanted to share it. No catch — enjoy. 🌿")
                             .font(.footnote)
@@ -107,6 +113,31 @@ struct AboutView: View {
             .padding(.vertical, 14)
             .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .foregroundStyle(.white)
+        }
+    }
+
+    private var clearDataButton: some View {
+        Button(role: .destructive) {
+            showClearDataConfirm = true
+        } label: {
+            HStack {
+                Image(systemName: "trash")
+                Text("Clear local data")
+            }
+            .font(.subheadline.weight(.medium))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.secondary.opacity(0.12))
+            )
+            .foregroundStyle(.red)
+        }
+        .confirmationDialog("Clear local data?", isPresented: $showClearDataConfirm, titleVisibility: .visible) {
+            Button("Clear saved corrections", role: .destructive) { onClearData() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Removes the strain and product-type corrections saved on this device. Your scans aren't stored, so nothing else is affected. This can't be undone.")
         }
     }
 }

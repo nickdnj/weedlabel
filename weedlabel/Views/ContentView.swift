@@ -33,7 +33,8 @@ struct ContentView: View {
                             showPromptLab = true
                             #endif
                         },
-                        onImport: { model.importPickedImage($0) }
+                        onImport: { model.importPickedImage($0) },
+                        onClearData: { model.clearLocalData() }
                     )
 
                 case .scanning:
@@ -361,6 +362,7 @@ private struct IdleView: View {
     let onRunCanary: () -> Void
     let onOpenPromptLab: () -> Void
     let onImport: (UIImage) -> Void
+    let onClearData: () -> Void
     @State private var showAbout = false
     @State private var pickedItem: PhotosPickerItem?
 
@@ -463,7 +465,7 @@ private struct IdleView: View {
             }
             .accessibilityLabel("About HighNotes")
         }
-        .sheet(isPresented: $showAbout) { AboutView() }
+        .sheet(isPresented: $showAbout) { AboutView(onClearData: onClearData) }
     }
 }
 
