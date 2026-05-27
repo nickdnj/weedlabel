@@ -34,7 +34,6 @@
 		97F362F5C00BF8B53E560277 /* LabelSanityChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */; };
 		9EE63D408E3780CA6D5ED3FF /* SummaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D06527F36A2DD990AB0C5E9E /* SummaryService.swift */; };
 		9FE4DD4A3C080230DBFE65FE /* CannabisLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */; };
-		A168ABD618665CC776B199A7 /* PromptLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C744C653A93A5A423F7ADF /* PromptLabView.swift */; };
 		AE804BD1E7E9974B4E658028 /* StrainOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */; };
 		AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */ = {isa = PBXBuildFile; fileRef = C599ED0461A67389D4F940CA /* ProductType+Display.swift */; };
 		BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6931CE4F5C707585B52846C9 /* PostScanView.swift */; };
@@ -87,7 +86,6 @@
 		C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessor.swift; sourceTree = "<group>"; };
 		C599ED0461A67389D4F940CA /* ProductType+Display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProductType+Display.swift"; sourceTree = "<group>"; };
 		D06527F36A2DD990AB0C5E9E /* SummaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryService.swift; sourceTree = "<group>"; };
-		D1C744C653A93A5A423F7ADF /* PromptLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptLabView.swift; sourceTree = "<group>"; };
 		D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainOverrideStoreTests.swift; sourceTree = "<group>"; };
 		DD5A78E90BF0C10B14291DC4 /* OCRPreprocessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessorTests.swift; sourceTree = "<group>"; };
 		DDED767113EC4C6265A346A3 /* ProductTypeOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTypeOverrideStoreTests.swift; sourceTree = "<group>"; };
@@ -115,7 +113,6 @@
 				240631CA58BB0C2F38763B93 /* DataScannerView.swift */,
 				303060CD4222C3426F7446A2 /* OnboardingView.swift */,
 				6931CE4F5C707585B52846C9 /* PostScanView.swift */,
-				D1C744C653A93A5A423F7ADF /* PromptLabView.swift */,
 				4C644794E83AC6B1EF2967DF /* ScanModel.swift */,
 			);
 			path = Views;
@@ -308,7 +305,6 @@
 				50C638528C7663A356E1A8E2 /* ProductLinks.swift in Sources */,
 				AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */,
 				6752F2738636EFB7365AF8C9 /* ProductTypeOverrideStore.swift in Sources */,
-				A168ABD618665CC776B199A7 /* PromptLabView.swift in Sources */,
 				01F2D240B3CA3DEE50224D43 /* ScanModel.swift in Sources */,
 				4647AD2F4648D37B0FA3B78E /* StaticImageOCR.swift in Sources */,
 				39915F48CF1FFA8C4D67EB05 /* StrainKnowledgeBase.swift in Sources */,

@@ -7,9 +7,6 @@ import PhotosUI
 
 struct ContentView: View {
     @State private var model = ScanModel()
-    #if DEBUG
-    @State private var showPromptLab: Bool = false
-    #endif
 
     var body: some View {
         NavigationStack {
@@ -21,17 +18,6 @@ struct ContentView: View {
                         onScan: {
                             model.refreshAvailability()
                             model.startScan()
-                        },
-                        onRunCanary: {
-                            #if DEBUG
-                            model.refreshAvailability()
-                            model.runBundledCanary()
-                            #endif
-                        },
-                        onOpenPromptLab: {
-                            #if DEBUG
-                            showPromptLab = true
-                            #endif
                         },
                         onImport: { model.importPickedImage($0) },
                         onClearData: { model.clearLocalData() }
@@ -90,16 +76,8 @@ struct ContentView: View {
                 print("[CANARY] Auto-run flag detected — invoking runBundledCanary()")
                 model.runBundledCanary()
             }
-            if CommandLine.arguments.contains("-OpenPromptLab") {
-                showPromptLab = true
-            }
             #endif
         }
-        #if DEBUG
-        .sheet(isPresented: $showPromptLab) {
-            PromptLabView()
-        }
-        #endif
     }
 
 }
@@ -359,8 +337,6 @@ private struct ShutterButton: View {
 private struct IdleView: View {
     let availability: FMAvailability
     let onScan: () -> Void
-    let onRunCanary: () -> Void
-    let onOpenPromptLab: () -> Void
     let onImport: (UIImage) -> Void
     let onClearData: () -> Void
     @State private var showAbout = false
@@ -430,30 +406,6 @@ private struct IdleView: View {
                     pickedItem = nil
                 }
             }
-            #if DEBUG
-            HStack(spacing: 12) {
-                Button(action: onRunCanary) {
-                    HStack {
-                        Image(systemName: "testtube.2")
-                        Text("Run canary")
-                    }
-                    .font(.footnote.weight(.medium))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-                Button(action: onOpenPromptLab) {
-                    HStack {
-                        Image(systemName: "wand.and.stars")
-                        Text("Prompt Lab")
-                    }
-                    .font(.footnote.weight(.medium))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-            }
-            .padding(.top, 10)
-            .foregroundStyle(.secondary)
-            #endif
             Spacer().frame(height: 32)
         }
         .overlay(alignment: .topTrailing) {
