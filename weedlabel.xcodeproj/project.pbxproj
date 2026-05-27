@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		01F2D240B3CA3DEE50224D43 /* ScanModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C644794E83AC6B1EF2967DF /* ScanModel.swift */; };
 		0250A8E6324AE4DC94A32182 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CBC43ECFC65FC5558775200 /* Assets.xcassets */; };
+		02EC0A4A5B5A850A7F21CA6C /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A7E33B825214CFC29CC6B5 /* AboutView.swift */; };
 		109FE728A5D2B682E9D014F6 /* FieldDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */; };
 		1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */; };
 		2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */; };
@@ -73,6 +74,7 @@
 		8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineProtocols.swift; sourceTree = "<group>"; };
 		8FF994512D20FED9C21B78D6 /* ProductLinksTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductLinksTests.swift; sourceTree = "<group>"; };
 		92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CannabisLabel.swift; sourceTree = "<group>"; };
+		96A7E33B825214CFC29CC6B5 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		9BB79C18425855B7AB67D0B6 /* StrainNameFixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameFixerTests.swift; sourceTree = "<group>"; };
 		9CBC43ECFC65FC5558775200 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = weedlabelApp.swift; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 		15174BCF376026B606C6537D /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				96A7E33B825214CFC29CC6B5 /* AboutView.swift */,
 				5009B08A5116D6385CA5FBCD /* ContentView.swift */,
 				240631CA58BB0C2F38763B93 /* DataScannerView.swift */,
 				303060CD4222C3426F7446A2 /* OnboardingView.swift */,
@@ -280,6 +283,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				02EC0A4A5B5A850A7F21CA6C /* AboutView.swift in Sources */,
 				DEFB9A95D843368A33260F60 /* AvailabilityGate.swift in Sources */,
 				39BCAE803B2C2359027379A9 /* Brand.swift in Sources */,
 				9FE4DD4A3C080230DBFE65FE /* CannabisLabel.swift in Sources */,
@@ -398,7 +402,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "weedlabel uses the camera to read NJ cannabis dispensary labels. Nothing leaves your device.";
+				INFOPLIST_KEY_CFBundleDisplayName = HighNotes;
+				INFOPLIST_KEY_NSCameraUsageDescription = "HighNotes uses your camera to read cannabis labels. Everything stays on your phone — nothing is uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -468,7 +473,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "weedlabel uses the camera to read NJ cannabis dispensary labels. Nothing leaves your device.";
+				INFOPLIST_KEY_CFBundleDisplayName = HighNotes;
+				INFOPLIST_KEY_NSCameraUsageDescription = "HighNotes uses your camera to read cannabis labels. Everything stays on your phone — nothing is uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;

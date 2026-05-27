@@ -12,7 +12,8 @@ settings:
     SWIFT_VERSION: "6.0"
     IPHONEOS_DEPLOYMENT_TARGET: "26.0"
     GENERATE_INFOPLIST_FILE: YES
-    INFOPLIST_KEY_NSCameraUsageDescription: "weedlabel uses the camera to read NJ cannabis dispensary labels. Nothing leaves your device."
+    INFOPLIST_KEY_CFBundleDisplayName: HighNotes
+    INFOPLIST_KEY_NSCameraUsageDescription: "HighNotes uses your camera to read cannabis labels. Everything stays on your phone — nothing is uploaded."
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
     INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
     INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES

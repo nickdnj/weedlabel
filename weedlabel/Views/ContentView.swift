@@ -357,6 +357,7 @@ private struct IdleView: View {
     let onScan: () -> Void
     let onRunCanary: () -> Void
     let onOpenPromptLab: () -> Void
+    @State private var showAbout = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -390,7 +391,7 @@ private struct IdleView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 14)
                 .frame(maxWidth: .infinity)
-                .background(.tint, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .foregroundStyle(.white)
             }
             .padding(.horizontal, 24)
@@ -420,6 +421,16 @@ private struct IdleView: View {
             #endif
             Spacer().frame(height: 32)
         }
+        .overlay(alignment: .topTrailing) {
+            Button { showAbout = true } label: {
+                Image(systemName: "info.circle")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                    .padding(16)
+            }
+            .accessibilityLabel("About HighNotes")
+        }
+        .sheet(isPresented: $showAbout) { AboutView() }
     }
 }
 

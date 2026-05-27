@@ -67,14 +67,7 @@ struct PostScanView: View {
         .background(
             ZStack {
                 Color(.systemBackground)
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.72, green: 0.71, blue: 1.0).opacity(0.16),
-                        Color(red: 0.69, green: 0.90, blue: 0.82).opacity(0.16)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                Brand.backgroundWash(0.14)
             }
             .ignoresSafeArea()
         )
@@ -126,17 +119,10 @@ struct PostScanView: View {
         }
         .padding(20)
         .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.72, green: 0.71, blue: 1.0),
-                    Color(red: 0.69, green: 0.90, blue: 0.82)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
+            Brand.gradient,
             in: RoundedRectangle(cornerRadius: 24, style: .continuous)
         )
-        .shadow(color: Color(red: 0.42, green: 0.38, blue: 1.0).opacity(0.18), radius: 16, x: 0, y: 8)
+        .shadow(color: Brand.violet.opacity(0.18), radius: 16, x: 0, y: 8)
     }
 
     private var summaryText: String {
