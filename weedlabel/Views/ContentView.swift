@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 // ContentView — root view for the spike. Single-screen flow that dispatches
 // based on ScanModel.Phase. No SwiftData persistence yet (spike scope per
@@ -31,7 +32,8 @@ struct ContentView: View {
                             #if DEBUG
                             showPromptLab = true
                             #endif
-                        }
+                        },
+                        onImport: { model.importPickedImage($0) }
                     )
 
                 case .scanning:
@@ -357,7 +359,9 @@ private struct IdleView: View {
     let onScan: () -> Void
     let onRunCanary: () -> Void
     let onOpenPromptLab: () -> Void
+    let onImport: (UIImage) -> Void
     @State private var showAbout = false
+    @State private var pickedItem: PhotosPickerItem?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -395,6 +399,34 @@ private struct IdleView: View {
                 .foregroundStyle(.white)
             }
             .padding(.horizontal, 24)
+
+            PhotosPicker(selection: $pickedItem, matching: .images, photoLibrary: .shared()) {
+                HStack {
+                    Image(systemName: "photo.on.rectangle")
+                    Text("Import from Photos")
+                }
+                .font(.callout.weight(.medium))
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.secondary.opacity(0.12))
+                )
+                .foregroundStyle(.primary)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 10)
+            .onChange(of: pickedItem) { _, item in
+                guard let item else { return }
+                Task {
+                    let data = try? await item.loadTransferable(type: Data.self)
+                    if let data, let image = UIImage(data: data) {
+                        onImport(image)
+                    }
+                    pickedItem = nil
+                }
+            }
             #if DEBUG
             HStack(spacing: 12) {
                 Button(action: onRunCanary) {

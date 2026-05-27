@@ -194,6 +194,33 @@ final class ScanModel {
         runPipeline(ocr: ocr, qrCodes: qrs)
     }
 
+    /// Import a photo from the user's library and run it through the same path
+    /// as a high-res capture: OCR the still, then show the confirm screen so the
+    /// user can verify the text before extraction. OCR uses Vision, so this
+    /// needs a real device (Vision still-OCR is unreliable in the Simulator).
+    func importPickedImage(_ image: UIImage) {
+        cancelAutoCaptureCountdown()
+        pipelineTask?.cancel()
+        lastSeenOcr = ""
+        lastSeenQRs = []
+        capturedImage = image
+        phase = .capturing
+        Task { [weak self] in
+            guard let self else { return }
+            let result = try? await StaticImageOCR.recognize(in: image)
+            // Bail if the user navigated away while OCR was running.
+            guard case .capturing = self.phase else { return }
+            if let result {
+                let text = result.ocrText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty {
+                    self.phase = .previewing(ocrText: text, qrCodes: result.qrCodes.reduced)
+                    return
+                }
+            }
+            self.phase = .failed(message: "No label text found in that photo. Try one where the label fills the frame.")
+        }
+    }
+
     /// User rejected the preview — return to scanning.
     func rescan() {
         cancelAutoCaptureCountdown()
