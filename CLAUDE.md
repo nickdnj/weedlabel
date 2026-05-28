@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo state
 
-**Device-tested v1 spike** (updated 2026-05-27). The product is now **HighNotes — "Your AI budtender"** (repo/target still named `weedlabel`; rename deferred). On-device scan → two-pass Foundation Models extraction → strain intelligence → grounded AI summary, with high-res capture, a user-correctable strain DB, and learn-more links. 199 tests passing.
+**Device-tested v1 spike** (updated 2026-05-27). The product is now **HighNotes — "Your AI budtender"** (repo/target still named `weedlabel`; rename deferred). On-device scan → two-pass Foundation Models extraction → strain intelligence → grounded AI summary, with high-res capture, a user-correctable strain DB, learn-more links, and a **StoreKit tip jar** (the one, never-pushy way to support the app — reached only from About). 224 tests passing.
 
 **The current specs live in `docs/` — read these first:**
 - `docs/PRD-v1.md` — product requirements
@@ -66,3 +66,18 @@ Foundation Models and `DataScannerViewController` both need a real device or sim
 ## Cost / distribution
 
 $0 ongoing infrastructure (no Supabase, no Vercel, no Anthropic API). **$99/yr Apple Developer Program is required for both TestFlight and App Store** (TestFlight goes through App Store Connect, which requires the paid program — the original "TestFlight is free" claim was wrong). The genuinely free path before signing up is sideloading via Xcode with a personal Apple ID (3-app limit, 7-day re-signing). Don't reintroduce server dependencies without an explicit pivot — "100% on-device" is a load-bearing product claim, not just an implementation detail.
+
+**Tip jar / IAP.** The tip jar (`TipJar.swift` + `TipJarView.swift`) is the *only* monetization and the *only* thing besides external-link taps that leaves the device — three **consumable** In-App Purchases (Apple requires IAP for developer tips, gl. 3.1.1; PayPal/etc. would be rejected). Tips are pure goodwill; never a paywall. Local testing runs against `TipJar.storekit` (repo root, wired into the run scheme via `project.yml` `storeKitConfiguration`) and works **only when launched from Xcode** — `simctl launch` doesn't inject it. Before shipping, the three product IDs (`com.demarconet.weedlabel.tip.{small,medium,large}`) must be created in App Store Connect (needs the paid account + agreements/tax/banking). This IAP is *not* a "server dependency" — it's Apple-mediated and carries no user data, so it doesn't violate the on-device claim.
+## gstack
+
+This repo's Claude Code workflow uses [gstack](https://github.com/garrytan/gstack). To install it (one-time, per machine):
+
+```
+git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack && cd ~/.claude/skills/gstack && ./setup
+```
+
+(`./setup` requires [bun](https://bun.sh).)
+
+Once installed:
+- Use the `/browse` skill for **all** web browsing. Never use `mcp__claude-in-chrome__*` tools.
+- Available skills: `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/setup-gbrain`, `/retro`, `/investigate`, `/document-release`, `/document-generate`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`.
