@@ -100,14 +100,17 @@ private struct LogRow: View {
                 Label(entry.label.productType.displayName, systemImage: entry.label.productType.iconName)
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
                 if let thca = entry.label.thca {
                     Text("· THCA \(LogFormat.pct(thca))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-                Spacer()
+                Spacer(minLength: 8)
                 if entry.rating > 0 {
                     StarRow(rating: entry.rating)
+                        .fixedSize()
                 }
             }
             if !entry.note.isEmpty {
