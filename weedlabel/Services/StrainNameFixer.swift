@@ -51,6 +51,14 @@ enum StrainNameFixer {
             "operate heavy", "food and drug", "fda", "pregnant", "breastfeeding",
             "store in a cool", "directions", "active ingredient", "other ingredient",
             "net wt", "net weight", "using this product", "this product", "while using",
+            // Lines seen grabbed off real labels (some via OCR typos, so match
+            // short fragments): "Pesticides used: None", the warning paragraph's
+            // "National Poison Control Center", FDA/age boilerplate.
+            "pesticides", "national", "control center", "poison", "drug administ",
+            "21 years", "do not", "grow method", "lic number", "license",
+            "potential allergen", "requires refriger", "inactive ingredient",
+            "this statement", "evaluated", "food and", "pkg date", "exp date",
+            "storage", "serving size", "servings per",
         ]
         return markers.contains { lower.contains($0) }
     }
@@ -76,6 +84,7 @@ enum StrainNameFixer {
             if isSuspicious(line) { continue }
             if isChemotypeLine(line) { continue }     // "High THC, Low CBD" etc.
             if isBoilerplateLine(line) { continue }   // warnings, directions, FDA text
+            if isLabeledValueLine(line) { continue }  // "Limonene: 1.08 %", "THCa: 28.73"
             // Skip the cultivator/brand line — it's provenance, not the strain.
             if let cult, !cult.isEmpty, line.lowercased().contains(cult) { continue }
             // Strip trailing weight/format markers like " - 28g" or " Flower 3.5g"
@@ -83,6 +92,10 @@ enum StrainNameFixer {
             let cleaned = stripTrailingFormatMarkers(line)
             if cleaned.isEmpty { continue }
             if isFormOnlyLine(cleaned) { continue }   // "Gummies", "Inhalable Product"
+            // A strain name is short; long lines are warning paragraphs / merged
+            // OCR rows. Check AFTER stripping the weight so a normal title like
+            // "Kynd Permanent Gas #15 (S) Flower 3.5g" isn't rejected for length.
+            if cleaned.split(whereSeparator: { $0 == " " }).count > 6 || cleaned.count > 48 { continue }
             return cleaned
         }
         return nil
@@ -103,8 +116,17 @@ enum StrainNameFixer {
             // verbatim ("Pine Barrens") or a superset ("Pine Barrens Cannabis Co").
             return s == cult || s.contains(cult) || cult.contains(s)
         }()
+        // A real strain name is short. Warning-paragraph fragments the model
+        // sometimes grabs ("using this product. National Poison Control…") are
+        // long — reject anything with too many words or characters. This catches
+        // OCR-mangled boilerplate that the marker list misses ("tnis"/"poisoa").
+        let wordCount = strain.split(whereSeparator: { $0 == " " }).count
+        let tooLong = wordCount > 6 || strain.count > 48
         let badName = isSuspicious(strain)
             || isBoilerplateLine(strain)
+            || isLabeledValueLine(strain)                          // "Limonene: 1.08 %"
+            || isAddressLikeLine(strain)                           // "Woodbridge NJ, 07095"
+            || tooLong
             || isFormOnlyLine(stripTrailingFormatMarkers(strain))  // "Live Resin Cartridge"
             || matchesCultivator
             || looksLikeChemicalFragment(strain, in: ocrText)
@@ -208,13 +230,27 @@ enum StrainNameFixer {
         // Stripping addresses out of strain consideration (these usually
         // already got removed by the boilerplate stripper, but be safe).
         let lower = line.lowercased()
-        return lower.contains("highway") || lower.contains("dispensary")
-            || lower.contains("street") || lower.contains("road")
-            || lower.contains("avenue") || lower.contains("drive")
+        let words = ["highway", "dispensary", "street", "road", "avenue", "drive",
+                     "north", "south", "blvd", "suite", "route", "lane"]
+        if words.contains(where: { lower.contains($0) }) { return true }
+        // "City ST, ZIP" e.g. "Woodbridge NJ, 07095" — state abbrev + 5-digit zip.
+        if let re = try? NSRegularExpression(pattern: #"\b[a-z]{2},?\s*\d{5}\b"#),
+           re.firstMatch(in: lower, range: NSRange(lower.startIndex..., in: lower)) != nil {
+            return true
+        }
+        return false
     }
 
     private static func containsLetter(_ line: String) -> Bool {
         line.contains(where: { $0.isLetter })
+    }
+
+    /// A "Label: value" data line (e.g. "Limonene: 1.08 %", "THCa: 28.73", "CBG:
+    /// 0.59 %") — a colon followed by a number. After row-grouped OCR these are
+    /// common, and they are never a strain name.
+    private static func isLabeledValueLine(_ line: String) -> Bool {
+        guard let regex = try? NSRegularExpression(pattern: #":\s*\d"#) else { return false }
+        return regex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) != nil
     }
 
     /// A potency/chemotype descriptor line like "High THC, Low CBD" or

@@ -82,16 +82,10 @@ enum MacImageOCR {
                     return
                 }
 
-                // Top-to-bottom, then left-to-right reading order.
-                let sorted = bestObservations.sorted { a, b in
-                    let aTop = 1.0 - a.boundingBox.maxY
-                    let bTop = 1.0 - b.boundingBox.maxY
-                    if abs(aTop - bTop) > 0.01 { return aTop < bTop }
-                    return a.boundingBox.minX < b.boundingBox.minX
-                }
-                let text = sorted
-                    .compactMap { $0.topCandidates(1).first?.string }
-                    .joined(separator: "\n")
+                // Assemble by VISUAL ROW (mirrors the app's StaticImageOCR), so
+                // a multi-column label's "Total THC:" rejoins its value column on
+                // one line — what lets the cannabinoid reconciler pair them.
+                let text = Self.assembleRows(bestObservations)
 
                 // Barcodes/QR — orientation-invariant enough to read off the EXIF
                 // orientation. These feed the app's "merge VisionKit QRs" step.
@@ -103,6 +97,30 @@ enum MacImageOCR {
                 cont.resume(returning: Result(ocrText: text, qrCodes: qrs))
             }
         }
+    }
+
+    /// Assemble OCR text by VISUAL ROW (mirrors StaticImageOCR.assembleRows in
+    /// the app). Groups observations whose vertical centers are close into one
+    /// row, read left-to-right, so multi-column label/value pairs land on one line.
+    static func assembleRows(_ observations: [VNRecognizedTextObservation]) -> String {
+        struct Item { let text: String; let yc: CGFloat; let xMin: CGFloat }
+        let items: [Item] = observations.compactMap { obs in
+            guard let s = obs.topCandidates(1).first?.string else { return nil }
+            return Item(text: s, yc: 1.0 - obs.boundingBox.midY, xMin: obs.boundingBox.minX)
+        }.sorted { $0.yc < $1.yc }
+
+        let rowTolerance: CGFloat = 0.015
+        var rows: [[Item]] = []
+        for it in items {
+            if let ref = rows.last?.first, abs(it.yc - ref.yc) <= rowTolerance {
+                rows[rows.count - 1].append(it)
+            } else {
+                rows.append([it])
+            }
+        }
+        return rows.map { row in
+            row.sorted { $0.xMin < $1.xMin }.map(\.text).joined(separator: "  ")
+        }.joined(separator: "\n")
     }
 
     /// Prefer orientations where text boxes are wider than tall (upright text);

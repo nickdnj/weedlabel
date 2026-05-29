@@ -51,8 +51,10 @@ enum Pipeline {
         //    impossible magnitudes (lot codes mis-parsed as cannabinoids).
         l.fixSwappedThcFields()
         l.clampImplausibleValues()
-        // 3b. Re-read terpenes from the OCR (model mis-slots them; pinene is
-        //     split across Alpha-/Beta-Pinene lines).
+        // 3b. Re-read cannabinoids + terpenes from the OCR by their printed
+        //     labels (model mis-slots them on dense panels; pinene is split
+        //     across Alpha-/Beta-Pinene lines).
+        l.reconcileCannabinoids(ocrText: ocrText)
         l.reconcileTerpenes(ocrText: ocrText)
 
         // 4. Recover a real strain name when the model latched onto a chemical

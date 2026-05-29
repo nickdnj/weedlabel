@@ -32,12 +32,16 @@ GT_PATH = os.path.join(os.path.dirname(__file__), "../fixtures/ground-truth.json
 GT_SYNTHETIC_PATH = os.path.join(os.path.dirname(__file__), "../fixtures/ground-truth-synthetic.json")
 
 
+GT_REALCHECKS_PATH = os.path.join(os.path.dirname(__file__), "../fixtures/ground-truth-realchecks.json")
+
+
 def load_ground_truth():
-    """Hand-authored truth, overlaid with synthetic truth when it exists.
-    Both are keyed by fixture filename; '_'-prefixed keys are dropped."""
+    """Hand-authored truth, overlaid with synthetic + realcheck truth when present.
+    All keyed by fixture filename; '_'-prefixed keys are dropped."""
     merged = dict(json.load(open(GT_PATH)))
-    if os.path.exists(GT_SYNTHETIC_PATH):
-        merged.update(json.load(open(GT_SYNTHETIC_PATH)))
+    for extra in (GT_SYNTHETIC_PATH, GT_REALCHECKS_PATH):
+        if os.path.exists(extra):
+            merged.update(json.load(open(extra)))
     return {k: v for k, v in merged.items() if not k.startswith("_")}
 
 CANNABINOID_FIELDS = ["totalThc", "totalCbd", "thca", "delta9thc", "cbd", "cbg", "totalCannabinoids"]

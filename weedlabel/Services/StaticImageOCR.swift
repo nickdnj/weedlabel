@@ -87,14 +87,7 @@ enum StaticImageOCR {
                     return
                 }
 
-                let sorted = bestObservations.sorted { a, b in
-                    let aTop = 1.0 - a.boundingBox.maxY
-                    let bTop = 1.0 - b.boundingBox.maxY
-                    if abs(aTop - bTop) > 0.01 { return aTop < bTop }
-                    return a.boundingBox.minX < b.boundingBox.minX
-                }
-                let lines = sorted.compactMap { $0.topCandidates(1).first?.string }
-                let text = lines.joined(separator: "\n")
+                let text = Self.assembleRows(bestObservations)
 
                 // Barcodes are orientation-invariant for QR — one pass on the
                 // original orientation is enough. Failure is non-fatal: a label
@@ -107,6 +100,33 @@ enum StaticImageOCR {
                 cont.resume(returning: Result(ocrText: text, qrCodes: qrs))
             }
         }
+    }
+
+    /// Assemble OCR text by VISUAL ROW, not one-observation-per-line. Cannabis
+    /// labels are multi-column ("Total THC:" in one column, "25.90 %" in the
+    /// next); Vision returns those as separate observations at the same Y. We
+    /// group observations whose vertical centers are close into one row and read
+    /// them left-to-right, so "Total THC:" rejoins its value on one line — which
+    /// is what lets both the model and the cannabinoid reconciler pair them.
+    static func assembleRows(_ observations: [VNRecognizedTextObservation]) -> String {
+        struct Item { let text: String; let yc: CGFloat; let xMin: CGFloat }
+        let items: [Item] = observations.compactMap { obs in
+            guard let s = obs.topCandidates(1).first?.string else { return nil }
+            return Item(text: s, yc: 1.0 - obs.boundingBox.midY, xMin: obs.boundingBox.minX)
+        }.sorted { $0.yc < $1.yc }
+
+        let rowTolerance: CGFloat = 0.015   // ~1.5% of height; rows sit ~5% apart
+        var rows: [[Item]] = []
+        for it in items {
+            if let ref = rows.last?.first, abs(it.yc - ref.yc) <= rowTolerance {
+                rows[rows.count - 1].append(it)
+            } else {
+                rows.append([it])
+            }
+        }
+        return rows.map { row in
+            row.sorted { $0.xMin < $1.xMin }.map(\.text).joined(separator: "  ")
+        }.joined(separator: "\n")
     }
 
     private static func noOrientationsSucceededError() -> NSError {

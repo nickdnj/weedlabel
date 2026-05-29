@@ -1,0 +1,63 @@
+{
+  "_conventions": {
+    "_doc": "Ground truth for real isolated-label crops pulled off the device (Kynd flower, Garden State Dispensary). Read off the labels by hand. Merged by score.py alongside ground-truth.json. pinene = AlphaPinene + BetaPinene."
+  },
+
+  "kynd-amoretto-sour.jpg": {
+    "_comment": "Kynd Amoretto Sour (H) Flower 3.5g - EXT. Total THC 25.90 = 0.877*28.73 + 0.70.",
+    "strainName": "Amoretto Sour",
+    "cultivator": "Garden State Dispensary",
+    "productType": "flower",
+    "netWeight": "3.5g",
+    "totalThc": 25.90,
+    "thca": 28.73,
+    "delta9thc": 0.70,
+    "cbd": 0.0,
+    "cbg": 0.36,
+    "dominantTerpene": "betaCaryophyllene",
+    "betaCaryophyllene": 1.28,
+    "limonene": 0.68,
+    "linalool": 0.29,
+    "humulene": 0.26,
+    "pinene": 0.19
+  },
+
+  "kynd-permanent-gas.jpg": {
+    "_comment": "Kynd Permanent Gas #15 (S) Flower 3.5g. Total THC 25.08 = 0.877*28.20 + 0.35.",
+    "strainName": "Permanent Gas #15",
+    "cultivator": "Garden State Dispensary",
+    "productType": "flower",
+    "netWeight": "3.5g",
+    "totalThc": 25.08,
+    "thca": 28.20,
+    "delta9thc": 0.35,
+    "cbd": 0.0,
+    "cbg": 0.59,
+    "dominantTerpene": "limonene",
+    "limonene": 1.08,
+    "betaCaryophyllene": 0.66,
+    "linalool": 0.24,
+    "humulene": 0.16,
+    "pinene": 0.30
+  },
+
+  "kynd-caramel-gelato.jpg": {
+    "_comment": "Kynd Caramel Gelato (H) Flower 3.5g. Total THC 32.22 = 0.877*35.45 + 1.13.",
+    "strainName": "Caramel Gelato",
+    "cultivator": "Garden State Dispensary",
+    "productType": "flower",
+    "netWeight": "3.5g",
+    "totalThc": 32.22,
+    "thca": 35.45,
+    "delta9thc": 1.13,
+    "cbd": 0.0,
+    "cbg": 0.47,
+    "dominantTerpene": "myrcene",
+    "myrcene": 1.52,
+    "limonene": 0.32,
+    "linalool": 0.31,
+    "betaCaryophyllene": 0.32,
+    "humulene": 0.09,
+    "pinene": 0.10
+  }
+}

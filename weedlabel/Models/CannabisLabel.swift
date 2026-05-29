@@ -255,32 +255,21 @@ extension CannabisLabel {
     /// match, so the model's value is left untouched. Run AFTER
     /// clampImplausibleValues so it has the last word.
     mutating func reconcileTerpenes(ocrText: String) {
-        let lines = ocrText.components(separatedBy: .newlines)
-
-        // Pinene = Alpha-Pinene + Beta-Pinene (two separate lines, summed).
-        var pineneSum = 0.0, pineneFound = false
-        for raw in lines {
-            let c = raw.lowercased().replacingOccurrences(of: " ", with: "")
-            guard c.contains("pinene"),
-                  c.contains("alpha") || c.contains("beta")
-                    || c.contains("a-pinene") || c.contains("b-pinene")
-                    || c.contains("α") || c.contains("β") else { continue }
-            if let v = Self.firstPlausiblePercent(in: raw) { pineneSum += v; pineneFound = true }
-        }
-        if pineneFound { pinene = (pineneSum * 100).rounded() / 100 }
-
-        // Single-line terpenes. Token lists include the deterministic OCR-mangled
-        // spellings we see in practice (e.g. "Lim onene"→"limonene" once spaces
-        // are stripped, "Linaool", "Humuiene", "CaryophylEne"). caryophyllene
-        // excludes "oxide" so Caryophyllene Oxide doesn't hijack the slot.
+        let lines = ocrText.components(separatedBy: .newlines).map(Self.normalizeOCRLine)
         func read(_ tokens: [String], exclude: [String] = []) -> Double? {
-            for raw in lines {
-                let c = raw.lowercased().replacingOccurrences(of: " ", with: "")
-                if exclude.contains(where: { c.contains($0) }) { continue }
-                guard tokens.contains(where: { c.contains($0) }) else { continue }
-                if let v = Self.firstPlausiblePercent(in: raw) { return v }
+            for line in lines {
+                if exclude.contains(where: { line.contains($0) }) { continue }
+                for t in tokens {
+                    if let v = Self.valueAfter(token: t, in: line, minV: 0.01, maxV: 30) { return v }
+                }
             }
             return nil
+        }
+        // Pinene = Alpha-Pinene + Beta-Pinene (printed as two lines, summed).
+        let alpha = read(["alphapinene", "alphapin"])
+        let beta = read(["betapinene", "betapin"])
+        if alpha != nil || beta != nil {
+            pinene = (((alpha ?? 0) + (beta ?? 0)) * 100).rounded() / 100
         }
         if let v = read(["myrcene", "myrcen"]) { myrcene = v }
         if let v = read(["limonene", "limonen"]) { limonene = v }
@@ -289,12 +278,56 @@ extension CannabisLabel {
         if let v = read(["humulene", "humulen", "humuiene"]) { humulene = v }
     }
 
-    /// First number in `s` that reads as a plausible terpene percent (≤ 30).
-    private static func firstPlausiblePercent(in s: String) -> Double? {
+    /// Cannabinoid reconciliation. The model mis-maps the cannabinoid column on
+    /// dense labels even when OCR reads it perfectly (observed: it put CBG's 0.36
+    /// into `thca` and missed Total THC 25.90 on a crisp crop). Each value is
+    /// printed next to an unambiguous label, so we re-read them by name — the
+    /// authoritative source — overriding the model. Run AFTER
+    /// fixSwappedThcFields/clamp so it has the last word. `0.00` is a legit value.
+    mutating func reconcileCannabinoids(ocrText: String) {
+        let lines = ocrText.components(separatedBy: .newlines).map(Self.normalizeOCRLine)
+        func read(_ tokens: [String], exclude: [String] = []) -> Double? {
+            for line in lines {
+                if exclude.contains(where: { line.contains($0) }) { continue }
+                for t in tokens {
+                    if let v = Self.valueAfter(token: t, in: line, minV: 0, maxV: 100) { return v }
+                }
+            }
+            return nil
+        }
+        // Distinct substrings: "totalthc"/"thca"/"d9thc" don't collide. CBD/CBG
+        // exclude their acids; the chemotype line ("…low cbd", no number) is
+        // skipped because no value follows the token.
+        if let v = read(["totalcannabinoid", "totalcannab"]) { totalCannabinoids = v }
+        if let v = read(["totalthc"]) { totalThc = v }
+        if let v = read(["thca"]) { thca = v }
+        if let v = read(["d9thc", "delta9thc", "delta9", "δ9thc", "δ9"]) { delta9thc = v }
+        // Exclude the chemotype line ("High THC, Low CBD") — when row-grouping
+        // merges it with an adjacent value column, a bare "cbd" would otherwise
+        // capture the wrong number.
+        if let v = read(["cbd"], exclude: ["cbda", "lowcbd", "highcbd", "moderatecbd"]) { cbd = v }
+        if let v = read(["cbg"], exclude: ["cbga", "lowcbg", "highcbg", "moderatecbg"]) { cbg = v }
+    }
+
+    /// Lowercase + strip spaces and hyphens, so a label split across columns by
+    /// OCR ("Total THC" / "D9-THC") matches a single token and the value parses
+    /// cleanly regardless of spacing.
+    private static func normalizeOCRLine(_ s: String) -> String {
+        s.lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "-", with: "")
+    }
+
+    /// First number appearing AFTER `token` in the normalized `line`, within
+    /// [minV, maxV]. Parsing after the token handles row-grouped multi-column
+    /// lines ("thca:28.73limonene:0.68") and labels containing digits ("d9thc").
+    private static func valueAfter(token: String, in line: String, minV: Double, maxV: Double) -> Double? {
+        guard let r = line.range(of: token) else { return nil }
+        let after = String(line[r.upperBound...])
         guard let re = try? NSRegularExpression(pattern: #"\d+(?:\.\d+)?"#) else { return nil }
-        let ns = s as NSString
-        for m in re.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
-            if let v = Double(ns.substring(with: m.range)), v > 0, v <= 30 { return v }
+        let ns = after as NSString
+        for m in re.matches(in: after, range: NSRange(location: 0, length: ns.length)) {
+            if let v = Double(ns.substring(with: m.range)), v >= minV, v <= maxV { return v }
         }
         return nil
     }

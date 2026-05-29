@@ -514,10 +514,10 @@ final class ScanModel {
                 // Post-fix: null out impossible magnitudes (e.g. a batch code
                 // mis-parsed as "120925% cannabinoids") rather than display them.
                 withQRs.clampImplausibleValues()
-                // Post-fix: re-read terpenes straight from the OCR — the model
-                // mis-slots them under dense panels (and pinene is split across
-                // Alpha-/Beta-Pinene lines). Deterministic; the values are
-                // unambiguous on the label.
+                // Post-fix: re-read cannabinoids AND terpenes straight from the
+                // OCR by their printed labels — the model mis-slots them on dense
+                // panels even when OCR is perfect. Deterministic; authoritative.
+                withQRs.reconcileCannabinoids(ocrText: ocr)
                 withQRs.reconcileTerpenes(ocrText: ocr)
                 // Post-fix: model sometimes picks a terpene/cannabinoid name
                 // as strainName (e.g. "Limonene"). Override with first
