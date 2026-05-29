@@ -28,9 +28,10 @@ real packaging, but the strain name and label markers are reliable.** So
 HighNotes leads with confident, name-derived intelligence and treats precise
 chemistry as best-effort, clearly flagged when suspect, never fabricated.
 
-There is **no backend, no account, no tracking.** Monetization is deferred
-(optional tipping; possibly monetized external links later) and explicitly not
-built.
+There is **no backend, no account, no tracking.** The only monetization is an
+optional **tip jar** (built — three StoreKit consumable tiers, reached only from
+About; never a paywall, "tip if you can, don't if you can't"); monetized
+external links remain a possible-later, not-built option.
 
 ---
 
@@ -97,7 +98,8 @@ All users 21+. NJ-CRC labels are the v1 target format.
   HighNotes phase once capture is trustworthy).
 - Cloud sync, accounts, social, e-commerce.
 - COA *fetching/parsing* (we link out; we don't scrape).
-- Any monetization UI.
+- Any monetization that gates the app (paywalls, subscriptions, ads). The tip
+  jar is the lone monetization surface and is purely optional.
 - Landscape mode.
 - Non-NJ label formats.
 
@@ -196,8 +198,12 @@ All users 21+. NJ-CRC labels are the v1 target format.
 - **Platform:** iOS 26.0+; Foundation Models requires Apple-Intelligence-capable
   hardware (iPhone 15 Pro / 16 / 17 / M-series iPad). Non-capable devices get
   scan + structured data, no AI summary.
-- **On-device only:** no backend, no network calls by the app itself.
-- **Distribution:** $99/yr Apple Developer Program (TestFlight + App Store).
+- **On-device only:** no backend, no network calls by the app itself. The sole
+  exception is the optional tip jar's StoreKit purchase — Apple-mediated, no
+  user data, and only when the user chooses to tip.
+- **Distribution:** $99/yr Apple Developer Program (TestFlight + App Store). The
+  same paid account is also required to register the tip jar's In-App Purchase
+  products before tips work in production.
 - **App Store cannabis policy** is a live risk; keep copy informational, non-
   promotional, 21+.
 

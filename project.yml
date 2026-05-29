@@ -62,6 +62,7 @@ schemes:
         weedlabelTests: [test]
     run:
       config: Debug
+      storeKitConfiguration: TipJar.storekit
     test:
       config: Debug
       targets:

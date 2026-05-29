@@ -2,8 +2,8 @@ import SwiftUI
 
 // AboutView — reachable from the home screen. Restates what HighNotes is and the
 // privacy promise (UXD §3.1 wants the promise reinforced beyond first run), and
-// lets the user replay the intro. The "share it, enjoy" ethos lives here; this
-// is also where a tip jar would go *if/when* added — deliberately not now.
+// lets the user replay the intro. The "share it, enjoy" ethos lives here, and so
+// does the tip jar — the one, never-pushy way to support the app (see TipJar).
 
 struct AboutView: View {
     /// Reset the first-run flag so RootView shows the welcome again.
@@ -13,6 +13,7 @@ struct AboutView: View {
     /// Wipe locally-saved corrections (strain lean + product type).
     var onClearData: () -> Void = {}
     @State private var showClearDataConfirm = false
+    @State private var showTipJar = false
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,8 @@ struct AboutView: View {
                             promise(emoji: "🧠", title: "Smart, still learning",
                                     detail: "Apple Intelligence reads labels on-device. When it slips up, correct it in a tap — it only gets better.")
                         }
+
+                        tipJarButton
 
                         replayButton
 
@@ -56,6 +59,23 @@ struct AboutView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showTipJar) { TipJarView() }
+        }
+    }
+
+    private var tipJarButton: some View {
+        Button {
+            showTipJar = true
+        } label: {
+            HStack {
+                Image(systemName: "heart.fill")
+                Text("Tip jar")
+            }
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .foregroundStyle(.white)
         }
     }
 
@@ -137,7 +157,7 @@ struct AboutView: View {
             Button("Clear saved corrections", role: .destructive) { onClearData() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Removes the strain and product-type corrections saved on this device. Your scans aren't stored, so nothing else is affected. This can't be undone.")
+            Text("Removes the strain, product-type, and name corrections saved on this device. Your Log Book entries are kept. This can't be undone.")
         }
     }
 }

@@ -20,15 +20,20 @@
 		37E80C2CA9520B8DCDCA7485 /* OCRPreprocessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */; };
 		39915F48CF1FFA8C4D67EB05 /* StrainKnowledgeBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1543B6AC44F3A9D66434A274 /* StrainKnowledgeBase.swift */; };
 		39BCAE803B2C2359027379A9 /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0AACC7BB1DA221E34688C0E /* Brand.swift */; };
+		3B89AFE3640007FB39B74299 /* LogEntryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F14F572A953D32307C55F81 /* LogEntryDetailView.swift */; };
+		40BBCFDD4EB4FCADF9D093C9 /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4DE79D3C8B6BA14BAF9D1B /* TipJarView.swift */; };
 		427AEA992DB5DA8C92838EAE /* ProductTypeInferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AFA1C72E21FB7293A6B2DD /* ProductTypeInferenceTests.swift */; };
 		4647AD2F4648D37B0FA3B78E /* StaticImageOCR.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8D7529EFA0E55694A6D2D38 /* StaticImageOCR.swift */; };
 		50C638528C7663A356E1A8E2 /* ProductLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20578EBF5F54B3112658919F /* ProductLinks.swift */; };
 		598F7CFF0A45BA978DA77A60 /* validation in Resources */ = {isa = PBXBuildFile; fileRef = 2254C8B63EA407653E87208D /* validation */; };
 		65F1C361CC69987B3FC9EDAF /* StrainNameFixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6F9E8F085BB50271753BB3 /* StrainNameFixer.swift */; };
 		6752F2738636EFB7365AF8C9 /* ProductTypeOverrideStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10EDF9F131951B71C3B0A9B5 /* ProductTypeOverrideStore.swift */; };
+		67A33F65B674FBCEF940D841 /* StrainNameOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C50C9142BF0485CF598D3E81 /* StrainNameOverrideStoreTests.swift */; };
 		7B6DD1EB2F3E1595698F27DF /* ProductLinksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FF994512D20FED9C21B78D6 /* ProductLinksTests.swift */; };
 		7D0493E8E7CDB9A444EBB898 /* FieldDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12ABA423CC39833F39B87ED2 /* FieldDetectorTests.swift */; };
 		7D22C8B5C7D12E8379824BB7 /* LabelSanityCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */; };
+		8351B8EC6E0144E2A9F4EB1B /* TipJar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0646FDDBD24740B9B3608C23 /* TipJar.swift */; };
+		84CA595526AAD43C984EE4E7 /* StrainNameOverrideStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D485D6B81B4A73B77BD63C /* StrainNameOverrideStore.swift */; };
 		860D65289692E1185199273B /* StrainKnowledgeBaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A67F0AADA564CD133E4F413 /* StrainKnowledgeBaseTests.swift */; };
 		8D028793F0D3B04023AC5DB6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 303060CD4222C3426F7446A2 /* OnboardingView.swift */; };
 		8FE824E10518DE78AF98B649 /* OCRPreprocessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5A78E90BF0C10B14291DC4 /* OCRPreprocessorTests.swift */; };
@@ -36,12 +41,16 @@
 		97F362F5C00BF8B53E560277 /* LabelSanityChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */; };
 		9EE63D408E3780CA6D5ED3FF /* SummaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D06527F36A2DD990AB0C5E9E /* SummaryService.swift */; };
 		9FE4DD4A3C080230DBFE65FE /* CannabisLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */; };
+		A5C642906D9A6A773FFAF47A /* LogBookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5C3AF5102B27F968BCFBD6 /* LogBookView.swift */; };
 		AE804BD1E7E9974B4E658028 /* StrainOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */; };
 		AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */ = {isa = PBXBuildFile; fileRef = C599ED0461A67389D4F940CA /* ProductType+Display.swift */; };
 		BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6931CE4F5C707585B52846C9 /* PostScanView.swift */; };
 		CA0A3CFCFCEC0CC1BD4EF368 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5009B08A5116D6385CA5FBCD /* ContentView.swift */; };
+		D1ADEE090AE91343D0657F87 /* TipJarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06044AB8E9FB987FD56F171 /* TipJarTests.swift */; };
 		DBF56BE240DB0B3206C43FFF /* PipelineProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */; };
 		DEFB9A95D843368A33260F60 /* AvailabilityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */; };
+		E3422BC37E4D4CA4B13BFC0A /* LogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1C4222DB0C0DCE9CF6645C /* LogStore.swift */; };
+		ECCBCAEC99379DABB86DDAED /* LogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF5066AE5CB7D703DDB3CAE /* LogStoreTests.swift */; };
 		EED37701B1A41554B8EEF995 /* StrainNameFixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BB79C18425855B7AB67D0B6 /* StrainNameFixerTests.swift */; };
 		FA367F8E468F984BB97ED058 /* ScanModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BD5E4DA48E32745BBDAE20E /* ScanModelTests.swift */; };
 /* End PBXBuildFile section */
@@ -57,10 +66,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0646FDDBD24740B9B3608C23 /* TipJar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJar.swift; sourceTree = "<group>"; };
 		0BD5E4DA48E32745BBDAE20E /* ScanModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanModelTests.swift; sourceTree = "<group>"; };
 		10EDF9F131951B71C3B0A9B5 /* ProductTypeOverrideStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTypeOverrideStore.swift; sourceTree = "<group>"; };
 		12ABA423CC39833F39B87ED2 /* FieldDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldDetectorTests.swift; sourceTree = "<group>"; };
 		1543B6AC44F3A9D66434A274 /* StrainKnowledgeBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainKnowledgeBase.swift; sourceTree = "<group>"; };
+		1B1C4222DB0C0DCE9CF6645C /* LogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogStore.swift; sourceTree = "<group>"; };
+		1C5C3AF5102B27F968BCFBD6 /* LogBookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogBookView.swift; sourceTree = "<group>"; };
+		1F14F572A953D32307C55F81 /* LogEntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntryDetailView.swift; sourceTree = "<group>"; };
+		1F4DE79D3C8B6BA14BAF9D1B /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
 		20578EBF5F54B3112658919F /* ProductLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductLinks.swift; sourceTree = "<group>"; };
 		2254C8B63EA407653E87208D /* validation */ = {isa = PBXFileReference; lastKnownFileType = folder; name = validation; path = assets/validation; sourceTree = SOURCE_ROOT; };
 		240631CA58BB0C2F38763B93 /* DataScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataScannerView.swift; sourceTree = "<group>"; };
@@ -81,6 +95,7 @@
 		8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineProtocols.swift; sourceTree = "<group>"; };
 		8FF994512D20FED9C21B78D6 /* ProductLinksTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductLinksTests.swift; sourceTree = "<group>"; };
 		92A8490BFE1E92EE8AB20646 /* CannabisLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CannabisLabel.swift; sourceTree = "<group>"; };
+		94D485D6B81B4A73B77BD63C /* StrainNameOverrideStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameOverrideStore.swift; sourceTree = "<group>"; };
 		96A7E33B825214CFC29CC6B5 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		9BB79C18425855B7AB67D0B6 /* StrainNameFixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameFixerTests.swift; sourceTree = "<group>"; };
 		9CBC43ECFC65FC5558775200 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -88,11 +103,14 @@
 		B1F64514D58748BA02013447 /* weedlabel.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = weedlabel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8D7529EFA0E55694A6D2D38 /* StaticImageOCR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticImageOCR.swift; sourceTree = "<group>"; };
 		C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessor.swift; sourceTree = "<group>"; };
+		C50C9142BF0485CF598D3E81 /* StrainNameOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameOverrideStoreTests.swift; sourceTree = "<group>"; };
 		C599ED0461A67389D4F940CA /* ProductType+Display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProductType+Display.swift"; sourceTree = "<group>"; };
 		D06527F36A2DD990AB0C5E9E /* SummaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryService.swift; sourceTree = "<group>"; };
 		D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainOverrideStoreTests.swift; sourceTree = "<group>"; };
 		DD5A78E90BF0C10B14291DC4 /* OCRPreprocessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessorTests.swift; sourceTree = "<group>"; };
 		DDED767113EC4C6265A346A3 /* ProductTypeOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTypeOverrideStoreTests.swift; sourceTree = "<group>"; };
+		DDF5066AE5CB7D703DDB3CAE /* LogStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogStoreTests.swift; sourceTree = "<group>"; };
+		E06044AB8E9FB987FD56F171 /* TipJarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarTests.swift; sourceTree = "<group>"; };
 		E0AACC7BB1DA221E34688C0E /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		E99D93418105C99800D9CC8F /* ExtractionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractionService.swift; sourceTree = "<group>"; };
 		FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvailabilityGate.swift; sourceTree = "<group>"; };
@@ -115,9 +133,12 @@
 				96A7E33B825214CFC29CC6B5 /* AboutView.swift */,
 				5009B08A5116D6385CA5FBCD /* ContentView.swift */,
 				240631CA58BB0C2F38763B93 /* DataScannerView.swift */,
+				1C5C3AF5102B27F968BCFBD6 /* LogBookView.swift */,
+				1F14F572A953D32307C55F81 /* LogEntryDetailView.swift */,
 				303060CD4222C3426F7446A2 /* OnboardingView.swift */,
 				6931CE4F5C707585B52846C9 /* PostScanView.swift */,
 				4C644794E83AC6B1EF2967DF /* ScanModel.swift */,
+				1F4DE79D3C8B6BA14BAF9D1B /* TipJarView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -145,6 +166,7 @@
 			children = (
 				12ABA423CC39833F39B87ED2 /* FieldDetectorTests.swift */,
 				6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */,
+				DDF5066AE5CB7D703DDB3CAE /* LogStoreTests.swift */,
 				DD5A78E90BF0C10B14291DC4 /* OCRPreprocessorTests.swift */,
 				4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */,
 				8FF994512D20FED9C21B78D6 /* ProductLinksTests.swift */,
@@ -153,7 +175,9 @@
 				0BD5E4DA48E32745BBDAE20E /* ScanModelTests.swift */,
 				7A67F0AADA564CD133E4F413 /* StrainKnowledgeBaseTests.swift */,
 				9BB79C18425855B7AB67D0B6 /* StrainNameFixerTests.swift */,
+				C50C9142BF0485CF598D3E81 /* StrainNameOverrideStoreTests.swift */,
 				D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */,
+				E06044AB8E9FB987FD56F171 /* TipJarTests.swift */,
 			);
 			path = weedlabelTests;
 			sourceTree = "<group>";
@@ -186,6 +210,7 @@
 				FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */,
 				E99D93418105C99800D9CC8F /* ExtractionService.swift */,
 				56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */,
+				1B1C4222DB0C0DCE9CF6645C /* LogStore.swift */,
 				C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */,
 				8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */,
 				20578EBF5F54B3112658919F /* ProductLinks.swift */,
@@ -194,8 +219,10 @@
 				B8D7529EFA0E55694A6D2D38 /* StaticImageOCR.swift */,
 				1543B6AC44F3A9D66434A274 /* StrainKnowledgeBase.swift */,
 				3C6F9E8F085BB50271753BB3 /* StrainNameFixer.swift */,
+				94D485D6B81B4A73B77BD63C /* StrainNameOverrideStore.swift */,
 				6E2E3B0F92071D4FC7640A4C /* StrainOverrideStore.swift */,
 				D06527F36A2DD990AB0C5E9E /* SummaryService.swift */,
+				0646FDDBD24740B9B3608C23 /* TipJar.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -304,6 +331,9 @@
 				910B62143DE508BB33BDFFD5 /* ExtractionService.swift in Sources */,
 				109FE728A5D2B682E9D014F6 /* FieldDetector.swift in Sources */,
 				97F362F5C00BF8B53E560277 /* LabelSanityChecker.swift in Sources */,
+				A5C642906D9A6A773FFAF47A /* LogBookView.swift in Sources */,
+				3B89AFE3640007FB39B74299 /* LogEntryDetailView.swift in Sources */,
+				E3422BC37E4D4CA4B13BFC0A /* LogStore.swift in Sources */,
 				37E80C2CA9520B8DCDCA7485 /* OCRPreprocessor.swift in Sources */,
 				8D028793F0D3B04023AC5DB6 /* OnboardingView.swift in Sources */,
 				DBF56BE240DB0B3206C43FFF /* PipelineProtocols.swift in Sources */,
@@ -316,8 +346,11 @@
 				4647AD2F4648D37B0FA3B78E /* StaticImageOCR.swift in Sources */,
 				39915F48CF1FFA8C4D67EB05 /* StrainKnowledgeBase.swift in Sources */,
 				65F1C361CC69987B3FC9EDAF /* StrainNameFixer.swift in Sources */,
+				84CA595526AAD43C984EE4E7 /* StrainNameOverrideStore.swift in Sources */,
 				2FB4B46D19113FA8F911C015 /* StrainOverrideStore.swift in Sources */,
 				9EE63D408E3780CA6D5ED3FF /* SummaryService.swift in Sources */,
+				8351B8EC6E0144E2A9F4EB1B /* TipJar.swift in Sources */,
+				40BBCFDD4EB4FCADF9D093C9 /* TipJarView.swift in Sources */,
 				1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -328,6 +361,7 @@
 			files = (
 				7D0493E8E7CDB9A444EBB898 /* FieldDetectorTests.swift in Sources */,
 				7D22C8B5C7D12E8379824BB7 /* LabelSanityCheckerTests.swift in Sources */,
+				ECCBCAEC99379DABB86DDAED /* LogStoreTests.swift in Sources */,
 				8FE824E10518DE78AF98B649 /* OCRPreprocessorTests.swift in Sources */,
 				2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */,
 				7B6DD1EB2F3E1595698F27DF /* ProductLinksTests.swift in Sources */,
@@ -336,7 +370,9 @@
 				FA367F8E468F984BB97ED058 /* ScanModelTests.swift in Sources */,
 				860D65289692E1185199273B /* StrainKnowledgeBaseTests.swift in Sources */,
 				EED37701B1A41554B8EEF995 /* StrainNameFixerTests.swift in Sources */,
+				67A33F65B674FBCEF940D841 /* StrainNameOverrideStoreTests.swift in Sources */,
 				AE804BD1E7E9974B4E658028 /* StrainOverrideStoreTests.swift in Sources */,
+				D1ADEE090AE91343D0657F87 /* TipJarTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

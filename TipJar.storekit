@@ -1,0 +1,66 @@
+{
+  "identifier" : "FD99158A-B1AB-4636-9E83-2A9028B0DE9D",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "189F5E5D-28A2-4473-8300-6BC1A6CFD383",
+      "localizations" : [
+        {
+          "description" : "A little love for the dev who built this.",
+          "displayName" : "A little love",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.demarconet.weedlabel.tip.small",
+      "referenceName" : "Tip — A little love",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "E2FB92F0-FF70-4DE7-8575-91139FB4146D",
+      "localizations" : [
+        {
+          "description" : "Good vibes — thanks for keeping HighNotes going.",
+          "displayName" : "Good vibes",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.demarconet.weedlabel.tip.medium",
+      "referenceName" : "Tip — Good vibes",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "0FF46F6E-8542-415F-A117-1D1E724D2D22",
+      "localizations" : [
+        {
+          "description" : "Big love — this genuinely makes someone's day.",
+          "displayName" : "Big love",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.demarconet.weedlabel.tip.large",
+      "referenceName" : "Tip — Big love",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

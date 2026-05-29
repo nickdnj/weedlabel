@@ -12,10 +12,11 @@ Current, authoritative specs for the **native iOS, on-device** product
 | [`OPEN-ISSUES.md`](./OPEN-ISSUES.md) | Consolidated backlog — every known issue with severity, plus decisions deferred on purpose |
 
 ## Status (2026-05-27)
-Device-tested v1 spike. 199 tests passing. On-device scan → two-pass FM
+Device-tested v1 spike. 224 tests passing. On-device scan → two-pass FM
 extraction → strain intelligence → grounded AI summary, with high-res capture,
-user-correctable strain DB, and learn-more links. See the execution log for the
-full story and the open issues.
+user-correctable strain DB, learn-more links, and an optional StoreKit **tip
+jar** (About-only, never a paywall). See the execution log for the full story
+and the open issues.
 
 ## Legacy (do NOT build against)
 [`legacy/`](./legacy/) holds the v0.1 PRD/SAD for the abandoned Next.js + Supabase

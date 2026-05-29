@@ -11,6 +11,13 @@ import SwiftUI
 struct RootView: View {
     @AppStorage("highnotes.hasSeenWelcome.v1") private var hasSeenWelcome = false
 
+    #if DEBUG
+    // Launch with `-ShowTipJar` to jump straight to the tip jar sheet — fast
+    // visual iteration without tapping through onboarding → About. Mirrors the
+    // `-AutoRunCanary` hook in ContentView.
+    @State private var showTipJarDebug = CommandLine.arguments.contains("-ShowTipJar")
+    #endif
+
     var body: some View {
         ZStack {
             if hasSeenWelcome {
@@ -23,6 +30,9 @@ struct RootView: View {
                 .transition(.opacity)
             }
         }
+        #if DEBUG
+        .sheet(isPresented: $showTipJarDebug) { TipJarView() }
+        #endif
     }
 }
 

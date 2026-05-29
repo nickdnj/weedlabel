@@ -20,7 +20,7 @@ Scan a cannabis dispensary label and get a plain-English breakdown — strain, c
 
 ## What it is
 
-HighNotes turns a photo of a regulated dispensary label into a structured, trustworthy read. Point the camera at a label (or import one from your photo library) and it OCRs the text, extracts the fields with an on-device LLM, sanity-checks the chemistry, and writes a grounded summary — no dispensary jargon, no homework. Nothing is uploaded; nothing is tracked. The only thing that ever leaves the app is you tapping an external link.
+HighNotes turns a photo of a regulated dispensary label into a structured, trustworthy read. Point the camera at a label (or import one from your photo library) and it OCRs the text, extracts the fields with an on-device LLM, sanity-checks the chemistry, and writes a grounded summary — no dispensary jargon, no homework. Nothing is uploaded; nothing is tracked. The only things that ever leave the app are you tapping an external link, and — if you choose to — an optional tip through the App Store.
 
 ## How it works
 
@@ -40,6 +40,7 @@ HighNotes turns a photo of a regulated dispensary label into a structured, trust
 
 - Scanning **and** the AI summary run on-device. No network calls in the core flow.
 - No accounts, no analytics, no ad SDKs.
+- The one network exception is the optional tip jar (StoreKit / App Store) — only when you choose to tip, and it carries no personal data.
 - The first-run welcome states this plainly, and the in-app **About** screen restates it.
 
 ## Build & run
@@ -70,11 +71,11 @@ The durable specs live in [`docs/`](docs/) — read these before non-trivial cha
 
 ## Status
 
-**Device-tested v1 spike** (2026-05). On-device scan → two-pass extraction → strain intelligence → grounded summary, with high-res capture and a correctable strain DB. 199 tests passing. The product is **HighNotes**; the repo, Xcode target, and bundle id still read `weedlabel` (rename deferred).
+**Device-tested v1 spike** (2026-05). On-device scan → two-pass extraction → strain intelligence → grounded summary, with high-res capture, a correctable strain DB, and an optional tip jar. 224 tests passing. The product is **HighNotes**; the repo, Xcode target, and bundle id still read `weedlabel` (rename deferred).
 
 ## Money
 
-Free. No paywall — ever. The goal is for people to use it and find it useful. Future revenue, if any, is **optional tipping** (tip if you can, don't if you can't) and possibly monetized external links — neither is built yet, and neither will ever gate the app.
+Free. No paywall — ever. The goal is for people to use it and find it useful. Revenue, if any, comes from an **optional tip jar** (tip if you can, don't if you can't) — now built, tucked away in the About screen, three StoreKit consumable tiers. Monetized external links are a possible-later option. Neither will ever gate the app. (Apple requires developer tips to be In-App Purchases, so the tip jar uses StoreKit; production tips just need the products registered in App Store Connect.)
 
 ## Why iOS native (not web)
 
