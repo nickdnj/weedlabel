@@ -23,6 +23,10 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
     /// The user's own journaling: a free-text note and a 0–5 rating (0 = unrated).
     var note: String
     var rating: Int
+    /// Filename of the saved scan image in `LogImageStore` (Documents/images/),
+    /// or nil for entries saved before image capture existed / live-only scans
+    /// with no still. Optional so old logbook.json decodes unchanged.
+    var imageFilename: String?
 
     init(
         id: UUID = UUID(),
@@ -33,7 +37,8 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
         strainLean: StrainLean? = nil,
         strainSourceNote: String? = nil,
         note: String = "",
-        rating: Int = 0
+        rating: Int = 0,
+        imageFilename: String? = nil
     ) {
         self.id = id
         self.dateScanned = dateScanned
@@ -44,6 +49,7 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
         self.strainSourceNote = strainSourceNote
         self.note = note
         self.rating = rating
+        self.imageFilename = imageFilename
     }
 }
 
@@ -90,11 +96,15 @@ final class FileLogStore: LogStoring {
     }
 
     func delete(id: UUID) {
+        if let name = byID[id]?.imageFilename { LogImageStore.delete(name) }
         byID[id] = nil
         save()
     }
 
     func removeAll() {
+        for entry in byID.values {
+            if let name = entry.imageFilename { LogImageStore.delete(name) }
+        }
         byID.removeAll()
         save()
     }

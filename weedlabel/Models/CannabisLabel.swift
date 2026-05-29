@@ -102,7 +102,7 @@ struct LabelChemistry: Sendable {
     var linalool: Double?
     @Guide(description: "Beta-caryophyllene percent")
     var betaCaryophyllene: Double?
-    @Guide(description: "Pinene percent")
+    @Guide(description: "Total pinene percent. Labels print Alpha-Pinene and Beta-Pinene as two separate lines — pinene is their SUM. If only one is printed, use it.")
     var pinene: Double?
     @Guide(description: "Humulene percent")
     var humulene: Double?
@@ -216,6 +216,14 @@ extension CannabisLabel {
     /// Both swaps only run on flower/preRoll/vape product types — concentrates
     /// can have decarboxylated profiles where Total THC genuinely exceeds THCA.
     mutating func fixSwappedThcFields() {
+        // These corrections encode FLOWER assumptions — Δ9-THC < ~5% and
+        // THCA ≥ Total THC. They are FALSE for vapes and concentrates:
+        // distillate carts have Δ9-THC and Total THC of 60-90% with near-zero
+        // THCA, so applying either swap there would corrupt a correctly-read
+        // label (observed: distillate vapes scoring 0% on totalThc/thca).
+        // Restrict to flower/pre-roll; trust the model + instructions elsewhere.
+        guard [.flower, .preRoll].contains(productType) else { return }
+
         // Swap #1: delta9thc populated with what should be Total THC.
         if let d9 = delta9thc, d9 > 10 {
             // Only swap if totalThc isn't already set higher than delta9thc.
@@ -225,14 +233,70 @@ extension CannabisLabel {
             }
         }
 
-        // Swap #2: THCA and Total THC reversed. Apply only on flower-like
-        // products where THCA being smaller than Total THC is implausible.
-        if [.flower, .preRoll, .vape].contains(productType),
-           let thcaVal = thca, let totalThcVal = totalThc,
+        // Swap #2: THCA and Total THC reversed — on flower THCA is ≥ Total THC,
+        // so totalThc materially exceeding thca means they're flipped.
+        if let thcaVal = thca, let totalThcVal = totalThc,
            totalThcVal > thcaVal * 1.1 {
             self.thca = totalThcVal
             self.totalThc = thcaVal
         }
+    }
+
+    /// Terpene reconciliation. NJ-CRC labels print each terpene on its own
+    /// "Name: value%" line, but the model mis-assigns values to the wrong slot
+    /// under dense or scrambled panels (observed: myrcene's value landing in the
+    /// caryophyllene slot, and pinene — split across Alpha-/Beta-Pinene lines —
+    /// at ~50%). The values are unambiguous in the OCR, so we re-read each named
+    /// terpene straight from the text and trust that over the model's slotting.
+    ///
+    /// Conservative by construction: a slot is overwritten ONLY when a line that
+    /// names that terpene AND carries a plausible percent on the SAME line is
+    /// found. Heavily scrambled OCR (name and value on different lines) yields no
+    /// match, so the model's value is left untouched. Run AFTER
+    /// clampImplausibleValues so it has the last word.
+    mutating func reconcileTerpenes(ocrText: String) {
+        let lines = ocrText.components(separatedBy: .newlines)
+
+        // Pinene = Alpha-Pinene + Beta-Pinene (two separate lines, summed).
+        var pineneSum = 0.0, pineneFound = false
+        for raw in lines {
+            let c = raw.lowercased().replacingOccurrences(of: " ", with: "")
+            guard c.contains("pinene"),
+                  c.contains("alpha") || c.contains("beta")
+                    || c.contains("a-pinene") || c.contains("b-pinene")
+                    || c.contains("α") || c.contains("β") else { continue }
+            if let v = Self.firstPlausiblePercent(in: raw) { pineneSum += v; pineneFound = true }
+        }
+        if pineneFound { pinene = (pineneSum * 100).rounded() / 100 }
+
+        // Single-line terpenes. Token lists include the deterministic OCR-mangled
+        // spellings we see in practice (e.g. "Lim onene"→"limonene" once spaces
+        // are stripped, "Linaool", "Humuiene", "CaryophylEne"). caryophyllene
+        // excludes "oxide" so Caryophyllene Oxide doesn't hijack the slot.
+        func read(_ tokens: [String], exclude: [String] = []) -> Double? {
+            for raw in lines {
+                let c = raw.lowercased().replacingOccurrences(of: " ", with: "")
+                if exclude.contains(where: { c.contains($0) }) { continue }
+                guard tokens.contains(where: { c.contains($0) }) else { continue }
+                if let v = Self.firstPlausiblePercent(in: raw) { return v }
+            }
+            return nil
+        }
+        if let v = read(["myrcene", "myrcen"]) { myrcene = v }
+        if let v = read(["limonene", "limonen"]) { limonene = v }
+        if let v = read(["linalool", "linaool", "linalol"]) { linalool = v }
+        if let v = read(["caryophyllene", "caryophylene", "caryophyllen"], exclude: ["oxide"]) { betaCaryophyllene = v }
+        if let v = read(["humulene", "humulen", "humuiene"]) { humulene = v }
+    }
+
+    /// First number in `s` that reads as a plausible terpene percent (≤ 30).
+    private static func firstPlausiblePercent(in s: String) -> Double? {
+        guard let re = try? NSRegularExpression(pattern: #"\d+(?:\.\d+)?"#) else { return nil }
+        let ns = s as NSString
+        for m in re.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
+            if let v = Double(ns.substring(with: m.range)), v > 0, v <= 30 { return v }
+        }
+        return nil
     }
 
     /// Null out physically-impossible magnitudes — almost always OCR/lot-code

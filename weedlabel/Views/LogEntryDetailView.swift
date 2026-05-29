@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // LogEntryDetailView — a saved scan with the user's own note + star rating
 // ("your HighNotes"). Edits persist immediately via LogBookModel.update. Styled
@@ -16,6 +17,18 @@ struct LogEntryDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                if let image = labelImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .frame(maxHeight: 320)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(Color.secondary.opacity(0.15))
+                        )
+                }
                 header
                 ratingEditor
                 noteEditor
@@ -127,6 +140,11 @@ struct LogEntryDetailView: View {
         Image(systemName: i <= entry.rating ? "star.fill" : "star")
             .font(.title2)
             .foregroundStyle(i <= entry.rating ? Brand.green : Color.secondary.opacity(0.35))
+    }
+
+    /// The saved scan image, if this entry has one.
+    private var labelImage: UIImage? {
+        entry.imageFilename.flatMap(LogImageStore.loadFull)
     }
 
     private func sectionLabel(_ text: String) -> some View {

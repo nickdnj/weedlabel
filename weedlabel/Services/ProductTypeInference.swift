@@ -27,16 +27,20 @@ enum ProductTypeInference {
         if lower.contains("inhalable") {
             return .flower
         }
+        // Tincture / topical FIRST — their explicit form words are authoritative
+        // and must beat the generic "per serving" edible signal below (tinctures
+        // and topicals are also dosed in servings/applications, so checking
+        // edible first mis-classified every one of them as edible).
+        if lower.contains("tincture") { return .tincture }
+        if lower.contains("topical") || lower.contains("salve") || lower.contains("balm") {
+            return .topical
+        }
         // Ingestible signals. Kept tight on purpose — no bare "candy"/"chocolate"
         // (those collide with strain names like Chocolope / Blue Candy Rain).
         if lower.contains("gummies") || lower.contains("gummy")
             || lower.contains("per serving") || lower.contains("servings per")
             || lower.contains("lozenge") {
             return .edible
-        }
-        if lower.contains("tincture") { return .tincture }
-        if lower.contains("topical") || lower.contains("salve") || lower.contains("balm") {
-            return .topical
         }
         return nil
     }

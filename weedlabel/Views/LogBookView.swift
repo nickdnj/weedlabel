@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // LogBookView — the Log Book ("your HighNotes"): the list of saved scans, each
 // openable for detail + personal note/rating. Presented as a sheet from the
@@ -85,7 +86,25 @@ struct LogBookView: View {
 private struct LogRow: View {
     let entry: LogEntry
 
+    private var thumbnail: UIImage? {
+        entry.imageFilename.flatMap(LogImageStore.loadThumbnail)
+    }
+
     var body: some View {
+        HStack(spacing: 12) {
+            if let thumbnail {
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 48, height: 48)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+            rowText
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var rowText: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(entry.label.strainName)

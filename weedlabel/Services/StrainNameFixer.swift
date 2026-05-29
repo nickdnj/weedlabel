@@ -34,9 +34,25 @@ enum StrainNameFixer {
     /// label that shouldn't appear as a strain.
     static func isSuspicious(_ name: String) -> Bool {
         let normalized = name
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: ":-.")))
             .lowercased()
         return forbiddenNames.contains(normalized)
+    }
+
+    /// Boilerplate the model occasionally grabs as a strain when the real name
+    /// is scrambled away from the top — warnings, directions, regulatory text.
+    /// These appear on every NJ-CRC label and are never a strain name.
+    static func isBoilerplateLine(_ line: String) -> Bool {
+        let lower = line.lowercased()
+        let markers = [
+            "psychosis", "high potency", "intoxicating effects", "poison control",
+            "keep out of the reach", "out of reach of children", "not for resale",
+            "contains cannabis", "health risk", "do not drive", "heavy machinery",
+            "operate heavy", "food and drug", "fda", "pregnant", "breastfeeding",
+            "store in a cool", "directions", "active ingredient", "other ingredient",
+            "net wt", "net weight", "using this product", "this product", "while using",
+        ]
+        return markers.contains { lower.contains($0) }
     }
 
     /// Try to extract a better strain name from the raw OCR. Heuristic: find
@@ -46,7 +62,8 @@ enum StrainNameFixer {
     ///   - isn't all-numeric / mostly punctuation
     ///   - has at least one letter
     /// Most NJ-CRC labels print the product name in the top 1-3 lines.
-    static func candidateFromOCR(_ ocrText: String) -> String? {
+    static func candidateFromOCR(_ ocrText: String, cultivator: String? = nil) -> String? {
+        let cult = cultivator?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let lines = ocrText.components(separatedBy: .newlines)
         for raw in lines {
             let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -58,6 +75,9 @@ enum StrainNameFixer {
             if !containsLetter(line) { continue }
             if isSuspicious(line) { continue }
             if isChemotypeLine(line) { continue }     // "High THC, Low CBD" etc.
+            if isBoilerplateLine(line) { continue }   // warnings, directions, FDA text
+            // Skip the cultivator/brand line — it's provenance, not the strain.
+            if let cult, !cult.isEmpty, line.lowercased().contains(cult) { continue }
             // Strip trailing weight/format markers like " - 28g" or " Flower 3.5g"
             // to leave a cleaner strain name.
             let cleaned = stripTrailingFormatMarkers(line)
@@ -74,12 +94,23 @@ enum StrainNameFixer {
     ///   2. It appears in the OCR text adjacent to a percent value — almost
     ///      always a sign the model latched onto a chemical-compound name or
     ///      OCR fragment of one (e.g. "Beicaropa" near "0.64%").
-    static func fix(strain: String, ocrText: String) -> (strain: String, didFix: Bool) {
+    static func fix(strain: String, cultivator: String? = nil, ocrText: String) -> (strain: String, didFix: Bool) {
+        let cult = cultivator?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let s = strain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let matchesCultivator: Bool = {
+            guard let cult, cult.count >= 4, s.count >= 4 else { return false }
+            // Contains-match both ways: the model often emits the cultivator
+            // verbatim ("Pine Barrens") or a superset ("Pine Barrens Cannabis Co").
+            return s == cult || s.contains(cult) || cult.contains(s)
+        }()
         let badName = isSuspicious(strain)
+            || isBoilerplateLine(strain)
+            || isFormOnlyLine(stripTrailingFormatMarkers(strain))  // "Live Resin Cartridge"
+            || matchesCultivator
             || looksLikeChemicalFragment(strain, in: ocrText)
             || isAbsentFromOCR(strain, in: ocrText)
         guard badName else { return (strain, false) }
-        if let candidate = candidateFromOCR(ocrText) {
+        if let candidate = candidateFromOCR(ocrText, cultivator: cultivator) {
             return (candidate, true)
         }
         return (strain, false)
@@ -210,7 +241,8 @@ enum StrainNameFixer {
             "flower", "vape", "vapes", "edible", "edibles", "concentrate",
             "preroll", "prerolls", "pre", "roll", "rolls", "tincture", "topical",
             "gummy", "gummies", "disposable", "cartridge", "cart", "inhalable",
-            "product", "smokable", "smokeable"
+            "product", "smokable", "smokeable",
+            "live", "resin", "rosin", "badder", "balm", "salve", "cannabis", "infused"
         ]
         return tokens.allSatisfy { formWords.contains($0) }
     }

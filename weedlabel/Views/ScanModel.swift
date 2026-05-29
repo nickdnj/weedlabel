@@ -397,12 +397,18 @@ final class ScanModel {
     func saveToLogBook() {
         guard case .ready(let label, let summary, _, let insight) = phase else { return }
         let text = summary?.text ?? SummaryService.buildFallback(label, strainInsight: insight)
+        // Persist the scanned/imported image alongside the entry (deleted with it
+        // in FileLogStore.delete). Keyed by the entry id so the two stay matched.
+        let id = UUID()
+        let imageFilename = capturedImage.flatMap { LogImageStore.save($0, id: id) }
         let entry = LogEntry(
+            id: id,
             label: label,
             summaryText: text,
             summaryDidFallback: summary?.didFallback ?? true,
             strainLean: insight?.lean,
-            strainSourceNote: insight?.sourceNote
+            strainSourceNote: insight?.sourceNote,
+            imageFilename: imageFilename
         )
         logStore.add(entry)
         cancel()
@@ -455,10 +461,15 @@ final class ScanModel {
                 // Post-fix: null out impossible magnitudes (e.g. a batch code
                 // mis-parsed as "120925% cannabinoids") rather than display them.
                 withQRs.clampImplausibleValues()
+                // Post-fix: re-read terpenes straight from the OCR — the model
+                // mis-slots them under dense panels (and pinene is split across
+                // Alpha-/Beta-Pinene lines). Deterministic; the values are
+                // unambiguous on the label.
+                withQRs.reconcileTerpenes(ocrText: ocr)
                 // Post-fix: model sometimes picks a terpene/cannabinoid name
                 // as strainName (e.g. "Limonene"). Override with first
                 // plausible OCR line when this happens.
-                let fixedStrain = StrainNameFixer.fix(strain: withQRs.strainName, ocrText: ocr)
+                let fixedStrain = StrainNameFixer.fix(strain: withQRs.strainName, cultivator: withQRs.cultivator, ocrText: ocr)
                 if fixedStrain.didFix {
                     #if DEBUG
                     canaryLog("Strain post-fix: '\(withQRs.strainName)' → '\(fixedStrain.strain)'")

@@ -43,10 +43,14 @@ enum Pipeline {
         //    impossible magnitudes (lot codes mis-parsed as cannabinoids).
         l.fixSwappedThcFields()
         l.clampImplausibleValues()
+        // 2b. Re-read terpenes from the OCR (model mis-slots them; pinene is
+        //     split across Alpha-/Beta-Pinene lines).
+        l.reconcileTerpenes(ocrText: ocrText)
 
         // 3. Recover a real strain name when the model latched onto a chemical
-        //    compound name (e.g. "Limonene") or an OCR fragment of one.
-        let fixed = StrainNameFixer.fix(strain: l.strainName, ocrText: ocrText)
+        //    compound name (e.g. "Limonene"), a warning line, the cultivator, or
+        //    an OCR fragment of one.
+        let fixed = StrainNameFixer.fix(strain: l.strainName, cultivator: l.cultivator, ocrText: ocrText)
         if fixed.didFix { l.strainName = fixed.strain }
 
         // 4. (name-override resolve — no saved corrections in a batch eval)

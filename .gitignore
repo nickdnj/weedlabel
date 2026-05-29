@@ -75,3 +75,6 @@ __pycache__/
 
 # Claude Code loop runtime lock (transient)
 .claude/scheduled_tasks.lock
+
+# HighNotes harness live-progress runtime state
+tests/harness/.progress.json

@@ -22,6 +22,10 @@ struct CLIOptions {
     var model: String = "claude-opus-4-7"
     var refine: Bool = false
     var skipApple: Bool = false
+    /// Skip the Claude side entirely. For synthetic fixtures we know the ground
+    /// truth, so Claude (a proxy baseline) is redundant — score Apple vs truth.
+    /// Also means no ANTHROPIC_API_KEY is required.
+    var skipClaude: Bool = false
     /// Max concurrent Claude+OCR label stages. Apple Foundation Models stays
     /// strictly serial regardless (the on-device model dislikes overlapped
     /// sessions); only the network-bound Claude side is parallelized.
@@ -42,6 +46,7 @@ struct CLIOptions {
         var model = "claude-opus-4-7"
         var refine = false
         var skipApple = false
+        var skipClaude = false
         var claudeConcurrency = 6
 
         var i = 1
@@ -54,6 +59,7 @@ struct CLIOptions {
             case "--model": i += 1; model = argv[i]
             case "--refine": refine = true
             case "--skip-apple": skipApple = true
+            case "--skip-claude": skipClaude = true
             case "--claude-concurrency": i += 1; claudeConcurrency = max(1, Int(argv[i]) ?? 6)
             case "--help", "-h": print(Self.helpText); exit(0)
             default:
@@ -63,7 +69,7 @@ struct CLIOptions {
         }
         return CLIOptions(imagesDir: imagesDir, outputDir: outputDir, includePattern: includePattern,
                           limit: limit, model: model, refine: refine, skipApple: skipApple,
-                          claudeConcurrency: claudeConcurrency)
+                          skipClaude: skipClaude, claudeConcurrency: claudeConcurrency)
     }
 
     static let helpText = """
@@ -77,6 +83,8 @@ struct CLIOptions {
       --model <id>              Claude model id (default: claude-opus-4-7)
       --refine                  After the run, call Claude to propose prompt edits
       --skip-apple              Skip the Foundation Models side (Claude only)
+      --skip-claude             Skip the Claude side (Apple-only; score vs ground
+                                truth). No ANTHROPIC_API_KEY needed.
       --claude-concurrency <n>  Max concurrent Claude+OCR stages (default 6).
                                 Apple Foundation Models always stays serial.
       --help                    This help
@@ -119,8 +127,14 @@ enum Run {
             log("Foundation Models available.")
         }
 
-        let claude = try ClaudeClient(config: .fromEnv(model: opts.model))
-        log("Claude model: \(opts.model)")
+        let claude: ClaudeClient?
+        if opts.skipClaude {
+            claude = nil
+            log("Claude side skipped (--skip-claude); scoring Apple vs ground truth.")
+        } else {
+            claude = try ClaudeClient(config: .fromEnv(model: opts.model))
+            log("Claude model: \(opts.model)")
+        }
 
         // ONE shared ExtractionService/SummaryService reused across ALL labels —
         // mirroring the app, where ScanModel holds a single long-lived instance
@@ -148,13 +162,17 @@ enum Run {
         // STAGE 0 — OCR every label concurrently. Vision is local + cheap and
         // both downstream halves need the text, so we do it once up front.
         log("Stage 0: OCR \(n) label(s)…")
+        await ProgressReporter.shared.setNote("Stage 0 — OCR \(n) label(s)")
         var ocrSlots = [OCRStage?](repeating: nil, count: n)
+        var ocrDone = 0
         await withTaskGroup(of: OCRStage.self) { group in
             var next = 0
             func launch(_ i: Int) { let u = images[i]; group.addTask { await ocrStage(idx: i, url: u) } }
             while next < concurrency { launch(next); next += 1 }
             while let s = await group.next() {
                 ocrSlots[s.idx] = s
+                ocrDone += 1
+                await ProgressReporter.shared.update(phase: "OCR", current: ocrDone, total: n)
                 if next < n { launch(next); next += 1 }
             }
         }
@@ -165,6 +183,7 @@ enum Run {
         // share nothing mutable, so they run at the same time. Wall-clock ≈
         // max(Apple-serial, Claude-concurrent), not the sum.
         log("Stages A‖C: Apple FM (serial) running alongside Claude (concurrency \(concurrency))…")
+        await ProgressReporter.shared.setNote("Stages A‖C — Apple FM (serial) ‖ Claude (concurrency \(concurrency))")
         async let appleHalves: [AppleHalf] = runAppleSerial(
             ocr: ocr, extractor: extractor, summarizer: summarizer,
             appleEnabled: appleEnabled, appleUnavailableReason: appleUnavailableReason, total: n)
@@ -194,13 +213,16 @@ enum Run {
 
         emitAccuracy(runDir: runDir)
 
-        if opts.refine {
+        if opts.refine, let claude {
             log("Generating proposed prompt refinements via Claude…")
             let md = try await Refiner.refine(results: results, client: claude)
             try md.write(to: runDir.appendingPathComponent("proposed-prompts.md"), atomically: true, encoding: .utf8)
             log("Wrote \(runDir.appendingPathComponent("proposed-prompts.md").path)")
+        } else if opts.refine {
+            log("--refine ignored: Claude is skipped (--skip-claude).")
         }
 
+        await ProgressReporter.shared.finish()
         log("Done.")
     }
 
@@ -257,8 +279,21 @@ enum Run {
         let raw: RunResult.ClaudeRaw?
     }
 
-    /// OCR one label (local Vision). Never throws — captures failure inline.
+    /// OCR one label (local Vision), or read a `.ocr.txt` text fixture directly.
+    /// Never throws — captures failure inline.
     private static func ocrStage(idx: Int, url: URL) async -> OCRStage {
+        // Synthetic text fixture: the file IS the (pre-noised) OCR text. Skip
+        // Vision; feed it to the same preprocessing + extraction the app uses.
+        if url.lastPathComponent.hasSuffix(".ocr.txt") {
+            do {
+                let text = try String(contentsOf: url, encoding: .utf8)
+                return OCRStage(idx: idx, url: url, ocrText: text,
+                                safeOcr: safeOCR(text), qrCodes: [], ocrError: nil)
+            } catch {
+                return OCRStage(idx: idx, url: url, ocrText: "", safeOcr: "", qrCodes: [],
+                                ocrError: error.localizedDescription)
+            }
+        }
         do {
             let r = try await MacImageOCR.recognize(at: url)
             return OCRStage(idx: idx, url: url, ocrText: r.ocrText,
@@ -279,6 +314,8 @@ enum Run {
         for (k, o) in ocr.enumerated() {
             out.append(await appleHalf(o: o, extractor: extractor, summarizer: summarizer,
                                        appleEnabled: appleEnabled, appleUnavailableReason: appleUnavailableReason))
+            let labelTag = o.url.deletingPathExtension().lastPathComponent
+            await ProgressReporter.shared.update(phase: "Apple", current: k + 1, total: total, label: labelTag)
             if (k + 1) % 5 == 0 || k + 1 == ocr.count { log("  Apple \(k + 1)/\(total)") }
         }
         return out
@@ -341,8 +378,13 @@ enum Run {
     // MARK: - Claude side (CONCURRENT, bounded)
 
     private static func runClaudeConcurrent(
-        ocr: [OCRStage], claude: ClaudeClient, concurrency: Int, total: Int
+        ocr: [OCRStage], claude: ClaudeClient?, concurrency: Int, total: Int
     ) async -> [ClaudeHalf] {
+        // --skip-claude: emit a skipped half per label so assembly still zips.
+        guard let claude else {
+            return ocr.map { ClaudeHalf(idx: $0.idx, passA: .skipped("--skip-claude"),
+                                        duration: 0, passB: .skipped("--skip-claude"), raw: nil) }
+        }
         var out: [ClaudeHalf] = []; out.reserveCapacity(ocr.count)
         var done = 0
         await withTaskGroup(of: ClaudeHalf.self) { group in
@@ -354,6 +396,7 @@ enum Run {
             while next < min(concurrency, ocr.count) { launch(next); next += 1 }
             while let h = await group.next() {
                 out.append(h); done += 1
+                await ProgressReporter.shared.update(phase: "Claude", current: done, total: total)
                 if done % 5 == 0 || done == ocr.count { log("  Claude \(done)/\(total)") }
                 if next < ocr.count { launch(next); next += 1 }
             }
@@ -408,10 +451,19 @@ enum Run {
         guard let en = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else {
             return []
         }
+        // Synthetic fixtures live in a `synthetic/` subtree. Keep them OUT of a
+        // broad default run (which also drives Claude); include them only when
+        // the caller points --images at synthetic/ directly.
+        let targetingSynthetic = dir.path.contains("synthetic")
         var out: [URL] = []
         for case let u as URL in en {
             if u.hasDirectoryPath { continue }
-            guard imageExtensions.contains(u.pathExtension.lowercased()) else { continue }
+            if !targetingSynthetic && u.path.contains("/synthetic/") { continue }
+            // Accept image fixtures (Vision OCR) AND `<slug>.ocr.txt` text
+            // fixtures (synthetic, pre-noised — fed straight to extraction).
+            let isImage = imageExtensions.contains(u.pathExtension.lowercased())
+            let isOcrText = u.lastPathComponent.hasSuffix(".ocr.txt")
+            guard isImage || isOcrText else { continue }
             if let p = pattern, !u.path.localizedCaseInsensitiveContains(p) { continue }
             out.append(u)
         }

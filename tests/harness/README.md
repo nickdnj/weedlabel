@@ -39,6 +39,39 @@ With `--refine`, a final Claude call ingests the run digest + current
 instructions and proposes concrete, quoted prompt edits → `proposed-prompts.md`,
 **never auto-applied**.
 
+## Live progress (long runs)
+
+A full sweep is slow (Apple Foundation Models is strictly serial). `progress.py`
+gives a realtime, redrawing progress bar you can watch in a **separate terminal**
+while an agent drives the run.
+
+The bar reads a shared `tests/harness/.progress.json`. Two writers cooperate:
+
+- **The harness writes its own bars per-label** — `OCR`, `Apple`, `Claude` — as it
+  actually works (see `ProgressReporter.swift`). No agent action needed for these;
+  just run the harness and the bars move. Writes are atomic, so the watcher never
+  sees a half-written file, and all writes funnel through one actor so the
+  overlapped Apple‖Claude loops don't race.
+- **An orchestrating agent drives the surrounding steps** with the CLI below
+  (e.g. an `Overall` step bar, or a `score` bar around `score.py`).
+
+```bash
+# In YOUR terminal — live bar, redraws ~4x/sec, exits when the run reports done:
+python3 progress.py watch
+
+# What an agent calls around the steps the harness itself doesn't cover:
+python3 progress.py start --phase Overall --total 3 --note "OCR+extract → score → gate"
+python3 progress.py set   --phase Overall --current 1 --total 3 --note "running harness"
+swift run HighNotesHarness                 # fills OCR/Apple/Claude on its own
+python3 progress.py set   --phase score --current 1 --total 1 --note "scoring run.json"
+python3 score.py results/<run>/run.json
+python3 progress.py done                   # watch shows the final frame, then exits
+```
+
+Override the state-file path with `--file <path>` or `$HN_PROGRESS_FILE` (set the
+same env for the harness to keep them in sync). `progress.py clear` removes it.
+`.progress.json` is runtime state — keep it out of git.
+
 ## Two kinds of measurement (read this)
 
 - **Agreement** (`index.md`, the Comparator) — where Apple and Claude differ. This

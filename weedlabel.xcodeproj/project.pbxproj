@@ -44,6 +44,7 @@
 		A5C642906D9A6A773FFAF47A /* LogBookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5C3AF5102B27F968BCFBD6 /* LogBookView.swift */; };
 		AE804BD1E7E9974B4E658028 /* StrainOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */; };
 		AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */ = {isa = PBXBuildFile; fileRef = C599ED0461A67389D4F940CA /* ProductType+Display.swift */; };
+		B409EF9CDDB85623022D79CF /* LogImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45D117E693DEE8C5DA57FE1B /* LogImageStore.swift */; };
 		BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6931CE4F5C707585B52846C9 /* PostScanView.swift */; };
 		CA0A3CFCFCEC0CC1BD4EF368 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5009B08A5116D6385CA5FBCD /* ContentView.swift */; };
 		D1ADEE090AE91343D0657F87 /* TipJarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06044AB8E9FB987FD56F171 /* TipJarTests.swift */; };
@@ -81,6 +82,7 @@
 		303060CD4222C3426F7446A2 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3C6F9E8F085BB50271753BB3 /* StrainNameFixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameFixer.swift; sourceTree = "<group>"; };
 		41AFA1C72E21FB7293A6B2DD /* ProductTypeInferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTypeInferenceTests.swift; sourceTree = "<group>"; };
+		45D117E693DEE8C5DA57FE1B /* LogImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogImageStore.swift; sourceTree = "<group>"; };
 		4C644794E83AC6B1EF2967DF /* ScanModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanModel.swift; sourceTree = "<group>"; };
 		4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P6ValidatorTests.swift; sourceTree = "<group>"; };
 		5009B08A5116D6385CA5FBCD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -210,6 +212,7 @@
 				FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */,
 				E99D93418105C99800D9CC8F /* ExtractionService.swift */,
 				56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */,
+				45D117E693DEE8C5DA57FE1B /* LogImageStore.swift */,
 				1B1C4222DB0C0DCE9CF6645C /* LogStore.swift */,
 				C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */,
 				8AF42EFFA2E2075194C619AF /* PipelineProtocols.swift */,
@@ -333,6 +336,7 @@
 				97F362F5C00BF8B53E560277 /* LabelSanityChecker.swift in Sources */,
 				A5C642906D9A6A773FFAF47A /* LogBookView.swift in Sources */,
 				3B89AFE3640007FB39B74299 /* LogEntryDetailView.swift in Sources */,
+				B409EF9CDDB85623022D79CF /* LogImageStore.swift in Sources */,
 				E3422BC37E4D4CA4B13BFC0A /* LogStore.swift in Sources */,
 				37E80C2CA9520B8DCDCA7485 /* OCRPreprocessor.swift in Sources */,
 				8D028793F0D3B04023AC5DB6 /* OnboardingView.swift in Sources */,

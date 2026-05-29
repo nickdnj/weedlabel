@@ -97,8 +97,8 @@ actor ExtractionService {
     static let metadataInstructions: String = """
     Extract NJ-CRC cannabis label metadata from OCR text. Rules:
     1. Dates → ISO YYYY-MM-DD format.
-    2. Strain: the full cultivar name only — strip the brand prefix and the weight. The name may wrap across two lines (e.g. "Blue Candy" then "Rain" → "Blue Candy Rain"); reassemble it into the complete name. NEVER a terpene or cannabinoid name, and never a lot/batch-code line.
-    3. productType: use the dosage form printed on the label. "Inhalable Product", or a net weight in grams (e.g. 28g, 3.5g), means an inhalable type — flower unless it explicitly says pre-roll or vape — and is NEVER an edible. Milligram dosing or words like gummies/chocolate/lozenge mean edible.
+    2. Strain: the full cultivar name only — strip the brand prefix and the weight. The name may wrap across two lines (e.g. "Blue Candy" then "Rain" → "Blue Candy Rain"); reassemble it into the complete name. NEVER a terpene or cannabinoid name, never a lot/batch-code line, never the cultivator/brand name, and NEVER a warning, directions, or marketing line (e.g. "psychosis", "intoxicating effects", "Poison Control", "Keep out of the reach of children").
+    3. productType: use the dosage form printed on the label. "Inhalable Product", or a net weight in grams (e.g. 28g, 3.5g), means an inhalable type — flower unless it explicitly says pre-roll or vape — and is NEVER an edible. "Tincture" → tincture; "Topical"/"Balm"/"Salve" → topical; gummies/chocolate/lozenge or milligram-per-serving dosing → edible.
     4. Net weight includes the unit, e.g. "28g".
     5. qrCodes: include only opaque barcode payloads such as Metrc seed-to-sale tags. Do not include phone numbers, addresses, license numbers, or other readable text. Do not invent or echo example values.
     6. Null when not printed. Copy values verbatim.
@@ -107,8 +107,8 @@ actor ExtractionService {
     static let chemistryInstructions: String = """
     Extract cannabinoid and terpene percentages from NJ-CRC cannabis label OCR text. Rules:
     1. Cannabinoid mapping: THCA→thca, Δ9-THC or Delta-9-THC→delta9thc, CBG→cbg, CBD→cbd. A bare "THC:" in the totals area is Total THC→totalThc, not delta9thc.
-    2. Δ9-THC is always small (under ~5% on flower); a large value near "THC" is Total THC.
-    3. Terpenes go in their named slots: myrcene, limonene, linalool, betaCaryophyllene, pinene, humulene. AlphaPinene and BetaPinene both contribute to pinene.
+    2. Map cannabinoids by their PRINTED LABEL, never by magnitude. On flower/pre-roll, Δ9-THC is small (under ~5%) and a large value near a bare "THC" is Total THC. On vapes and concentrates, Δ9-THC AND Total THC can BOTH be large (60-90%) while THCA is near zero — still assign each to the field named on the label (THCA:→thca, Δ9-THC:/D9-THC:→delta9thc, bare THC:→totalThc). Never swap them because one looks "too big".
+    3. Terpenes go in their named slots: myrcene, limonene, linalool, betaCaryophyllene, pinene, humulene. pinene = Alpha-Pinene + Beta-Pinene (they print as two separate lines; sum them, or use whichever one is present).
     4. Null when not printed. Copy values verbatim — never compute or estimate.
     """
 
