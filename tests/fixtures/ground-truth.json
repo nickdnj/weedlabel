@@ -1,0 +1,195 @@
+{
+  "_conventions": {
+    "_doc": "Hand-authored truth for the HighNotes harness scorer (score.py). Keyed by fixture image FILENAME (cannabis labels have no folder-slug ground truth like wine appellations, so each must be read off the label by a human once). Assert ONLY fields you can confidently read off the label; OMIT anything absent/illegible — omitted/null fields are NOT scored. ProductType values: flower | vape | edible | concentrate | preRoll | tincture | topical | other.",
+    "string_fields": "strainName/cultivator: case-insensitive, whitespace-folded; pass if the truth is contained in the model value (handles trailing brand/weight noise)",
+    "productType": "exact enum match (storageKey)",
+    "numeric_cannabinoids_pct": "totalThc/totalCbd/thca/delta9thc/cbd/cbg/totalCannabinoids — percent as printed; scored within +/-0.5 absolute (labels round; OCR drops a digit)",
+    "numeric_terpenes_pct": "myrcene/limonene/linalool/betaCaryophyllene/pinene/humulene/totalTerpenes — percent; scored within +/-0.1 absolute",
+    "weight_dates": "netWeight scored by digits+unit; harvestDate/expirationDate scored as ISO YYYY-MM-DD exact",
+    "dominantTerpene": "TRUTH-ONLY convenience field — the single highest-% terpene on the label. NOT a CannabisLabel field; scored against whichever terpene the model reports highest.",
+    "omitted_or_null": "field not present on the label OR not confidently read -> leave it out -> not scored",
+    "_firstpass_note": "IMG_* entries filled first-pass by Claude vision off the photos (not the app). VERIFY before trusting, especially terpene %s and the blurry pre-roll (IMG_0783). 'pinene' omitted throughout because labels print Alpha+Beta pinene separately and the single field is ambiguous. Edibles are mg-dosed, so their cannabinoid %s are omitted (don't map to the %% fields). Several files are rotations/dupes of the same product."
+  },
+
+  "zips-blue-candy-rain.jpeg": {
+    "_comment": "The canonical canary (CLAUDE.md). Cylindrical tin photographed sideways = worst-case OCR. These are the TRUE printed values; totalThc is the NJAC-derived 0.877*THCA+d9 the label prints.",
+    "strainName": "Blue Candy Rain",
+    "cultivator": "Fresh Grow",
+    "productType": "flower",
+    "netWeight": "28g",
+    "thca": 29.73,
+    "delta9thc": 1.45,
+    "cbg": 0.49,
+    "totalCannabinoids": 32.25,
+    "totalThc": 27.52,
+    "dominantTerpene": "limonene",
+    "myrcene": 0.84,
+    "limonene": 1.83,
+    "linalool": 0.84,
+    "betaCaryophyllene": 0.44,
+    "humulene": 0.13,
+    "totalTerpenes": 5.03,
+    "harvestDate": "2025-12-10"
+  },
+
+  "IMG_0774.jpg": {
+    "_comment": "Kynd Caramel Gelato (H) Flower 3.5g, Garden State Dispensary. totalThc 32.22 = 0.877*35.45 + 1.13.",
+    "strainName": "Caramel Gelato",
+    "cultivator": "Garden State Dispensary",
+    "productType": "flower",
+    "netWeight": "3.5g",
+    "licenseNumber": "C000067",
+    "thca": 35.45,
+    "delta9thc": 1.13,
+    "totalThc": 32.22,
+    "totalCbd": 0.0,
+    "cbg": 0.47,
+    "dominantTerpene": "myrcene",
+    "myrcene": 1.62,
+    "limonene": 0.32,
+    "betaCaryophyllene": 0.32,
+    "linalool": 0.31,
+    "humulene": 0.09,
+    "expirationDate": "2026-10-06"
+  },
+
+  "IMG_0775.jpg": {
+    "_comment": "Kynd Sleep Bedtime Blueberry (I) gummies, Ayr Wellness NJ. mg-dosed edible (~100.3mg THC/pkg) so cannabinoid %s omitted.",
+    "strainName": "Bedtime Blueberry",
+    "cultivator": "Ayr Wellness NJ",
+    "productType": "edible",
+    "netWeight": "37.7g",
+    "licenseNumber": "C000033",
+    "expirationDate": "2027-02-03"
+  },
+
+  "IMG_0776.jpg": {
+    "_comment": "Zips - Blue Candy Rain - 28g flower (grower Fresh Grow; Zips is brand). Same product as zips-blue-candy-rain.jpeg.",
+    "strainName": "Blue Candy Rain",
+    "cultivator": "Fresh Grow",
+    "productType": "flower",
+    "netWeight": "28g",
+    "licenseNumber": "C000186",
+    "thca": 29.73,
+    "delta9thc": 1.45,
+    "totalThc": 27.52,
+    "totalCbd": 0.0,
+    "cbg": 0.49,
+    "totalCannabinoids": 32.25,
+    "dominantTerpene": "limonene",
+    "limonene": 1.83,
+    "myrcene": 0.84,
+    "linalool": 0.84,
+    "betaCaryophyllene": 0.44,
+    "humulene": 0.13,
+    "totalTerpenes": 5.03,
+    "harvestDate": "2025-12-10",
+    "expirationDate": "2026-07-25"
+  },
+
+  "IMG_0777.jpg": {
+    "_comment": "Kynd Lollipopz (I) Flower 3.5g, Garden State Dispensary. totalThc 25.65 = 0.877*29.05 + 0.17.",
+    "strainName": "Lollipopz",
+    "cultivator": "Garden State Dispensary",
+    "productType": "flower",
+    "netWeight": "3.5g",
+    "licenseNumber": "C000067",
+    "thca": 29.05,
+    "delta9thc": 0.17,
+    "totalThc": 25.65,
+    "totalCbd": 0.0,
+    "cbg": 0.35,
+    "dominantTerpene": "limonene",
+    "limonene": 0.65,
+    "betaCaryophyllene": 0.54,
+    "linalool": 0.29,
+    "myrcene": 0.17,
+    "humulene": 0.14,
+    "expirationDate": "2026-08-24"
+  },
+
+  "IMG_0778.jpg": {
+    "_comment": "Zips - Warheadz - 28g flower, Fresh Grow. totalThc 22.18 = 0.877*21.74 + 3.11.",
+    "strainName": "Warheadz",
+    "cultivator": "Fresh Grow",
+    "productType": "flower",
+    "netWeight": "28g",
+    "licenseNumber": "C000186",
+    "thca": 21.74,
+    "delta9thc": 3.11,
+    "totalThc": 22.18,
+    "totalCbd": 0.0,
+    "cbg": 0.12,
+    "totalCannabinoids": 25.16,
+    "dominantTerpene": "betaCaryophyllene",
+    "betaCaryophyllene": 1.14,
+    "limonene": 0.68,
+    "myrcene": 0.37,
+    "linalool": 0.31,
+    "humulene": 0.26,
+    "totalTerpenes": 3.26,
+    "harvestDate": "2025-07-07",
+    "expirationDate": "2026-08-31"
+  },
+
+  "IMG_0779.jpg": {
+    "_comment": "Same product as IMG_0775 (Bedtime Blueberry gummies), photographed rotated.",
+    "strainName": "Bedtime Blueberry",
+    "cultivator": "Ayr Wellness NJ",
+    "productType": "edible",
+    "netWeight": "37.7g",
+    "licenseNumber": "C000033"
+  },
+
+  "IMG_0780.jpeg": {
+    "_comment": "Garden Society red tin; strain name not visible on the photographed face; mg-dosed, low %. Partial truth only.",
+    "cultivator": "Garden Society",
+    "licenseNumber": "M000127",
+    "expirationDate": "2026-02-15"
+  },
+
+  "IMG_0781.jpeg": {
+    "_comment": "Same product as IMG_0775 (Bedtime Blueberry gummies).",
+    "strainName": "Bedtime Blueberry",
+    "cultivator": "Ayr Wellness NJ",
+    "productType": "edible",
+    "netWeight": "37.7g",
+    "licenseNumber": "C000033",
+    "expirationDate": "2027-02-03"
+  },
+
+  "IMG_0782.jpg": {
+    "_comment": "Kynd Uplift Sour Watermelon (S) gummies, Garden State Dispensary. mg-dosed edible (~109.4mg THC/pkg) so %s omitted.",
+    "strainName": "Sour Watermelon",
+    "cultivator": "Garden State Dispensary",
+    "productType": "edible",
+    "netWeight": "38.8g",
+    "licenseNumber": "M000033",
+    "expirationDate": "2026-04-05"
+  },
+
+  "IMG_0783.jpg": {
+    "_comment": "Kynd Cookies & Cream Blend (H) Pre-Roll 1g, Garden State Dispensary. Small/blurry print: thca + terpenes NOT confidently legible, so omitted.",
+    "strainName": "Cookies & Cream",
+    "cultivator": "Garden State Dispensary",
+    "productType": "preRoll",
+    "netWeight": "1g",
+    "licenseNumber": "C000067",
+    "totalThc": 22.46,
+    "totalCbd": 0.0
+  },
+
+  "njcrc-official-gummies-front.png": {
+    "_comment": "The official NJ-CRC example label (front). Cannabis-Infused Gummies, 'Lamb's Bread' (Cannabis Sativa). mg-dosed edible (100mg THC/pkg, 10mg/serving) so cannabinoid %s omitted.",
+    "strainName": "Lamb's Bread",
+    "productType": "edible",
+    "netWeight": "28.35g"
+  },
+
+  "njcrc-official-gummies-back.png": {
+    "_comment": "Official NJ-CRC example label (back). Made by Cannabis Farms; Beyond Use Date 11/12/23. Read by human off the image 2026-05-28.",
+    "cultivator": "Cannabis Farms",
+    "productType": "edible",
+    "expirationDate": "2023-11-12"
+  }
+}

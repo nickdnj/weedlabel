@@ -1,0 +1,10 @@
+{
+  "_comment": "Golden regression set: CLEAN labels both Apple and Claude read well, with an accuracy floor. score.py --golden scores ONLY these labels' asserted ground-truth fields and FAILS if Apple's mean field accuracy drops below `accuracy_floor`. A forward TRIPWIRE against a stochastic model, NOT a brittle single-run hard floor — the floor (0.75) sits well below the observed pooled accuracy (~0.9) so normal run-to-run variance doesn't trip it. Re-confirm the set after a few stable runs; widen as ground truth grows. Keyed by fixture filename. Selected 2026-05-28 from run 20260529-023002 (Apple>=88%, Claude>=100% each).",
+  "accuracy_floor": 0.75,
+  "labels": [
+    "zips-blue-candy-rain.jpeg",
+    "IMG_0778.jpg",
+    "IMG_0782.jpg",
+    "njcrc-official-gummies-back.png"
+  ]
+}
