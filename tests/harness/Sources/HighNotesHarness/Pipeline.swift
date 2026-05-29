@@ -39,29 +39,27 @@ enum Pipeline {
         // 1. Merge in QR codes the OCR/barcode pass found (FM doesn't see them).
         l.qrCodes = dedupe(label.qrCodes + qrCodes)
 
-        // 2. Total-THC/Δ9 and THCA/Total-THC swap correction, then null out
-        //    impossible magnitudes (lot codes mis-parsed as cannabinoids).
-        l.fixSwappedThcFields()
-        l.clampImplausibleValues()
-        // 2b. Re-read terpenes from the OCR (model mis-slots them; pinene is
-        //     split across Alpha-/Beta-Pinene lines).
-        l.reconcileTerpenes(ocrText: ocrText)
-
-        // 3. Recover a real strain name when the model latched onto a chemical
-        //    compound name (e.g. "Limonene"), a warning line, the cultivator, or
-        //    an OCR fragment of one.
-        let fixed = StrainNameFixer.fix(strain: l.strainName, cultivator: l.cultivator, ocrText: ocrText)
-        if fixed.didFix { l.strainName = fixed.strain }
-
-        // 4. (name-override resolve — no saved corrections in a batch eval)
-
-        // 5. Deterministic product-type from explicit printed wording
-        //    ("Inhalable Product" → flower), overriding a name-biased FM guess.
+        // 2. Deterministic product-type from explicit printed wording
+        //    ("Inhalable Product"/"Flower" → flower), overriding a name-biased FM
+        //    guess. Done BEFORE the THCA/Δ9 swap fix because that fix is gated to
+        //    flower/pre-roll — a label mis-typed "edible" would skip it.
         if let inferred = ProductTypeInference.infer(ocrText: ocrText), inferred != l.productType {
             l.productType = inferred
         }
 
-        // 6. (product-type override — no saved corrections in a batch eval)
+        // 3. Total-THC/Δ9 and THCA/Total-THC swap correction, then null out
+        //    impossible magnitudes (lot codes mis-parsed as cannabinoids).
+        l.fixSwappedThcFields()
+        l.clampImplausibleValues()
+        // 3b. Re-read terpenes from the OCR (model mis-slots them; pinene is
+        //     split across Alpha-/Beta-Pinene lines).
+        l.reconcileTerpenes(ocrText: ocrText)
+
+        // 4. Recover a real strain name when the model latched onto a chemical
+        //    compound name (e.g. "Limonene"), a warning line, the cultivator, or
+        //    an OCR fragment of one.
+        let fixed = StrainNameFixer.fix(strain: l.strainName, cultivator: l.cultivator, ocrText: ocrText)
+        if fixed.didFix { l.strainName = fixed.strain }
 
         return l
     }

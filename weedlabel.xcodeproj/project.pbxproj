@@ -11,8 +11,10 @@
 		0250A8E6324AE4DC94A32182 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CBC43ECFC65FC5558775200 /* Assets.xcassets */; };
 		02EC0A4A5B5A850A7F21CA6C /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A7E33B825214CFC29CC6B5 /* AboutView.swift */; };
 		109FE728A5D2B682E9D014F6 /* FieldDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */; };
+		11120B719E3E3F366F971936 /* LabelIsolator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4195B83EE20D12BB8D3C4BD2 /* LabelIsolator.swift */; };
 		1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */; };
 		2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */; };
+		2360737925292DAEB224437A /* ZoomableImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7DBA2FED8868D693E3BBF3 /* ZoomableImageView.swift */; };
 		288B220A9D089C5D1039EE46 /* DataScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240631CA58BB0C2F38763B93 /* DataScannerView.swift */; };
 		2F4C447F91EEB40E68565D1F /* ProductTypeInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 802A72828911CF48B262245C /* ProductTypeInference.swift */; };
 		2FB4B46D19113FA8F911C015 /* StrainOverrideStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2E3B0F92071D4FC7640A4C /* StrainOverrideStore.swift */; };
@@ -81,6 +83,7 @@
 		240631CA58BB0C2F38763B93 /* DataScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataScannerView.swift; sourceTree = "<group>"; };
 		303060CD4222C3426F7446A2 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3C6F9E8F085BB50271753BB3 /* StrainNameFixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameFixer.swift; sourceTree = "<group>"; };
+		4195B83EE20D12BB8D3C4BD2 /* LabelIsolator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelIsolator.swift; sourceTree = "<group>"; };
 		41AFA1C72E21FB7293A6B2DD /* ProductTypeInferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTypeInferenceTests.swift; sourceTree = "<group>"; };
 		45D117E693DEE8C5DA57FE1B /* LogImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogImageStore.swift; sourceTree = "<group>"; };
 		4C644794E83AC6B1EF2967DF /* ScanModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanModel.swift; sourceTree = "<group>"; };
@@ -107,6 +110,7 @@
 		C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessor.swift; sourceTree = "<group>"; };
 		C50C9142BF0485CF598D3E81 /* StrainNameOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameOverrideStoreTests.swift; sourceTree = "<group>"; };
 		C599ED0461A67389D4F940CA /* ProductType+Display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProductType+Display.swift"; sourceTree = "<group>"; };
+		CC7DBA2FED8868D693E3BBF3 /* ZoomableImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableImageView.swift; sourceTree = "<group>"; };
 		D06527F36A2DD990AB0C5E9E /* SummaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryService.swift; sourceTree = "<group>"; };
 		D7F8BA1275C349BDAE3BEAEC /* StrainOverrideStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainOverrideStoreTests.swift; sourceTree = "<group>"; };
 		DD5A78E90BF0C10B14291DC4 /* OCRPreprocessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessorTests.swift; sourceTree = "<group>"; };
@@ -141,6 +145,7 @@
 				6931CE4F5C707585B52846C9 /* PostScanView.swift */,
 				4C644794E83AC6B1EF2967DF /* ScanModel.swift */,
 				1F4DE79D3C8B6BA14BAF9D1B /* TipJarView.swift */,
+				CC7DBA2FED8868D693E3BBF3 /* ZoomableImageView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -212,6 +217,7 @@
 				FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */,
 				E99D93418105C99800D9CC8F /* ExtractionService.swift */,
 				56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */,
+				4195B83EE20D12BB8D3C4BD2 /* LabelIsolator.swift */,
 				45D117E693DEE8C5DA57FE1B /* LogImageStore.swift */,
 				1B1C4222DB0C0DCE9CF6645C /* LogStore.swift */,
 				C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */,
@@ -333,6 +339,7 @@
 				288B220A9D089C5D1039EE46 /* DataScannerView.swift in Sources */,
 				910B62143DE508BB33BDFFD5 /* ExtractionService.swift in Sources */,
 				109FE728A5D2B682E9D014F6 /* FieldDetector.swift in Sources */,
+				11120B719E3E3F366F971936 /* LabelIsolator.swift in Sources */,
 				97F362F5C00BF8B53E560277 /* LabelSanityChecker.swift in Sources */,
 				A5C642906D9A6A773FFAF47A /* LogBookView.swift in Sources */,
 				3B89AFE3640007FB39B74299 /* LogEntryDetailView.swift in Sources */,
@@ -355,6 +362,7 @@
 				9EE63D408E3780CA6D5ED3FF /* SummaryService.swift in Sources */,
 				8351B8EC6E0144E2A9F4EB1B /* TipJar.swift in Sources */,
 				40BBCFDD4EB4FCADF9D093C9 /* TipJarView.swift in Sources */,
+				2360737925292DAEB224437A /* ZoomableImageView.swift in Sources */,
 				1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -7,7 +7,12 @@ import UIKit
 
 struct LogEntryDetailView: View {
     @State private var entry: LogEntry
+    @State private var showingOriginal = false
+    @State private var zoomItem: ZoomItem?
     let model: LogBookModel
+
+    /// Identifiable wrapper so the zoom viewer can be presented via `.fullScreenCover(item:)`.
+    private struct ZoomItem: Identifiable { let id = UUID(); let image: UIImage }
 
     init(entry: LogEntry, model: LogBookModel) {
         _entry = State(initialValue: entry)
@@ -17,17 +22,41 @@ struct LogEntryDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                if let image = labelImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity)
-                        .frame(maxHeight: 320)
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color.secondary.opacity(0.15))
-                        )
+                if let image = displayedImage {
+                    VStack(spacing: 8) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity)
+                            .frame(maxHeight: 320)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.15))
+                            )
+                            // Tap to inspect the label up close (pan/zoom) and
+                            // check the extracted values against the print.
+                            .overlay(alignment: .bottomTrailing) {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right.magnifyingglass")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(7)
+                                    .background(.black.opacity(0.45), in: Circle())
+                                    .padding(8)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture { zoomItem = ZoomItem(image: image) }
+                        // Only when a separate original was kept alongside the crop.
+                        if entry.originalImageFilename != nil {
+                            Button { showingOriginal.toggle() } label: {
+                                Label(showingOriginal ? "View label" : "View full photo",
+                                      systemImage: showingOriginal ? "crop" : "photo")
+                                    .font(.caption.weight(.medium))
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Brand.violet)
+                        }
+                    }
                 }
                 header
                 ratingEditor
@@ -46,6 +75,9 @@ struct LogEntryDetailView: View {
         // Persist note/rating edits. LogEntry is Equatable, so this fires only on
         // actual change.
         .onChange(of: entry) { _, updated in model.update(updated) }
+        .fullScreenCover(item: $zoomItem) { item in
+            ZoomableImageView(image: item.image)
+        }
     }
 
     private var header: some View {
@@ -142,9 +174,13 @@ struct LogEntryDetailView: View {
             .foregroundStyle(i <= entry.rating ? Brand.green : Color.secondary.opacity(0.35))
     }
 
-    /// The saved scan image, if this entry has one.
-    private var labelImage: UIImage? {
-        entry.imageFilename.flatMap(LogImageStore.loadFull)
+    /// Image shown at the top: the isolated label by default, the full original
+    /// when the user toggles (only available if a separate original was kept).
+    private var displayedImage: UIImage? {
+        if showingOriginal, let orig = entry.originalImageFilename {
+            return LogImageStore.loadFull(orig)
+        }
+        return entry.imageFilename.flatMap(LogImageStore.loadFull)
     }
 
     private func sectionLabel(_ text: String) -> some View {

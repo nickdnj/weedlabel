@@ -55,6 +55,22 @@ enum LogImageStore {
         return full
     }
 
+    /// Write the full original photo for an entry (no thumbnail — it's only shown
+    /// on demand on the detail screen). Filename "<id>_orig.jpg".
+    @discardableResult
+    static func saveOriginal(_ image: UIImage, id: UUID) -> String? {
+        let name = "\(id.uuidString)_orig.jpg"
+        guard let data = downscaled(image, maxEdge: fullMaxEdge).jpegData(compressionQuality: fullQuality) else {
+            return nil
+        }
+        do {
+            try data.write(to: url(for: name), options: [.atomic])
+            return name
+        } catch {
+            return nil
+        }
+    }
+
     static func loadFull(_ filename: String) -> UIImage? {
         UIImage(contentsOfFile: url(for: filename).path)
     }

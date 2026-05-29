@@ -23,10 +23,14 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
     /// The user's own journaling: a free-text note and a 0–5 rating (0 = unrated).
     var note: String
     var rating: Int
-    /// Filename of the saved scan image in `LogImageStore` (Documents/images/),
-    /// or nil for entries saved before image capture existed / live-only scans
-    /// with no still. Optional so old logbook.json decodes unchanged.
+    /// Primary saved image in `LogImageStore` (Documents/images/) — the isolated,
+    /// deskewed label crop when one was found, else the full capture. Nil for
+    /// entries saved before image capture / live-only scans. Optional so old
+    /// logbook.json decodes unchanged.
     var imageFilename: String?
+    /// The full original photo, kept alongside the crop for context/debugging.
+    /// Nil when no separate crop was made (then `imageFilename` IS the original).
+    var originalImageFilename: String?
 
     init(
         id: UUID = UUID(),
@@ -38,7 +42,8 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
         strainSourceNote: String? = nil,
         note: String = "",
         rating: Int = 0,
-        imageFilename: String? = nil
+        imageFilename: String? = nil,
+        originalImageFilename: String? = nil
     ) {
         self.id = id
         self.dateScanned = dateScanned
@@ -50,6 +55,7 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
         self.note = note
         self.rating = rating
         self.imageFilename = imageFilename
+        self.originalImageFilename = originalImageFilename
     }
 }
 
@@ -96,14 +102,18 @@ final class FileLogStore: LogStoring {
     }
 
     func delete(id: UUID) {
-        if let name = byID[id]?.imageFilename { LogImageStore.delete(name) }
+        if let entry = byID[id] {
+            entry.imageFilename.map(LogImageStore.delete)
+            entry.originalImageFilename.map(LogImageStore.delete)
+        }
         byID[id] = nil
         save()
     }
 
     func removeAll() {
         for entry in byID.values {
-            if let name = entry.imageFilename { LogImageStore.delete(name) }
+            entry.imageFilename.map(LogImageStore.delete)
+            entry.originalImageFilename.map(LogImageStore.delete)
         }
         byID.removeAll()
         save()

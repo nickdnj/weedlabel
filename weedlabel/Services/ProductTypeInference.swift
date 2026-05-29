@@ -22,9 +22,15 @@ enum ProductTypeInference {
             || lower.contains("disposable") || lower.contains("510 thread") {
             return .vape
         }
-        // Generic inhalable wording — NJ-CRC labels print "Inhalable Product".
-        // Defaults to flower, the dominant inhalable form.
-        if lower.contains("inhalable") {
+        // Inhalable flower signals. NJ-CRC labels print "Inhalable Product", but
+        // brand labels (e.g. Kynd) instead print the class word "Flower" and
+        // "Directions: Light and Inhale" — AND a "Serving Size / Servings Per
+        // Unit" block that would otherwise trip the edible check below. Treat any
+        // of these as flower so smokable product isn't mislabeled edible (which
+        // also re-enables the THCA/Δ9 swap fix, gated to flower/pre-roll).
+        // "\bflower\b" avoids matching strain names like "Wildflower".
+        if lower.contains("inhalable") || lower.contains("inhale")
+            || lower.range(of: #"\bflower\b"#, options: .regularExpression) != nil {
             return .flower
         }
         // Tincture / topical FIRST — their explicit form words are authoritative

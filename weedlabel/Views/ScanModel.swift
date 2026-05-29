@@ -52,6 +52,10 @@ final class ScanModel {
     private(set) var lastSeenQRs: [String] = []
     /// The high-res still captured at confirm time, shown on the preview screen.
     private(set) var capturedImage: UIImage?
+    /// Deskewed crop of just the label (LabelIsolator), when one was found. OCR
+    /// runs on this, and it's saved as the primary Log Book image; nil falls back
+    /// to the full `capturedImage`.
+    private(set) var isolatedImage: UIImage?
     /// Bridge to the live scanner for high-res photo capture. Passed to
     /// DataScannerView, which populates its weak controller reference.
     let scannerController = ScannerController()
@@ -116,6 +120,7 @@ final class ScanModel {
         lastSeenOcr = ""
         lastSeenQRs = []
         capturedImage = nil
+        isolatedImage = nil
         phase = .scanning
         let extraction = self.extraction
         let summary = self.summary
@@ -157,12 +162,15 @@ final class ScanModel {
         Task { [weak self] in
             guard let self else { return }
 
-            // High-res capture + OCR.
+            // High-res capture → isolate the label → OCR the deskewed crop.
             var image: UIImage?
             var stillResult: StaticImageOCR.Result?
+            var isolated: UIImage?
             if let captured = await self.scannerController.capturePhoto() {
                 image = captured
-                stillResult = try? await StaticImageOCR.recognize(in: captured)
+                let (result, iso) = await self.isolateAndOCR(captured)
+                stillResult = result
+                isolated = iso
             }
 
             // If the user backed out (rescan/cancel) while we were capturing,
@@ -170,6 +178,7 @@ final class ScanModel {
             guard case .capturing = self.phase else { return }
 
             if let image { self.capturedImage = image }
+            self.isolatedImage = isolated
             if let result = stillResult {
                 let text = result.ocrText.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !text.isEmpty {
@@ -213,12 +222,14 @@ final class ScanModel {
         lastSeenOcr = ""
         lastSeenQRs = []
         capturedImage = image
+        isolatedImage = nil
         phase = .capturing
         Task { [weak self] in
             guard let self else { return }
-            let result = try? await StaticImageOCR.recognize(in: image)
+            let (result, isolated) = await self.isolateAndOCR(image)
             // Bail if the user navigated away while OCR was running.
             guard case .capturing = self.phase else { return }
+            self.isolatedImage = isolated
             if let result {
                 let text = result.ocrText.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !text.isEmpty {
@@ -230,12 +241,34 @@ final class ScanModel {
         }
     }
 
+    /// Isolate the label, OCR the deskewed crop, and fall back to the full image
+    /// when isolation fails or the crop yields too little text. Returns the OCR
+    /// result plus the isolated crop (nil when none was used) for display/saving.
+    private func isolateAndOCR(_ original: UIImage) async -> (result: StaticImageOCR.Result?, isolated: UIImage?) {
+        // Detection is CPU-bound Vision work — keep it off the main actor.
+        let isolated = await Task.detached { LabelIsolator.isolate(original) }.value
+        guard let isolated else {
+            return (try? await StaticImageOCR.recognize(in: original), nil)
+        }
+        let cropResult = try? await StaticImageOCR.recognize(in: isolated)
+        let cropText = cropResult?.ocrText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if cropText.count >= 20 {
+            return (cropResult, isolated)   // deskewed crop is the OCR + saved image
+        }
+        // Sparse crop → detection likely grabbed the wrong region. Prefer the
+        // full image if it OCRs better, and drop the bad crop.
+        let fullResult = try? await StaticImageOCR.recognize(in: original)
+        let fullText = fullResult?.ocrText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return fullText.count > cropText.count ? (fullResult, nil) : (cropResult, isolated)
+    }
+
     /// User rejected the preview — return to scanning.
     func rescan() {
         cancelAutoCaptureCountdown()
         lastSeenOcr = ""
         lastSeenQRs = []
         capturedImage = nil
+        isolatedImage = nil
         phase = .scanning
     }
 
@@ -397,10 +430,19 @@ final class ScanModel {
     func saveToLogBook() {
         guard case .ready(let label, let summary, _, let insight) = phase else { return }
         let text = summary?.text ?? SummaryService.buildFallback(label, strainInsight: insight)
-        // Persist the scanned/imported image alongside the entry (deleted with it
-        // in FileLogStore.delete). Keyed by the entry id so the two stay matched.
+        // Persist the scan image(s) alongside the entry (deleted with it in
+        // FileLogStore.delete), keyed by the entry id. When the label was
+        // isolated, the deskewed crop is the primary image and the full photo is
+        // kept as the original; otherwise the full photo is the primary.
         let id = UUID()
-        let imageFilename = capturedImage.flatMap { LogImageStore.save($0, id: id) }
+        var primaryName: String?
+        var originalName: String?
+        if let isolated = isolatedImage {
+            primaryName = LogImageStore.save(isolated, id: id)
+            originalName = capturedImage.flatMap { LogImageStore.saveOriginal($0, id: id) }
+        } else {
+            primaryName = capturedImage.flatMap { LogImageStore.save($0, id: id) }
+        }
         let entry = LogEntry(
             id: id,
             label: label,
@@ -408,7 +450,8 @@ final class ScanModel {
             summaryDidFallback: summary?.didFallback ?? true,
             strainLean: insight?.lean,
             strainSourceNote: insight?.sourceNote,
-            imageFilename: imageFilename
+            imageFilename: primaryName,
+            originalImageFilename: originalName
         )
         logStore.add(entry)
         cancel()
@@ -455,6 +498,16 @@ final class ScanModel {
                 // Merge in QR codes captured by VisionKit (FM doesn't see them)
                 var withQRs = extracted
                 withQRs.qrCodes = (extracted.qrCodes + qrCodes).reduced
+                // Deterministic product-type from explicit label wording
+                // ("Inhalable Product"/"Flower" → not edible). Done BEFORE the
+                // THC swap fix below, which is gated to flower/pre-roll — a label
+                // mis-typed "edible" by the model would otherwise skip it.
+                if let inferredType = ProductTypeInference.infer(ocrText: ocr), inferredType != withQRs.productType {
+                    #if DEBUG
+                    canaryLog("Product-type inference: \(withQRs.productType.storageKey) → \(inferredType.storageKey) (from label text)")
+                    #endif
+                    withQRs.productType = inferredType
+                }
                 // Post-fix: model frequently mis-assigns Total THC into
                 // delta9thc on labels where they appear adjacent in OCR.
                 withQRs.fixSwappedThcFields()
@@ -486,15 +539,6 @@ final class ScanModel {
                     canaryLog("Name override applied: '\(withQRs.strainName)' → '\(resolvedName)'")
                     #endif
                     withQRs.strainName = resolvedName
-                }
-                // Deterministic product-type correction from explicit label
-                // wording (e.g. "Inhalable Product" → not an edible), overriding
-                // a name-biased FM guess. A saved user override still wins below.
-                if let inferredType = ProductTypeInference.infer(ocrText: ocr), inferredType != withQRs.productType {
-                    #if DEBUG
-                    canaryLog("Product-type inference: \(withQRs.productType.storageKey) → \(inferredType.storageKey) (from label text)")
-                    #endif
-                    withQRs.productType = inferredType
                 }
                 // Apply a saved product-type correction for this strain, if any,
                 // so the user's fix survives across future scans.
