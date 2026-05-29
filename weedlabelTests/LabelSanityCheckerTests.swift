@@ -235,6 +235,64 @@ import Testing
         #expect(label.thca == 25.0)
         #expect(label.totalThc == 65.0)
     }
+
+    // MARK: - Implausible-magnitude clamp (lot-code contamination)
+
+    @Test func clampNullsImpossibleCannabinoid() {
+        // Observed: a batch line "9 - 120925- Blueberry Caviar" parsed into
+        // totalCannabinoids as 120925. No cannabinoid percent can exceed 100.
+        var label = Self.zips
+        label.totalCannabinoids = 120925
+        label.thca = 150
+        label.clampImplausibleValues()
+        #expect(label.totalCannabinoids == nil)
+        #expect(label.thca == nil)
+    }
+
+    @Test func clampNullsImpossibleTerpene() {
+        var label = Self.zips
+        label.myrcene = 95.0   // a terpene can't be 95%
+        label.clampImplausibleValues()
+        #expect(label.myrcene == nil)
+    }
+
+    @Test func clampLeavesPlausibleValuesAlone() {
+        var label = Self.zips
+        label.thca = 29.73
+        label.totalThc = 27.52
+        label.cbg = 0.49
+        label.myrcene = 0.84
+        label.totalTerpenes = 5.03
+        label.clampImplausibleValues()
+        #expect(label.thca == 29.73)
+        #expect(label.totalThc == 27.52)
+        #expect(label.cbg == 0.49)
+        #expect(label.myrcene == 0.84)
+        #expect(label.totalTerpenes == 5.03)
+    }
+
+    @Test func clampNullsZeroTerpenes() {
+        // Guided generation defaults absent terpenes to 0.0, cluttering the
+        // result screen with "0.00%" rows. A 0% terpene is absent → null it.
+        var label = Self.zips
+        label.myrcene = 0.0
+        label.limonene = 0.84
+        label.totalTerpenes = 0.0
+        label.clampImplausibleValues()
+        #expect(label.myrcene == nil)
+        #expect(label.limonene == 0.84)
+        #expect(label.totalTerpenes == nil)
+    }
+
+    @Test func clampKeepsZeroCannabinoid() {
+        // "CBD 0.00%" / "Total CBD 0.00%" is a real printed value — keep it.
+        var label = Self.zips
+        label.totalCbd = 0.0
+        label.cbd = 0.0
+        label.clampImplausibleValues()
+        #expect(label.totalCbd == 0.0)
+        #expect(label.cbd == 0.0)
+    }
 }
 
 // MARK: - Empty-chemistry fallback message

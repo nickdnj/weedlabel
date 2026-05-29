@@ -23,10 +23,11 @@ actor SummaryService {
     }
 
     func summarize(_ label: CannabisLabel, strainInsight: StrainInsight? = nil) async throws -> SummaryOutcome {
-        if session == nil {
-            session = LanguageModelSession(instructions: SummaryService.systemInstructions)
-        }
-        guard let session else { throw SummaryError.noSession }
+        // FRESH session per call (see ExtractionService): a reused session
+        // accumulates context across scans and degrades output. The regenerate
+        // loop below intentionally reuses THIS call's session — its conditioning
+        // prompt refers to "your previous response".
+        let session = LanguageModelSession(instructions: SummaryService.systemInstructions)
 
         let promptText = Self.buildUserPrompt(label, strainInsight: strainInsight)
 
@@ -126,7 +127,10 @@ actor SummaryService {
 
     // MARK: - User prompt
 
-    private static func buildUserPrompt(_ label: CannabisLabel, strainInsight: StrainInsight? = nil) -> String {
+    // `internal` (not `private`) so the eval harness's Claude side can send the
+    // byte-identical user prompt — comparison fairness depends on Apple and
+    // Claude seeing the exact same parsed-label text. See tests/harness/.
+    static func buildUserPrompt(_ label: CannabisLabel, strainInsight: StrainInsight? = nil) -> String {
         var lines: [String] = []
         lines.append("Strain: \(label.strainName)")
         lines.append("Cultivator: \(label.cultivator)")

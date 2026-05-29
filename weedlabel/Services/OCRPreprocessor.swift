@@ -150,7 +150,13 @@ enum OCRPreprocessor {
         // ZIP-with-state-and-comma patterns common in addresses.
         #"\b[A-Z]{2}[,.]\s*\d{5}\b"#,
         // Street addresses starting with a number then street type word.
-        #"^\s*\d+\s+\w+.*\b(street|st\.?|road|rd\.?|drive|dr\.?|highway|hwy\.?|avenue|ave\.?|lane|ln\.?|boulevard|blvd\.?)\b"#
+        #"^\s*\d+\s+\w+.*\b(street|st\.?|road|rd\.?|drive|dr\.?|highway|hwy\.?|avenue|ave\.?|lane|ln\.?|boulevard|blvd\.?)\b"#,
+        // Batch/lot identifier lines like "9 - 120925- Blueberry Caviar" — a
+        // small index, a long date-or-lot number, then a batch name. The FM
+        // otherwise pulls "9" and "120925" into totalThc / totalCannabinoids
+        // (observed on the Zips canary: totalCannabinoids = 120925). These
+        // carry no schema field, so dropping the whole line is safe.
+        #"^\s*\d{1,3}\s*-\s*\d{5,}\s*-"#
     ]
 
     static func stripBoilerplate(_ text: String) -> String {
@@ -158,8 +164,11 @@ enum OCRPreprocessor {
         // First, fast substring scan to avoid building regexes when nothing
         // boilerplate-shaped is present.
         let hasAnyPhrase = boilerplatePhrases.contains { lower.contains($0) }
+        // .anchorsMatchLines so a `^`-anchored pattern (street address, lot
+        // code) is detected anywhere in the multi-line text, not only at the
+        // very start — the precheck below runs against the whole text.
         let hasAnyPattern = boilerplatePatterns.contains { pattern in
-            (try? NSRegularExpression(pattern: pattern, options: .caseInsensitive))
+            (try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .anchorsMatchLines]))
                 .flatMap { regex in
                     regex.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text))
                 } != nil
@@ -167,7 +176,7 @@ enum OCRPreprocessor {
         if !hasAnyPhrase && !hasAnyPattern { return text }
 
         let compiledPatterns: [NSRegularExpression] = boilerplatePatterns.compactMap {
-            try? NSRegularExpression(pattern: $0, options: .caseInsensitive)
+            try? NSRegularExpression(pattern: $0, options: [.caseInsensitive, .anchorsMatchLines])
         }
 
         let lines = text.components(separatedBy: .newlines)

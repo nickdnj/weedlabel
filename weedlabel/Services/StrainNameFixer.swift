@@ -57,12 +57,13 @@ enum StrainNameFixer {
             if isAddressLikeLine(line) { continue }
             if !containsLetter(line) { continue }
             if isSuspicious(line) { continue }
+            if isChemotypeLine(line) { continue }     // "High THC, Low CBD" etc.
             // Strip trailing weight/format markers like " - 28g" or " Flower 3.5g"
             // to leave a cleaner strain name.
             let cleaned = stripTrailingFormatMarkers(line)
-            if !cleaned.isEmpty {
-                return cleaned
-            }
+            if cleaned.isEmpty { continue }
+            if isFormOnlyLine(cleaned) { continue }   // "Gummies", "Inhalable Product"
+            return cleaned
         }
         return nil
     }
@@ -74,12 +75,46 @@ enum StrainNameFixer {
     ///      always a sign the model latched onto a chemical-compound name or
     ///      OCR fragment of one (e.g. "Beicaropa" near "0.64%").
     static func fix(strain: String, ocrText: String) -> (strain: String, didFix: Bool) {
-        let badName = isSuspicious(strain) || looksLikeChemicalFragment(strain, in: ocrText)
+        let badName = isSuspicious(strain)
+            || looksLikeChemicalFragment(strain, in: ocrText)
+            || isAbsentFromOCR(strain, in: ocrText)
         guard badName else { return (strain, false) }
         if let candidate = candidateFromOCR(ocrText) {
             return (candidate, true)
         }
         return (strain, false)
+    }
+
+    /// True when NONE of the strain name's significant words appear in the OCR
+    /// text — a near-certain sign the model invented the name rather than read
+    /// it. The dominant failure mode this catches: the model regurgitating the
+    /// "Blue Candy Rain" example baked into the @Guide schema description when it
+    /// can't read the real name, stamping it onto unrelated products.
+    ///
+    /// Token-based on purpose: a real name often wraps across OCR lines (e.g.
+    /// "Zips - Blue Candy" / "Rain - 28g"), so a contiguous substring test would
+    /// wrongly reject it. Requiring that not even ONE significant word is present
+    /// keeps the false-positive rate near zero — a name with any word on the
+    /// label is left alone.
+    static func isAbsentFromOCR(_ name: String, in ocrText: String) -> Bool {
+        let tokens = significantTokens(name)
+        guard !tokens.isEmpty else { return false }   // nothing to judge → don't flag
+        let hay = ocrText.lowercased()
+        return !tokens.contains { hay.contains($0) }
+    }
+
+    /// Words worth matching against the label: ≥3 chars, lowercased, with
+    /// product-form / dosage words stripped (those appear on every label and
+    /// would mask a hallucinated name).
+    static func significantTokens(_ name: String) -> [String] {
+        let formWords: Set<String> = [
+            "flower", "vape", "vapes", "edible", "edibles", "concentrate",
+            "preroll", "prerolls", "roll", "rolls", "tincture", "topical",
+            "gummy", "gummies", "disposable", "cartridge", "cart", "inhalable",
+            "product", "the", "and"
+        ]
+        let parts = name.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted)
+        return parts.filter { $0.count >= 3 && !formWords.contains($0) }
     }
 
     /// True when `name` appears in the OCR on a line that also contains a
@@ -149,6 +184,35 @@ enum StrainNameFixer {
 
     private static func containsLetter(_ line: String) -> Bool {
         line.contains(where: { $0.isLetter })
+    }
+
+    /// A potency/chemotype descriptor line like "High THC, Low CBD" or
+    /// "Moderate THC, Moderate CBG" — never a strain name. Recovered by the
+    /// hallucination fallback otherwise (observed on the Garden Society tin).
+    private static func isChemotypeLine(_ line: String) -> Bool {
+        let lower = line.lowercased()
+        if lower.contains("potency analysis") || lower.contains("terpene content") { return true }
+        guard let regex = try? NSRegularExpression(
+            pattern: #"\b(high|low|moderate)\b.{0,20}\b(thc|thca|cbd|cbg|cbn|cbc)\b"#,
+            options: .caseInsensitive
+        ) else { return false }
+        return regex.firstMatch(in: line, options: [], range: NSRange(line.startIndex..., in: line)) != nil
+    }
+
+    /// A line that is only product-form / dosage wording once weight markers are
+    /// stripped — e.g. "Gummies", "Inhalable Product", "Pre-Roll". Not a strain.
+    private static func isFormOnlyLine(_ line: String) -> Bool {
+        let tokens = line.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { $0.count >= 2 }
+        guard !tokens.isEmpty else { return true }
+        let formWords: Set<String> = [
+            "flower", "vape", "vapes", "edible", "edibles", "concentrate",
+            "preroll", "prerolls", "pre", "roll", "rolls", "tincture", "topical",
+            "gummy", "gummies", "disposable", "cartridge", "cart", "inhalable",
+            "product", "smokable", "smokeable"
+        ]
+        return tokens.allSatisfy { formWords.contains($0) }
     }
 
     /// Drop trailing format/weight markers like " Flower 3.5g" or " - 28g".
