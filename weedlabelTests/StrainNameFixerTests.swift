@@ -176,4 +176,86 @@ struct StrainNameFixerTests {
         """
         #expect(!StrainNameFixer.looksLikeChemicalFragment("Some Long Strain Name", in: ocr))
     }
+
+    // MARK: - Hallucinated-name detection (regurgitated @Guide example)
+    // Device/harness case 2026-05-28: on labels it couldn't read, the model
+    // stamped "Blue Candy Rain" (the example in the strainName @Guide) onto
+    // unrelated products. A real name's words must appear somewhere on the label.
+
+    @Test func absentNameDetectedAsHallucinated() {
+        let ocr = """
+        Panda Farms
+        Sundae Driver
+        Pre-Roll 1g
+        THCA: 25.0%
+        """
+        #expect(StrainNameFixer.isAbsentFromOCR("Blue Candy Rain", in: ocr))
+    }
+
+    @Test func presentNameNotHallucinatedEvenWhenWrappedAcrossLines() {
+        // The canary: the name is really on the label, split across two lines
+        // with chemistry between. Token match must keep it.
+        let ocr = """
+        Zips - Blue Candy
+        THCA: 29.73 %
+        Rain - 28g
+        """
+        #expect(!StrainNameFixer.isAbsentFromOCR("Blue Candy Rain", in: ocr))
+    }
+
+    @Test func significantTokensDropFormWords() {
+        let toks = StrainNameFixer.significantTokens("Kynd Caramel Gelato (H) Flower")
+        #expect(toks.contains("caramel"))
+        #expect(toks.contains("gelato"))
+        #expect(!toks.contains("flower"))   // form word stripped
+        #expect(!toks.contains("h"))         // <3 chars dropped
+    }
+
+    @Test func fixRecoversWhenNameIsHallucinated() {
+        // "Blue Candy Rain" stamped on a Panda Farms pre-roll whose OCR contains
+        // none of those words → drop the hallucination, recover from the label.
+        let ocr = """
+        Panda Farms
+        Pre-Roll 1g
+        1A4110300003C8D000041730
+        THCA: 25.0%
+        """
+        let result = StrainNameFixer.fix(strain: "Blue Candy Rain", ocrText: ocr)
+        #expect(result.didFix)
+        #expect(result.strain != "Blue Candy Rain")
+    }
+
+    @Test func candidateSkipsChemotypeLine() {
+        // The Garden Society tin recovered "Moderate THC, Moderate CBG" as a
+        // strain. A potency/chemotype line must be skipped.
+        let ocr = """
+        High THC, Low CBD
+        Wedding Cake
+        3.5g
+        """
+        #expect(StrainNameFixer.candidateFromOCR(ocr) == "Wedding Cake")
+    }
+
+    @Test func candidateSkipsFormOnlyLine() {
+        // "Gummies" / "Inhalable Product" are product forms, not strains.
+        let ocr = """
+        Inhalable Product
+        Gummies
+        Sour Watermelon
+        """
+        #expect(StrainNameFixer.candidateFromOCR(ocr) == "Sour Watermelon")
+    }
+
+    @Test func fixKeepsHallucinatedNameWhenNothingRecoverable() {
+        // Absent from OCR, but the OCR is all metadata → no candidate → keep
+        // original rather than blanking the field.
+        let ocr = """
+        1A4110300003C8D000041730
+        License # C000186
+        07/25/2026
+        """
+        let result = StrainNameFixer.fix(strain: "Blue Candy Rain", ocrText: ocr)
+        #expect(!result.didFix)
+        #expect(result.strain == "Blue Candy Rain")
+    }
 }

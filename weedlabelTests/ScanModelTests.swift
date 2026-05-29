@@ -48,7 +48,7 @@ struct ScanModelTests {
             summary: MockSummarizer(result: .success(.ai(text: "fine.", regenerationsTried: 0))),
             availability: MockAvailability(value: .available)
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         guard case .ready(_, let summary, _, _) = model.phase else {
             Issue.record("expected .ready, got \(model.phase)")
@@ -69,7 +69,7 @@ struct ScanModelTests {
             availability: MockAvailability(value: .available),
             logStore: logStore
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         #expect(logStore.entries().isEmpty) // nothing saved until the user opts in
 
@@ -95,7 +95,7 @@ struct ScanModelTests {
             summary: summarizer,
             availability: MockAvailability(value: .available)
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         guard case .ready(_, let summary, let warning, _) = model.phase else {
             Issue.record("expected .ready, got \(model.phase)")
@@ -114,7 +114,7 @@ struct ScanModelTests {
             summary: summarizer,
             availability: MockAvailability(value: .deviceNotEligible)
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         guard case .ready(_, let summary, _, _) = model.phase else {
             Issue.record("expected .ready, got \(model.phase)")
@@ -132,7 +132,7 @@ struct ScanModelTests {
             summary: MockSummarizer(result: .success(.ai(text: "x", regenerationsTried: 0))),
             availability: MockAvailability(value: .available)
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         guard case .failed = model.phase else {
             Issue.record("expected .failed, got \(model.phase)")
@@ -147,7 +147,7 @@ struct ScanModelTests {
             summary: MockSummarizer(result: .failure(SummaryFailed())),
             availability: MockAvailability(value: .available)
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         guard case .ready(_, let summary, _, _) = model.phase else {
             Issue.record("expected .ready, got \(model.phase)")
@@ -404,7 +404,7 @@ struct ScanModelTests {
             availability: MockAvailability(value: .available),
             strainOverrides: store
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         // cleanFlowerLabel strain is "Test Strain" — no marker, no lineage →
         // no insight initially.
@@ -434,7 +434,7 @@ struct ScanModelTests {
             availability: MockAvailability(value: .available),
             strainOverrides: store
         )
-        model.handleCapture(ocr: "fake ocr input", qrCodes: [])
+        model.handleCapture(ocr: "Test Strain\nfake ocr input", qrCodes: [])
         try await waitForPipeline(model)
         // Override applied → sativa insight.
         guard case .ready(_, _, _, let insight) = model.phase else {

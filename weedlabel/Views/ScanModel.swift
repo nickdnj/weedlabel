@@ -452,6 +452,9 @@ final class ScanModel {
                 // Post-fix: model frequently mis-assigns Total THC into
                 // delta9thc on labels where they appear adjacent in OCR.
                 withQRs.fixSwappedThcFields()
+                // Post-fix: null out impossible magnitudes (e.g. a batch code
+                // mis-parsed as "120925% cannabinoids") rather than display them.
+                withQRs.clampImplausibleValues()
                 // Post-fix: model sometimes picks a terpene/cannabinoid name
                 // as strainName (e.g. "Limonene"). Override with first
                 // plausible OCR line when this happens.

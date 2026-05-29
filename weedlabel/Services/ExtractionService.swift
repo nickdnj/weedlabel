@@ -26,16 +26,15 @@ actor ExtractionService {
     func extract(rawOcrText: String) async throws -> CannabisLabel {
         let safeOcr = Self.preprocessedOCR(rawOcrText, logPrefix: true)
 
-        let metadataSession = self.metadataSession ?? {
-            let s = LanguageModelSession(instructions: Self.metadataInstructions)
-            self.metadataSession = s
-            return s
-        }()
-        let chemistrySession = self.chemistrySession ?? {
-            let s = LanguageModelSession(instructions: Self.chemistryInstructions)
-            self.chemistrySession = s
-            return s
-        }()
+        // FRESH sessions per extraction. A LanguageModelSession accumulates
+        // conversation history across respond() calls, so reusing one session
+        // across many scans makes its context grow until extraction silently
+        // collapses to empty output (observed in the eval harness: a reused
+        // session decays to all-nil after ~5 scans). A clean session per call
+        // keeps every scan independent. The on-device model stays warm (loaded)
+        // regardless — warm() still preloads it — so this costs no real latency.
+        let metadataSession = LanguageModelSession(instructions: Self.metadataInstructions)
+        let chemistrySession = LanguageModelSession(instructions: Self.chemistryInstructions)
 
         // Pass 1 — metadata.
         let metadata = try await metadataSession.respond(
@@ -70,7 +69,10 @@ actor ExtractionService {
         return cleaned
     }
 
-    private static func metadataPrompt(_ ocr: String) -> String {
+    // `internal` (not `private`) so the eval harness's Claude side can send the
+    // byte-identical user prompt — comparison fairness depends on Apple and
+    // Claude seeing the exact same text. See tests/harness/.
+    static func metadataPrompt(_ ocr: String) -> String {
         """
         Extract the product metadata fields from this NJ-CRC cannabis label OCR \
         text. Apply the rules in your instructions strictly.
@@ -80,7 +82,7 @@ actor ExtractionService {
         """
     }
 
-    private static func chemistryPrompt(_ ocr: String) -> String {
+    static func chemistryPrompt(_ ocr: String) -> String {
         """
         Extract the cannabinoid and terpene percentages from this NJ-CRC cannabis \
         label OCR text. Apply the rules in your instructions strictly.

@@ -234,4 +234,33 @@ extension CannabisLabel {
             self.totalThc = thcaVal
         }
     }
+
+    /// Null out physically-impossible magnitudes — almost always OCR/lot-code
+    /// noise the model mis-parsed (observed: a batch line "9 - 120925- …" pulled
+    /// into totalCannabinoids as 120925). A single cannabinoid percent cannot
+    /// exceed 100; a single terpene percent realistically cannot exceed ~30.
+    /// Defense-in-depth behind the OCRPreprocessor lot-line stripper — better to
+    /// show "not legible" than "120925% THC". Run AFTER fixSwappedThcFields so a
+    /// promoted-then-absurd value is also caught.
+    mutating func clampImplausibleValues() {
+        // Cannabinoids: only out-of-range values are noise. A printed 0.00% (e.g.
+        // "CBD 0.00%") is legitimate and kept.
+        func clampCannabinoid(_ v: inout Double?) {
+            if let x = v, x > 100 || x < 0 { v = nil }
+        }
+        // Terpenes: out-of-range OR exactly 0. A terpene that isn't detected is
+        // absent, not "0.00%" — guided generation defaults these Double fields to
+        // 0, which otherwise litters the result screen with seven "0.00%" rows on
+        // edibles and labels with no terpene panel. Ground truth never asserts a
+        // 0.0 terpene, so dropping them is purely a cleanup.
+        func clampTerpene(_ v: inout Double?) {
+            if let x = v, x > 30 || x <= 0 { v = nil }
+        }
+        clampCannabinoid(&thca); clampCannabinoid(&delta9thc); clampCannabinoid(&cbd)
+        clampCannabinoid(&cbg); clampCannabinoid(&totalCannabinoids)
+        clampCannabinoid(&totalThc); clampCannabinoid(&totalCbd)
+        clampTerpene(&myrcene); clampTerpene(&limonene); clampTerpene(&linalool)
+        clampTerpene(&betaCaryophyllene); clampTerpene(&pinene)
+        clampTerpene(&humulene); clampTerpene(&totalTerpenes)
+    }
 }

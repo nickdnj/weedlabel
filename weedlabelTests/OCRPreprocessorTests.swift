@@ -505,4 +505,27 @@ struct OCRPreprocessorTests {
         #expect(out.contains("27.52%"))
         #expect(out.contains("0.00%"))
     }
+
+    // MARK: - Lot/batch-code line stripping
+
+    @Test func stripsLotCodeLine() {
+        // "9 - 120925- Blueberry Caviar" is a batch identifier; the FM was
+        // pulling "9" and "120925" into cannabinoid fields. Drop the whole line.
+        let input = """
+        Blue Candy Rain
+        9 - 120925- Blueberry Caviar
+        THCA: 29.73%
+        """
+        let out = OCRPreprocessor.clean(input)
+        #expect(!out.contains("120925"))
+        #expect(out.contains("Blue Candy Rain"))
+        #expect(out.contains("THCA: 29.73%"))
+    }
+
+    @Test func keepsNormalDashedProductLine() {
+        // A normal hyphenated product line must NOT be mistaken for a lot code.
+        let input = "Zips - Blue Candy Rain - 28g"
+        let out = OCRPreprocessor.clean(input)
+        #expect(out.contains("Blue Candy Rain"))
+    }
 }

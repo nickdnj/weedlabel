@@ -63,3 +63,12 @@ fastlane/test_output
 
 # Canary run artifacts (logs + screenshots from headless simulator runs)
 .canary-runs/
+.gstack/
+
+# HighNotesHarness (tests/harness) — timestamped runs + SPM build + py caches.
+# The fixture label images live in assets/validation/ and ARE tracked; only the
+# harness's own outputs and build products are ignored.
+tests/harness/results/
+tests/harness/.build/
+__pycache__/
+*.pyc
