@@ -57,7 +57,8 @@ tap"). Single CTA. Persists only a "seen it" flag. (`OnboardingView`/`RootView`.
 - App mark + tagline ("Your AI budtender").
 - FM-availability copy if AI is unavailable (older hardware / AI off / not ready)
   — scanning still works, AI summary is gated.
-- Primary CTA: **Scan a label**.
+- Primary CTA: **Scan a label**; secondary: **Import from Photos**.
+- Top-right **info button** → About (which is where the tip jar lives).
 - Debug-only row: **Run canary**, **Prompt Lab** (`#if DEBUG`).
 
 ### 3.3 Scanning  *(the bank-check-inspired capture)*
@@ -120,10 +121,31 @@ correction, a "Remove my correction" option reverts to marker/lineage.
 ### 3.9 Failed
 Friendly message + "Try again." Used for empty OCR, extraction errors, etc.
 
-### 3.10 Debug surfaces (not shipped)
+### 3.10 About
+- Privacy promise restated (on-device / no tracking / links-go-to-web / "smart,
+  still learning"), **Replay the intro**, **Clear local data**, and the
+  **Tip jar** entry — plus the "built by one person… no catch, enjoy 🌿" note.
+
+### 3.11 Tip jar  *(reached only from About — never pushy)*
+- Opens as a sheet. Header: gradient heart + "HighNotes is free, forever… drop a
+  little something in the jar — totally optional." Repeat tippers see a quiet
+  "you've chipped in before — thank you 💚".
+- **Three tiers**, cheapest → most generous, each a card with emoji + name +
+  blurb + a gradient price pill: 🌱 A little love · 🌿 Good vibes · 💚 Big love.
+  (Prices come from StoreKit, so they're correct per storefront.)
+- Tapping a tier runs the purchase (spinner on that row, others dimmed). Success
+  → a warm **Thank you!** state. Cancel/failure is a silent no-op — tiers stay
+  tappable, nothing scolds.
+- Footer reinforces the deal: "a thank-you, not a paywall — every feature is
+  free whether you tip or not."
+- Load failure (rare) → a friendly "couldn't reach the App Store… try again."
+
+### 3.12 Debug surfaces (not shipped)
 - **Prompt Lab** — edit extraction/summary prompts + OCR, toggle preprocessor,
   Run vs Baseline A/B, copy prompts/JSON, view parsed result.
 - **Run canary** — fixture-driven full pipeline for Simulator testing.
+- **Tip jar shortcuts** — `-ShowTipJar` opens the sheet on launch;
+  `-TipJarSampleData` renders the tiers without StoreKit (for screenshots).
 
 ---
 
@@ -161,4 +183,6 @@ Friendly message + "Try again." Used for empty OCR, extraction errors, etc.
   **strain name** (the lot-code confusion case)?
 - Where does session/consumption **journaling** live when it returns (a tab? a
   post-save prompt)?
-- Tipping placement *if/when* added (deferred; keep generous, never a wall).
+- Tip jar reach — currently About-only (deliberately low-key). Open question
+  whether a *gentle, dismissible* post-scan nudge is worth adding, or whether
+  About-only better protects the "never pushy" feel.

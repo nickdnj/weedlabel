@@ -13,8 +13,11 @@
 
 A single native iOS app. All processing — OCR, structured extraction, summary
 generation, interpretation, persistence — happens **on-device**. There is no
-server, no account, no analytics SDK. The app makes **no network calls itself**;
-the only egress is the user tapping an external link, which hands off to Safari.
+server, no account, no analytics SDK. The app makes **no network calls itself**,
+with one bounded exception: the optional **tip jar** uses StoreKit, which talks
+to the App Store when (and only when) the user chooses to tip — Apple-mediated,
+no user data, no developer backend. Otherwise the only egress is the user
+tapping an external link, which hands off to Safari.
 
 Two Apple on-device ML systems do the heavy lifting:
 - **Vision / VisionKit** — live text + barcode recognition (DataScanner) and
@@ -52,8 +55,9 @@ trust and testability live.
 | Still OCR / barcodes | Vision (`VNRecognizeTextRequest`, `VNDetectBarcodesRequest`) |
 | Structured extraction / summary | FoundationModels (`@Generable`, `LanguageModelSession`) |
 | Persistence | Foundation `Codable` → JSON (Documents); `@AppStorage` |
+| Tip jar | StoreKit 2 (`Product`, `Transaction`); local `TipJar.storekit` for testing |
 | Project gen | xcodegen (`project.yml`) |
-| Tests | swift-testing (`@Test`/`@Suite`), 199 tests |
+| Tests | swift-testing (`@Test`/`@Suite`), 224 tests |
 
 ---
 
@@ -150,6 +154,12 @@ Camera ──DataScanner──> live OCR text ──> FieldDetector ──> chip
   product-shaped `FMAvailability`.
 - **`PipelineProtocols`** — `LabelExtracting`, `LabelSummarizing`,
   `AvailabilityProviding` seams; production conformances + `DefaultAvailabilityProvider`.
+- **`TipJar`** — `@MainActor @Observable` StoreKit 2 service: loads the three
+  consumable tiers, flattens each `Product` into a `TipTier` value type (so the
+  view is StoreKit-free and previewable), runs/finishes purchases, listens to
+  `Transaction.updates` for out-of-band (Ask-to-Buy) approvals, and keeps a
+  local-only "tips given" count. Tips are consumables — not restorable, no
+  entitlements. Off the scan pipeline entirely; the one network-touching service.
 
 ### 3.3 Views
 - **`RootView` / `OnboardingView`** — first-run gate (`@AppStorage`).
@@ -161,6 +171,10 @@ Camera ──DataScanner──> live OCR text ──> FieldDetector ──> chip
   **Profile card** (strain insight + inline editor), AI-summary hero, chips,
   **Learn more** links, disclaimer, source data.
 - **`PromptLabView`** (Debug) — prompt iteration with A/B baseline.
+- **`AboutView`** — privacy promise, replay-intro, clear-local-data, and the
+  **tip jar** entry (the only place tipping is surfaced).
+- **`TipJarView`** — the tip sheet: three tiers, warm copy, thank-you state;
+  renders `TipTier`s from `TipJar`, styled on `Brand`.
 - **`Brand.swift`** — centralized HighNotes visual system.
 
 ---
@@ -187,6 +201,9 @@ Camera ──DataScanner──> live OCR text ──> FieldDetector ──> chip
 - **Strain overrides** → `strain-overrides.json` in the app's Documents
   directory (Codable). Keyed by normalized strain name.
 - **Onboarding flag** → `@AppStorage("highnotes.hasSeenWelcome.v1")`.
+- **Tips-given count** → `UserDefaults("highnotes.tipJar.tipsGiven.v1")`, an
+  integer used only to show a warm "you've chipped in before" state. Local-only,
+  never synced; no purchase history or receipts stored (StoreKit owns those).
 - **Canary assets** → bundled `validation/` folder (Debug fixture path).
 - No PII, no scan history persisted yet (journaling deferred). Camera-only
   permission (`NSCameraUsageDescription`).
@@ -199,14 +216,25 @@ Camera ──DataScanner──> live OCR text ──> FieldDetector ──> chip
   `DEVELOPMENT_TEAM: 5VPR237YHV` is set in `settings.base` so regens preserve
   device signing (previously a recurring "signing issue").
 - **Portrait-locked** (`UISupportedInterfaceOrientations: Portrait`).
-- **Tests:** 199 across 11 suites, all deterministic (FM is mocked via the
-  protocol seams). FM works in the iOS-26 Simulator; Vision still-OCR and
-  `capturePhoto()` are device-only, so those paths are exercised on hardware and
-  the Simulator uses the bundled OCR fixture (`-AutoRunCanary`).
+- **StoreKit testing:** the run scheme references `TipJar.storekit` (set via
+  `project.yml` `storeKitConfiguration`), so the tip-jar purchase flow works in
+  the Simulator **when launched from Xcode**. A raw `simctl launch` does *not*
+  inject the config — products come back empty and the sheet shows its retry
+  state. Real production tips need the IDs registered in App Store Connect.
+- **Tests:** 224 across 14 suites, all deterministic (FM is mocked via the
+  protocol seams; the StoreKit purchase flow isn't unit-tested — `TipJarTests`
+  covers the pure tier/emoji/state logic, the live flow runs via `TipJar.storekit`).
+  FM works in the iOS-26 Simulator; Vision still-OCR and `capturePhoto()` are
+  device-only, so those paths are exercised on hardware and the Simulator uses
+  the bundled OCR fixture (`-AutoRunCanary`).
 
 ### 6.1 Debug-only surface (remove before App Store)
 - `PromptLabView.swift` + the `#if DEBUG` button/sheet wiring in `ContentView`.
 - `ScanModel.runBundledCanary()` / `runBundledCanaryLiveOCR()` + launch args.
+- Tip-jar launch args + `#if DEBUG` wiring: `-ShowTipJar` (jump to the sheet, in
+  `RootView`), `-TipJarSampleData` (render tiers without StoreKit, in `TipJar`),
+  and `TipJar.sampleTiers`. The `TipJar.storekit` file itself stays — it's the
+  local test config, not shipped surface.
 - `extractWithCustomInstructions` / `summarizeWithCustomInstructions`.
 - `CannabisLabel.diagnosticJSON`, `[CANARY]` logging.
 

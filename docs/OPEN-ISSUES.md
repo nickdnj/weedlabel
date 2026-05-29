@@ -102,9 +102,12 @@ rewritten. Low risk on NJ-CRC labels; documented for future label formats.
 ### OI-13 · Strip Debug surface before App Store  **(P1 at ship)**
 Remove before submission: `PromptLabView.swift` + its `#if DEBUG` wiring in
 `ContentView`; `ScanModel.runBundledCanary()/runBundledCanaryLiveOCR()` + launch
-args; `extractWithCustomInstructions`/`summarizeWithCustomInstructions`;
-`CannabisLabel.diagnosticJSON`; `[CANARY]` logging. All are `#if DEBUG`-gated, so
-a Release build excludes them — verify before submitting.
+args; the tip-jar debug hooks (`-ShowTipJar` in `RootView`, `-TipJarSampleData`
++ `TipJar.sampleTiers` in `TipJar`); `extractWithCustomInstructions`/
+`summarizeWithCustomInstructions`; `CannabisLabel.diagnosticJSON`; `[CANARY]`
+logging. All are `#if DEBUG`-gated, so a Release build excludes them — verify
+before submitting. (Note: `TipJar.storekit` is *not* debug surface to strip —
+it's the local StoreKit test config; harmless to leave, just unused in Release.)
 
 ### OI-14 · Repo/target still named `weedlabel`  **(P3)**
 Product is **HighNotes**; the repo, Xcode target, and bundle id prefix still say
@@ -119,14 +122,24 @@ Apple's review of cannabis apps is a live risk. Keep all shipped copy
 informational, non-promotional, 21+. The on-device + no-commerce posture helps
 but doesn't guarantee approval.
 
+### OI-17 · Tip jar IAP products not yet in App Store Connect  **(P1 at ship)**
+The tip jar works end-to-end locally against `TipJar.storekit`, but real tips
+need the three consumable products (`com.demarconet.weedlabel.tip.{small,medium,
+large}`) created in App Store Connect, with matching IDs/prices, plus the paid
+developer account and the agreements/tax/banking ("Paid Apps" agreement) in
+place. Until then, production builds will load zero tiers and the sheet shows
+its retry state. No code change needed when they're registered — the IDs already
+match.
+
 ---
 
 ## Deferred by decision (not bugs — tracked so we don't lose them)
 
 - **Session/consumption journaling + analytics** — the v0.1 core; returns once
   capture is trustworthy.
-- **Monetization** — optional tipping and possibly monetized external links;
-  explicitly not built. Never paywall.
+- **Monetization** — the optional **tip jar is now built** (see OI-17 for the
+  remaining App Store Connect setup). Monetized external links remain a
+  possible-later, not-built option. Never paywall.
 - **COA fetch/parse** — link-only for now to preserve the on-device claim.
 - **iCloud / cross-device sync** of corrections.
 - **Layout-aware OCR** for two-column potency tables (only if high-res capture

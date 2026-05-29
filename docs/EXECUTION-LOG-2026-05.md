@@ -87,7 +87,8 @@ These findings drove the strategic pivot in §4.
     `OnboardingView`/`RootView`; tagline "Your AI budtender"; bold-&-playful
     visual direction; "100% on-device, no accounts, no tracking" positioning.
 
-Every step kept the test suite green; it grew from ~35 to **199 tests**.
+Every step kept the test suite green; it grew from ~35 to **199 tests** by the
+end of this build-out (and to **224** with the later tip jar + corrections work).
 
 ## 4. Scope changes (decisions that altered the plan)
 
@@ -126,6 +127,17 @@ Every step kept the test suite green; it grew from ~35 to **199 tests**.
    future revenue is optional tipping and possibly monetized external links —
    neither built now.
 
+9. **Tip jar built (2026-05-27).** Tipping moved from "deferred" to shipped in
+   code. Three StoreKit **consumable** tiers ($0.99 / $2.99 / $4.99), reached
+   only from About — never pushy. Apple requires IAP for developer tips (gl.
+   3.1.1), so external payment links were never an option. The view renders a
+   `TipTier` value type rather than StoreKit's `Product` (previewable, testable).
+   A local `TipJar.storekit` wired into the run scheme makes the whole flow
+   purchasable in the Simulator today — the only thing waiting on the paid Apple
+   account is registering the product IDs in App Store Connect. This is the one
+   network-touching part of an otherwise on-device app; documented as a bounded,
+   no-user-data exception, not a backend.
+
 ## 5. Known open issues (carried forward)
 
 - **Strain name vs lot code.** On labels where a lot code reads like a strain
@@ -140,10 +152,12 @@ Every step kept the test suite green; it grew from ~35 to **199 tests**.
 
 ## 6. Test + build status at end of period
 
-- **199 tests passing** across 11 suites (`FieldDetector`, `LabelSanityChecker`,
-  `OCRPreprocessor`, `P6Validator`, `SummaryHallucinationGuard`,
-  `SummaryFallback`, `ScanModel pipeline`, `StrainKnowledgeBase`,
-  `StrainNameFixer`, `StrainOverrideStore`, `ProductLinks`).
+- **224 tests passing** across 14 suites — the original 11 (`FieldDetector`,
+  `LabelSanityChecker`, `OCRPreprocessor`, `P6Validator`,
+  `SummaryHallucinationGuard`, `SummaryFallback`, `ScanModel pipeline`,
+  `StrainKnowledgeBase`, `StrainNameFixer`, `StrainOverrideStore`, `ProductLinks`)
+  plus `TipJar` (tip-jar logic), `ProductTypeOverrideStore`, and in-progress
+  strain-name-correction tests.
 - Build green on iPhone 17 Pro Simulator (iOS 26 SDK).
 - Device signing resolved: `DEVELOPMENT_TEAM: 5VPR237YHV` now set in
   `project.yml`, so xcodegen no longer wipes it.

@@ -72,3 +72,6 @@ tests/harness/results/
 tests/harness/.build/
 __pycache__/
 *.pyc
+
+# Claude Code loop runtime lock (transient)
+.claude/scheduled_tasks.lock
