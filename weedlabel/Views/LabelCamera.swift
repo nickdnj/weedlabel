@@ -62,8 +62,8 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     private var photoContinuation: ((UIImage?) -> Void)?
 
     // Tuning.
-    private let analysisInterval: TimeInterval = 0.25   // ~4 fps Vision/sharpness
-    private let minLabelAreaFraction: CGFloat = 0.18    // label must fill ≥18% of frame
+    private let analysisInterval: TimeInterval = 0.25   // ~4 fps analysis
+    private let minLabelFillFraction: CGFloat = 0.32    // white label must fill ≥32% of frame
     private let sharpnessThreshold: Double = 9.0        // luma-gradient variance floor
     private let readyFramesToFire = 2                   // sharp+framed frames before snap
 
@@ -201,11 +201,15 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
         lastAnalysis = now
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
 
-        // Framing: largest document/rectangle area in the frame.
-        let area = Self.largestRectangleAreaFraction(pixelBuffer)
-        guard area >= minLabelAreaFraction else {
+        // Framing: how much of the frame the WHITE LABEL fills. Document/
+        // rectangle detection locks onto the big colored bag, not the small
+        // label inside it, so it let captures fire from too far away. The label
+        // is a bright near-white block against a vivid bag — measure that
+        // directly. Hard gate: the label must fill a large share of the frame.
+        let fill = Self.brightLabelFillFraction(pixelBuffer)
+        guard fill >= minLabelFillFraction else {
             readyStreak = 0
-            report(area > 0.02 ? .tooFar : .searching)
+            report(fill > 0.06 ? .tooFar : .searching)
             return
         }
 
@@ -222,26 +226,35 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
 
-    /// Label area as a fraction of the frame (0–1). Uses document segmentation —
-    /// the same detector that reliably finds these bag-fused labels in
-    /// LabelIsolator (plain rectangle detection misses them) — falling back to
-    /// rectangle detection. Geometry only: no text, no AI reading.
-    private static func largestRectangleAreaFraction(_ pixelBuffer: CVPixelBuffer) -> CGFloat {
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
-        let doc = VNDetectDocumentSegmentationRequest()
-        if (try? handler.perform([doc])) != nil,
-           let obs = (doc.results)?.first, obs.confidence >= 0.5 {
-            return obs.boundingBox.width * obs.boundingBox.height
+    /// Fraction of the frame covered by the bright near-white label. NJ labels
+    /// are white blocks on vivid bags, so "how much of the frame is bright"
+    /// directly measures how close/centered the label is — and forces the user
+    /// to fill the frame with the LABEL, not the bag. Photometry only: no text,
+    /// no AI reading. Cheap, samples the luma plane on a coarse grid.
+    private static func brightLabelFillFraction(_ pixelBuffer: CVPixelBuffer) -> CGFloat {
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0) else { return 0 }
+        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0)
+        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, 0)
+        let rowBytes = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0)
+        let ptr = base.assumingMemoryBound(to: UInt8.self)
+        let brightCutoff: UInt8 = 170     // label white vs colored bag
+        let step = 8
+        var bright = 0, total = 0
+        var y = 0
+        while y < height {
+            let row = ptr + y * rowBytes
+            var x = 0
+            while x < width {
+                if row[x] >= brightCutoff { bright += 1 }
+                total += 1
+                x += step
+            }
+            y += step
         }
-        let rect = VNDetectRectanglesRequest()
-        rect.minimumConfidence = 0.5
-        rect.minimumAspectRatio = 0.2
-        rect.maximumObservations = 1
-        rect.minimumSize = 0.1
-        if (try? handler.perform([rect])) != nil, let obs = (rect.results)?.first {
-            return obs.boundingBox.width * obs.boundingBox.height
-        }
-        return 0
+        guard total > 0 else { return 0 }
+        return CGFloat(bright) / CGFloat(total)
     }
 
     /// Sharpness proxy: variance of horizontal luma gradients on a subsampled

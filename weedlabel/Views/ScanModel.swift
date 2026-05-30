@@ -167,6 +167,17 @@ final class ScanModel {
         labelCamera.captureNow()
     }
 
+    /// True when the OCR text contains a cannabinoid label immediately followed
+    /// by a number — the signature of a legible potency panel (THCa: 28.20,
+    /// Total THC: 25.08, D9THC: 0.35). Used to reject whole-bag shots whose
+    /// small potency print didn't resolve even though warning text did.
+    private static func potencyPanelLegible(_ text: String) -> Bool {
+        let norm = text.lowercased().replacingOccurrences(of: " ", with: "")
+        guard let re = try? NSRegularExpression(
+            pattern: #"(thca?|totalthc|d9thc|delta9)[:=]?\d"#) else { return false }
+        return re.firstMatch(in: norm, range: NSRange(norm.startIndex..., in: norm)) != nil
+    }
+
     /// Handle a sharp still from the camera (smart shutter or manual): isolate +
     /// OCR, gate on quality, then either preview it or guide the user to retake.
     private func handleCapturedFrame(_ frame: CapturedFrame) {
@@ -179,12 +190,15 @@ final class ScanModel {
             let (result, isolated) = await self.isolateAndOCR(image)
             guard case .capturing = self.phase else { return }
             let text = (result?.ocrText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            // Quality gate: need a detected label crop AND enough legible text.
-            // Otherwise reject and guide the user to retake (re-arm the shutter).
-            guard isolated != nil, text.count >= 40 else {
-                self.captureHint = (isolated == nil)
-                    ? "Center the label so it fills the frame."
-                    : "That looked blurry — hold steady and try again."
+            // Quality gate: the POTENCY PANEL must be legible, not just any text.
+            // A whole-bag shot still OCRs lots of warning text but the small
+            // cannabinoid numbers are unreadable — exactly the failure we saw. So
+            // require a cannabinoid label sitting next to a number (THCa: 28.20,
+            // Total THC: 25.08). If it's missing, the label wasn't close/sharp
+            // enough — reject and guide the user to retake (re-arm the shutter).
+            let hasPotency = Self.potencyPanelLegible(text)
+            guard isolated != nil, text.count >= 40, hasPotency else {
+                self.captureHint = "Move closer so the label fills the box, then hold steady."
                 self.capturedImage = nil
                 self.isolatedImage = nil
                 self.framing = .searching
