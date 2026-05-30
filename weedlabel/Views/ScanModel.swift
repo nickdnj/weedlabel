@@ -356,8 +356,10 @@ final class ScanModel {
 #endif
 
     func cancel() {
+        labelCamera.stop()
         cancelAutoCaptureCountdown()
         pipelineTask?.cancel()
+        captureHint = nil
         phase = .idle(availability: availability.current())
     }
 
