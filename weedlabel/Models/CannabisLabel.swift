@@ -319,14 +319,21 @@ extension CannabisLabel {
     }
 
     /// First number appearing AFTER `token` in the normalized `line`, within
-    /// [minV, maxV]. Parsing after the token handles row-grouped multi-column
-    /// lines ("thca:28.73limonene:0.68") and labels containing digits ("d9thc").
+    /// [minV, maxV] — but only within a short WINDOW right after the label. A
+    /// real value sits immediately after the colon ("d9thc:1.13"); capping the
+    /// window stops the parser from walking down a row-grouped line into an
+    /// unrelated number (observed: "d9thc: … licnumber:c000067" → grabbing 67
+    /// when OCR failed to read the value column). Handles labels with digits
+    /// ("d9thc") and merged multi-column rows ("thca:28.73limonene:0.68").
     private static func valueAfter(token: String, in line: String, minV: Double, maxV: Double) -> Double? {
         guard let r = line.range(of: token) else { return nil }
-        let after = String(line[r.upperBound...])
+        // Only the first ~10 chars after the token — enough for ":25.90%", not
+        // enough to reach a license/Metrc number further down a merged row.
+        let tail = line[r.upperBound...]
+        let window = String(tail.prefix(10))
         guard let re = try? NSRegularExpression(pattern: #"\d+(?:\.\d+)?"#) else { return nil }
-        let ns = after as NSString
-        for m in re.matches(in: after, range: NSRange(location: 0, length: ns.length)) {
+        let ns = window as NSString
+        for m in re.matches(in: window, range: NSRange(location: 0, length: ns.length)) {
             if let v = Double(ns.substring(with: m.range)), v >= minV, v <= maxV { return v }
         }
         return nil
