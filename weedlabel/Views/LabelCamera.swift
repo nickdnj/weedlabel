@@ -1,0 +1,304 @@
+import AVFoundation
+import CoreMedia
+import CoreVideo
+import UIKit
+import Vision
+
+// LabelCamera — the deliberate, focus-first capture engine that replaces the
+// VisionKit DataScanner live-OCR path. There is NO live AI reading: we do not
+// run text recognition on preview frames or auto-capture on "fields detected".
+// Instead we watch FOCUS and FRAMING and snap a single sharp, full-resolution
+// still only when the label fills the frame and is crisp — then hand that one
+// good image to the post-processing pipeline (isolate → OCR → extract).
+//
+// Outputs on the AVCaptureSession:
+//   - photo output  : the sharp still we actually extract from
+//   - video output  : low-rate frames for sharpness + label-rectangle framing
+//   - metadata output: QR / barcode (Metrc) payloads
+//
+// Threading: the session and all delegate callbacks run off the main actor on a
+// private serial queue; UI-facing state is delivered through main-actor closures
+// so the @Observable ScanModel stays the single source of truth for SwiftUI.
+
+/// What the framing analysis currently sees — drives the on-screen hint.
+enum CaptureFraming: Equatable {
+    case searching      // no label rectangle found
+    case tooFar         // label found but small — move closer
+    case holdSteady     // framed but not yet sharp / focus settling
+    case ready          // framed + sharp → about to auto-capture
+}
+
+struct CapturedFrame {
+    let image: UIImage
+    let qrCodes: [String]
+}
+
+final class LabelCamera: NSObject {
+    let session = AVCaptureSession()
+
+    // Main-actor callbacks set by ScanModel.
+    var onFraming: (@MainActor (CaptureFraming) -> Void)?
+    var onCapture: (@MainActor (CapturedFrame) -> Void)?
+    var onError: (@MainActor (String) -> Void)?
+
+    private let sessionQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.session")
+    private let videoQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.video")
+    private let photoOutput = AVCapturePhotoOutput()
+    private let videoOutput = AVCaptureVideoDataOutput()
+    private let metadataOutput = AVCaptureMetadataOutput()
+    private var device: AVCaptureDevice?
+
+    private var configured = false
+    private var armed = false                 // smart shutter active
+    private var capturing = false             // a still is in flight
+    private var readyStreak = 0               // consecutive "ready" frames
+    private var lastAnalysis = Date.distantPast
+    private var seenQRCodes: [String] = []
+    private var photoContinuation: ((UIImage?) -> Void)?
+
+    // Tuning.
+    private let analysisInterval: TimeInterval = 0.25   // ~4 fps Vision/sharpness
+    private let minLabelAreaFraction: CGFloat = 0.18    // label must fill ≥18% of frame
+    private let sharpnessThreshold: Double = 9.0        // luma-gradient variance floor
+    private let readyFramesToFire = 2                   // sharp+framed frames before snap
+
+    // MARK: - Lifecycle
+
+    /// Request access, configure the session, start running, and arm the smart
+    /// shutter. Safe to call repeatedly.
+    func start() {
+        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            guard let self else { return }
+            guard granted else {
+                Task { @MainActor in self.onError?("Camera access is off. Enable it in Settings to scan labels.") }
+                return
+            }
+            self.sessionQueue.async {
+                self.configureIfNeeded()
+                if !self.session.isRunning { self.session.startRunning() }
+                self.readyStreak = 0
+                self.armed = true
+                self.capturing = false
+            }
+        }
+    }
+
+    func stop() {
+        sessionQueue.async {
+            self.armed = false
+            if self.session.isRunning { self.session.stopRunning() }
+        }
+    }
+
+    /// Re-arm the smart shutter after a rejected/low-quality capture without
+    /// tearing down the session.
+    func rearm() {
+        sessionQueue.async {
+            self.readyStreak = 0
+            self.capturing = false
+            self.armed = true
+        }
+    }
+
+    /// Tap-to-focus at a point in normalized (0–1) device coordinates.
+    func focus(atDevicePoint point: CGPoint) {
+        sessionQueue.async {
+            guard let device = self.device, device.isFocusPointOfInterestSupported else { return }
+            do {
+                try device.lockForConfiguration()
+                device.focusPointOfInterest = point
+                device.focusMode = .autoFocus
+                if device.isExposurePointOfInterestSupported {
+                    device.exposurePointOfInterest = point
+                    device.exposureMode = .autoExpose
+                }
+                device.unlockForConfiguration()
+            } catch { /* best effort */ }
+        }
+    }
+
+    /// Manual shutter — capture now regardless of framing (override).
+    func captureNow() {
+        sessionQueue.async { self.triggerPhoto() }
+    }
+
+    // MARK: - Configuration
+
+    private func configureIfNeeded() {
+        guard !configured else { return }
+        session.beginConfiguration()
+        session.sessionPreset = .photo
+
+        guard let cam = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+              let input = try? AVCaptureDeviceInput(device: cam),
+              session.canAddInput(input) else {
+            session.commitConfiguration()
+            Task { @MainActor in self.onError?("Couldn't open the camera.") }
+            return
+        }
+        session.addInput(input)
+        device = cam
+        configureFocus(cam)
+
+        if session.canAddOutput(photoOutput) {
+            session.addOutput(photoOutput)
+            photoOutput.maxPhotoQualityPrioritization = .quality
+        }
+        if session.canAddOutput(videoOutput) {
+            videoOutput.alwaysDiscardsLateVideoFrames = true
+            videoOutput.setSampleBufferDelegate(self, queue: videoQueue)
+            session.addOutput(videoOutput)
+        }
+        if session.canAddOutput(metadataOutput) {
+            session.addOutput(metadataOutput)
+            metadataOutput.setMetadataObjectsDelegate(self, queue: videoQueue)
+            metadataOutput.metadataObjectTypes = [.qr, .pdf417, .aztec, .dataMatrix, .code128]
+        }
+        session.commitConfiguration()
+        configured = true
+    }
+
+    private func configureFocus(_ cam: AVCaptureDevice) {
+        do {
+            try cam.lockForConfiguration()
+            if cam.isFocusModeSupported(.continuousAutoFocus) { cam.focusMode = .continuousAutoFocus }
+            if cam.isAutoFocusRangeRestrictionSupported { cam.autoFocusRangeRestriction = .near }
+            if cam.isSmoothAutoFocusSupported { cam.isSmoothAutoFocusEnabled = true }
+            if cam.isExposureModeSupported(.continuousAutoExposure) { cam.exposureMode = .continuousAutoExposure }
+            cam.unlockForConfiguration()
+        } catch { /* best effort */ }
+    }
+
+    // MARK: - Smart shutter (framing + sharpness on preview frames)
+
+    private func triggerPhoto() {
+        guard configured, !capturing else { return }
+        capturing = true
+        armed = false
+        let settings = AVCapturePhotoSettings()
+        settings.photoQualityPrioritization = .quality
+        photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+
+    private func report(_ framing: CaptureFraming) {
+        Task { @MainActor in self.onFraming?(framing) }
+    }
+}
+
+// MARK: - Preview-frame analysis (sharpness + label rectangle)
+
+extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer,
+                       from connection: AVCaptureConnection) {
+        guard armed, !capturing else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastAnalysis) >= analysisInterval else { return }
+        lastAnalysis = now
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+
+        // Framing: largest document/rectangle area in the frame.
+        let area = Self.largestRectangleAreaFraction(pixelBuffer)
+        guard area >= minLabelAreaFraction else {
+            readyStreak = 0
+            report(area > 0.02 ? .tooFar : .searching)
+            return
+        }
+
+        // Sharpness on the luma plane.
+        let sharp = Self.sharpness(pixelBuffer) >= sharpnessThreshold
+        let focusing = device?.isAdjustingFocus ?? false
+        if sharp && !focusing {
+            readyStreak += 1
+            report(.ready)
+            if readyStreak >= readyFramesToFire { triggerPhoto() }
+        } else {
+            readyStreak = 0
+            report(.holdSteady)
+        }
+    }
+
+    /// Label area as a fraction of the frame (0–1). Uses document segmentation —
+    /// the same detector that reliably finds these bag-fused labels in
+    /// LabelIsolator (plain rectangle detection misses them) — falling back to
+    /// rectangle detection. Geometry only: no text, no AI reading.
+    private static func largestRectangleAreaFraction(_ pixelBuffer: CVPixelBuffer) -> CGFloat {
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        let doc = VNDetectDocumentSegmentationRequest()
+        if (try? handler.perform([doc])) != nil,
+           let obs = (doc.results)?.first, obs.confidence >= 0.5 {
+            return obs.boundingBox.width * obs.boundingBox.height
+        }
+        let rect = VNDetectRectanglesRequest()
+        rect.minimumConfidence = 0.5
+        rect.minimumAspectRatio = 0.2
+        rect.maximumObservations = 1
+        rect.minimumSize = 0.1
+        if (try? handler.perform([rect])) != nil, let obs = (rect.results)?.first {
+            return obs.boundingBox.width * obs.boundingBox.height
+        }
+        return 0
+    }
+
+    /// Sharpness proxy: variance of horizontal luma gradients on a subsampled
+    /// grid of the Y plane. Higher = crisper. Cheap, no allocation per pixel.
+    private static func sharpness(_ pixelBuffer: CVPixelBuffer) -> Double {
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0) else { return 0 }
+        let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0)
+        let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, 0)
+        let rowBytes = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0)
+        let ptr = base.assumingMemoryBound(to: UInt8.self)
+        // Sample the central region (where the label is) on a coarse grid.
+        let x0 = width / 4, x1 = width * 3 / 4
+        let y0 = height / 4, y1 = height * 3 / 4
+        let step = 4
+        var n = 0
+        var sum = 0.0, sumSq = 0.0
+        var y = y0
+        while y < y1 {
+            let row = ptr + y * rowBytes
+            var x = x0
+            while x < x1 - step {
+                let g = Double(Int(row[x]) - Int(row[x + step]))
+                sum += g; sumSq += g * g; n += 1
+                x += step
+            }
+            y += step
+        }
+        guard n > 0 else { return 0 }
+        let mean = sum / Double(n)
+        return sumSq / Double(n) - mean * mean   // variance of the gradient
+    }
+}
+
+// MARK: - Barcode / QR
+
+extension LabelCamera: AVCaptureMetadataOutputObjectsDelegate {
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject],
+                        from connection: AVCaptureConnection) {
+        for obj in metadataObjects {
+            if let m = obj as? AVMetadataMachineReadableCodeObject, let s = m.stringValue,
+               !seenQRCodes.contains(s) {
+                seenQRCodes.append(s)
+            }
+        }
+    }
+}
+
+// MARK: - Still capture
+
+extension LabelCamera: AVCapturePhotoCaptureDelegate {
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto,
+                     error: Error?) {
+        defer { capturing = false }
+        guard error == nil, let data = photo.fileDataRepresentation(),
+              let image = UIImage(data: data) else {
+            Task { @MainActor in self.onError?("Capture failed — try again.") }
+            return
+        }
+        let qrs = seenQRCodes
+        let frame = CapturedFrame(image: image, qrCodes: qrs)
+        Task { @MainActor in self.onCapture?(frame) }
+    }
+}

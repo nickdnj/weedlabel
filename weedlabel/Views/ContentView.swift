@@ -100,38 +100,85 @@ private struct ScanningView: View {
 
     var body: some View {
         ZStack {
-            DataScannerView(
-                onTextUpdate: { ocr, qrs in
-                    model.handleTextUpdate(ocr: ocr, qrCodes: qrs)
-                },
-                onError: { _ in
-                    model.cancel()
-                },
-                scannerController: model.scannerController
-            )
-            .ignoresSafeArea()
+            // AVFoundation preview — focus-first, no live OCR. Tap to focus.
+            CameraPreviewView(camera: model.labelCamera)
+                .ignoresSafeArea()
 
-            // Dim the camera outside the viewfinder. Brackets indicate the
-            // active OCR region.
+            // Brackets indicate where to place the label.
             ViewfinderOverlay()
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
             VStack {
-                FieldChipsRow(detected: model.detectedFields)
-                    .padding(.top, 20)
+                CaptureHintBanner(framing: model.framing, hint: model.captureHint)
+                    .padding(.top, 24)
                 Spacer()
-                ScannerControls(
-                    canCapture: model.canCapture,
-                    detectedCount: model.detectedFields.count,
-                    totalFields: DetectedField.allCases.count,
-                    isAutoCapturePending: model.isAutoCapturePending,
-                    autoCaptureDuration: ScanModel.autoCaptureDebounceSeconds,
+                CaptureControls(
+                    framing: model.framing,
                     onCapture: { model.confirmCapture() },
                     onCancel: { model.cancel() }
                 )
             }
         }
+    }
+}
+
+/// One-line guidance above the viewfinder: framing state, or a retake hint.
+private struct CaptureHintBanner: View {
+    let framing: CaptureFraming
+    let hint: String?
+
+    var body: some View {
+        Text(hint ?? message)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.black.opacity(0.55), in: Capsule())
+            .multilineTextAlignment(.center)
+    }
+
+    private var message: String {
+        switch framing {
+        case .searching: return "Point at the label"
+        case .tooFar:    return "Move closer — fill the frame"
+        case .holdSteady: return "Hold steady…"
+        case .ready:     return "Capturing…"
+        }
+    }
+}
+
+/// Cancel + manual shutter. The shutter glows green when the smart shutter is
+/// about to fire (framed + sharp); tapping it captures immediately.
+private struct CaptureControls: View {
+    let framing: CaptureFraming
+    let onCapture: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onCancel) {
+                Text("Cancel").font(.body.weight(.medium)).foregroundStyle(.white)
+            }
+            .frame(width: 80, alignment: .leading)
+
+            Spacer()
+
+            Button(action: onCapture) {
+                ZStack {
+                    Circle().strokeBorder(.white, lineWidth: 4).frame(width: 74, height: 74)
+                    Circle().fill(framing == .ready ? Brand.green : Color.white)
+                        .frame(width: 60, height: 60)
+                }
+            }
+            .accessibilityLabel("Capture")
+
+            Spacer()
+
+            Color.clear.frame(width: 80, height: 1)   // balances Cancel
+        }
+        .padding(.horizontal, 28)
+        .padding(.bottom, 40)
     }
 }
 
