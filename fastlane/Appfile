@@ -1,0 +1,3 @@
+app_identifier("com.demarconet.weedlabel") # bundle ID (target rename deferred)
+apple_id("nickd@demarconet.com")            # Apple Developer account email
+team_id("5VPR237YHV")                       # Apple Developer Program team

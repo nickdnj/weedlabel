@@ -1,0 +1,82 @@
+# Pocketbud — Fastlane
+#
+# Two jobs, each one command (after the API key is in place — see fastlane/README.md):
+#   bundle exec fastlane beta      → build the Beta scheme + upload to TestFlight
+#   bundle exec fastlane metadata  → push the App Store listing (text + screenshots), no binary
+#
+# Auth uses an App Store Connect API key (no 2FA prompts). Set these env vars:
+#   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH  (path to the .p8). See README.
+
+default_platform(:ios)
+
+APP_ID      = "com.demarconet.weedlabel"
+XCODEPROJ   = "weedlabel.xcodeproj"
+DERIVED_DIR = File.expand_path("~/Library/Developer/Xcode")
+
+def asc_api_key
+  app_store_connect_api_key(
+    key_id:      ENV.fetch("ASC_KEY_ID"),
+    issuer_id:   ENV.fetch("ASC_ISSUER_ID"),
+    key_filepath: ENV.fetch("ASC_KEY_PATH"),
+    in_house:    false
+  )
+end
+
+platform :ios do
+  before_all do
+    # Foundation Models toolchain lives in the full Xcode, not CommandLineTools.
+    ENV["DEVELOPER_DIR"] ||= "/Applications/Xcode.app/Contents/Developer"
+  end
+
+  desc "Build the Beta scheme and upload to TestFlight"
+  lane :beta do
+    api_key = asc_api_key
+
+    # The Beta scheme archives the Beta config, which includes the #if BETA
+    # tester-feedback feature. (The App Store release uses the `weedlabel` scheme.)
+    build_app(
+      project: XCODEPROJ,
+      scheme: "weedlabel-Beta",
+      configuration: "Beta",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "Pocketbud-Beta.ipa",
+      xcargs: "-allowProvisioningUpdates"
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_ID,
+      skip_waiting_for_build_processing: true,
+      # "What to Test" — keep in sync with docs/TESTFLIGHT-RECRUITING.md §3.
+      changelog: "Scan a few real NJ labels (flower/vape/edible). Check the strain, " \
+                 "THC%, and terpenes against the print. Correct any misreads in a tap, " \
+                 "and share the scan when prompted. Tell me anything confusing or broken."
+    )
+  end
+
+  desc "Push App Store listing metadata + screenshots (no binary)"
+  lane :metadata do
+    upload_to_app_store(
+      api_key: asc_api_key,
+      app_identifier: APP_ID,
+      skip_binary_upload: true,
+      skip_app_version_update: true,
+      overwrite_screenshots: true,
+      precheck_include_in_app_purchases: false,
+      submit_for_review: false,
+      force: true, # skip the HTML preview prompt (CI/headless)
+      primary_category: "LIFESTYLE",
+      secondary_category: "REFERENCE"
+    )
+  end
+
+  desc "Verify metadata locally without uploading (lengths, assets)"
+  lane :check_metadata do
+    UI.message("name:     #{File.read('fastlane/metadata/en-US/name.txt').length} / 30")
+    UI.message("subtitle: #{File.read('fastlane/metadata/en-US/subtitle.txt').length} / 30")
+    UI.message("keywords: #{File.read('fastlane/metadata/en-US/keywords.txt').length} / 100")
+    UI.message("promo:    #{File.read('fastlane/metadata/en-US/promotional_text.txt').length} / 170")
+    UI.message("desc:     #{File.read('fastlane/metadata/en-US/description.txt').length} / 4000")
+  end
+end

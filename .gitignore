@@ -3,6 +3,16 @@
 .AppleDouble
 .LSOverride
 Icon
+
+# Fastlane: never commit signing keys/secrets or build/report output.
+*.p8
+.env
+build/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+*.ipa
+*.xcarchive
 ._*
 
 # Xcode

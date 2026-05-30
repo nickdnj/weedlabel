@@ -1,0 +1,1 @@
+First release. Scan NJ cannabis labels, get a private on-device read on cannabinoids, terpenes, and provenance, and keep a private Log Book. Everything stays on your phone.

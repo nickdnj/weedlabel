@@ -1,0 +1,9 @@
+Pocketbud is an informational/journaling app. It reads cannabis product labels on-device using the camera and Apple Foundation Models, and shows a plain-English summary plus a private, on-device log.
+
+It does NOT sell, deliver, or facilitate the purchase of cannabis. No storefront, no ordering, no location-based retailer features. No user data leaves the device: no account, no server, no analytics, no third-party SDKs. The only network activity is the user tapping an external web link (e.g. a Certificate of Analysis).
+
+Monetization is an optional tip jar (three consumable IAPs) reached only from the About screen; it never gates any feature.
+
+Age rating 17+ (cannabis references). In-app disclaimer states informational/educational use, not medical advice, 21+.
+
+To test the AI read: use an Apple-Intelligence-capable device (iPhone 15 Pro / 16 / 17) on iOS 26 with Apple Intelligence enabled, then scan a NJ dispensary label (colon-delimited THCA/terpene format). A sample label is acceptable.

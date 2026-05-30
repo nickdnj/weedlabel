@@ -1,0 +1,21 @@
+Pocketbud is your private AI budtender. Point your iPhone at a cannabis label and Pocketbud reads the cannabinoids, terpenes, and provenance, then explains them in plain English — so you actually understand what you're about to enjoy.
+
+Everything runs on your device. No account. No tracking. Nothing is uploaded — your scans never leave your phone.
+
+WHAT IT DOES
+• Scan a label with your camera — Pocketbud reads the text and codes on-device.
+• Understand it — an on-device AI summary explains the THC/CBD, terpene profile, and what the numbers mean.
+• Know the source — cultivator, license number, harvest/expiration, and a link to the Certificate of Analysis when the label has one.
+• Keep a private Log Book — save what you tried so you can find the good ones again. It stays on your device.
+• Correct it in a tap — when the AI misreads something, fix it; it learns your corrections locally.
+
+PRIVATE BY DESIGN
+Pocketbud uses Apple's on-device intelligence. There's no server, no login, and no analytics. The only thing that ever leaves the app is you tapping a web link (like a COA). That's the whole point: it lives in your pocket and never leaves it.
+
+BUILT FOR NEW JERSEY (FOR NOW)
+This version is tuned for New Jersey dispensary (NJ-CRC) labels. Other formats may read less accurately for now.
+
+REQUIREMENTS
+Pocketbud's AI features need an iPhone 15 Pro, iPhone 16, or iPhone 17 on iOS 26 with Apple Intelligence enabled. On other devices you can still scan and view the label's structured data.
+
+For informational and educational use only. Not medical advice. 21+.
