@@ -38,6 +38,19 @@ struct CapturedFrame {
     let qrCodes: [String]
 }
 
+/// Live camera telemetry for the on-screen debug HUD (most reliable real-time
+/// channel — device log streaming is silent on iOS 26 and file pulls race).
+struct CameraDiag: Equatable {
+    var fill: Double = 0
+    var sharp: Double = 0
+    var luma: Double = 0
+    var focusing = false
+    var lens: Float = -1
+    var zoom: Double = -1
+    var activeLens = "—"
+    var torch = false
+}
+
 // @unchecked Sendable: the AVFoundation delegate callbacks arrive on private
 // queues and mutate simple flags (armed/capturing/readyStreak). Those mutations
 // are benign (a missed/extra preview frame at worst) and all session mutation is
@@ -51,6 +64,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     var onCapture: (@MainActor @Sendable (CapturedFrame) -> Void)?
     var onError: (@MainActor @Sendable (String) -> Void)?
     var onTorchChanged: (@MainActor @Sendable (Bool) -> Void)?
+    var onDiag: (@MainActor @Sendable (CameraDiag) -> Void)?
 
     private let sessionQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.session")
     private let videoQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.video")
@@ -96,6 +110,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
                 self.readyStreak = 0
                 self.armed = true
                 self.capturing = false
+                Self.diag(String(format: "START running=%d armed=%d", self.session.isRunning ? 1 : 0, self.armed ? 1 : 0))
             }
         }
     }
@@ -165,24 +180,29 @@ final class LabelCamera: NSObject, @unchecked Sendable {
         session.addInput(input)
         device = cam
         configureFocus(cam)
-        camLog.notice("camdiag config: device=\(cam.localizedName, privacy: .public) minFocusDist=\(cam.minimumFocusDistance)mm virtual=\(cam.isVirtualDevice)")
 
-        if session.canAddOutput(photoOutput) {
+        let photoOK = session.canAddOutput(photoOutput)
+        if photoOK {
             session.addOutput(photoOutput)
             photoOutput.maxPhotoQualityPrioritization = .quality
         }
-        if session.canAddOutput(videoOutput) {
+        let videoOK = session.canAddOutput(videoOutput)
+        if videoOK {
             videoOutput.alwaysDiscardsLateVideoFrames = true
             videoOutput.setSampleBufferDelegate(self, queue: videoQueue)
             session.addOutput(videoOutput)
         }
-        if session.canAddOutput(metadataOutput) {
+        let metaOK = session.canAddOutput(metadataOutput)
+        if metaOK {
             session.addOutput(metadataOutput)
             metadataOutput.setMetadataObjectsDelegate(self, queue: videoQueue)
             metadataOutput.metadataObjectTypes = [.qr, .pdf417, .aztec, .dataMatrix, .code128]
         }
         session.commitConfiguration()
         configured = true
+        Self.diag(String(format: "CONFIG device=%@ minFocus=%.0fmm virtual=%d photoOut=%d videoOut=%d metaOut=%d",
+                         cam.localizedName, cam.minimumFocusDistance, cam.isVirtualDevice ? 1 : 0,
+                         photoOK ? 1 : 0, videoOK ? 1 : 0, metaOK ? 1 : 0))
     }
 
     private func configureFocus(_ cam: AVCaptureDevice) {
@@ -299,12 +319,12 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
             if wantTorch != torchOn { applyTorch(wantTorch) }
         }
 
-        // Live diagnostics. iOS 26 makes os_log/NSLog unreachable via
-        // idevicesyslog and devicectl --console only dumps on exit, so we append
-        // to a file in Documents and pull it live with `devicectl copy` while
-        // scanning. Capped to the last ~120 lines.
-        Self.diag(String(format: "fill=%.2f sharp=%.1f luma=%.0f focusing=%d lens=%.2f zoom=%.1f active=%@ torch=%d streak=%d",
-                         fill, sharpVal, meanLuma, focusing ? 1 : 0, lens, zoom, activeLens, self.torchOn ? 1 : 0, self.readyStreak))
+        // Live diagnostics → on-screen HUD (the reliable real-time channel;
+        // device log streaming is silent on iOS 26 and file pulls race).
+        let diag = CameraDiag(fill: Double(fill), sharp: sharpVal, luma: meanLuma,
+                              focusing: focusing, lens: lens, zoom: Double(zoom),
+                              activeLens: activeLens, torch: self.torchOn)
+        Task { @MainActor in self.onDiag?(diag) }
 
         // Framing: how much of the frame the WHITE LABEL fills. The label is a
         // bright near-white block against a vivid bag; measuring brightness

@@ -60,6 +60,8 @@ final class ScanModel {
     let labelCamera = LabelCamera()
     /// Live framing/focus state for the scanning overlay hint.
     private(set) var framing: CaptureFraming = .searching
+    /// Live camera telemetry for the on-screen debug HUD.
+    private(set) var cameraDiag = CameraDiag()
     /// Guidance shown after a rejected (blurry / too-small) capture.
     private(set) var captureHint: String?
     /// Derived field-presence set; UI reads this to render the chip row and
@@ -132,6 +134,7 @@ final class ScanModel {
             self.phase = .failed(message: msg)
         }
         labelCamera.onCapture = { [weak self] frame in self?.handleCapturedFrame(frame) }
+        labelCamera.onDiag = { [weak self] d in self?.cameraDiag = d }
         labelCamera.start()
         let extraction = self.extraction
         let summary = self.summary

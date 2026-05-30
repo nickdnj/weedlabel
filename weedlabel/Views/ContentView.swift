@@ -112,6 +112,10 @@ private struct ScanningView: View {
             VStack {
                 CaptureHintBanner(framing: model.framing, hint: model.captureHint)
                     .padding(.top, 24)
+                #if DEBUG
+                CameraDiagHUD(diag: model.cameraDiag)
+                    .padding(.top, 8)
+                #endif
                 Spacer()
                 CaptureControls(
                     framing: model.framing,
@@ -147,6 +151,27 @@ private struct CaptureHintBanner: View {
         }
     }
 }
+
+#if DEBUG
+/// On-screen live camera telemetry — the reliable real-time debug channel while
+/// tuning focus/framing on device. DEBUG-only.
+private struct CameraDiagHUD: View {
+    let diag: CameraDiag
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(String(format: "fill %.2f   sharp %.1f   luma %.0f", diag.fill, diag.sharp, diag.luma))
+            Text(String(format: "lens %.2f   zoom %.1f   %@%@", diag.lens, diag.zoom,
+                        diag.focusing ? "FOCUSING " : "", diag.torch ? "TORCH" : ""))
+            Text("active: \(diag.activeLens)")
+        }
+        .font(.system(size: 12, weight: .medium, design: .monospaced))
+        .foregroundStyle(.white)
+        .padding(8)
+        .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+#endif
 
 /// Cancel + manual shutter. The shutter glows green when the smart shutter is
 /// about to fire (framed + sharp); tapping it captures immediately.

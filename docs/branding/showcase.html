@@ -4,8 +4,9 @@
 <title>Pocketbud — Brand Showcase</title>
 <style>
   :root{
-    --ink:#0B0B0E; --ink2:#0E0D13; --cream:#F7F3EC; --amber:#FFB020; --amber2:#F5A623;
-    --sage:#6B8F71; --card:#15151A; --line:#26262E; --muted:#8b8794;
+    --ink:#0A0F0C; --ink2:#0C120E; --cream:#F7F3EC; --amber:#FFB020; --amber2:#F5A623;
+    --green:#2FA866; --green-bright:#3FBE7D; --green-deep:#1C6E45; --sage:#6B8F71;
+    --card:#121814; --line:#232A25; --muted:#8b9089;
     --rounded:"SF Pro Rounded",ui-rounded,-apple-system,system-ui,sans-serif;
     --text:-apple-system,"SF Pro Text",system-ui,sans-serif;
     --mono:"SF Mono",ui-monospace,"JetBrains Mono",monospace;
@@ -20,7 +21,7 @@
   .lead{color:var(--muted);font-size:16px;max-width:680px;margin-bottom:36px;}
 
   /* HERO */
-  .hero{padding:90px 0 80px;background:radial-gradient(120% 90% at 50% -10%, #251f3e 0%, #0d0b16 55%, #08070b 100%);text-align:center;}
+  .hero{padding:90px 0 80px;background:radial-gradient(120% 90% at 50% -10%, #16432d 0%, #0a1a11 55%, #070f0a 100%);text-align:center;}
   .hero .icon{width:124px;height:124px;border-radius:28px;margin:0 auto 26px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden;}
   .hero h1{font-family:var(--rounded);font-weight:800;font-size:72px;letter-spacing:-.03em;line-height:1;}
   .hero h1 .b{color:var(--amber);}
@@ -58,7 +59,7 @@
   .status{display:flex;justify-content:space-between;padding:13px 24px 0;font-size:12px;font-weight:600;font-family:var(--rounded);z-index:20;}
   .status .ic{font-size:10px;letter-spacing:1px;}
   .badge{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;padding:6px 11px;border-radius:999px;
-    background:rgba(255,176,32,.16);color:var(--amber);border:1px solid rgba(255,176,32,.3);}
+    background:rgba(47,168,102,.18);color:var(--green-bright);border:1px solid rgba(47,168,102,.34);}
   .badge svg{width:12px;height:12px;}
   .body{flex:1;overflow:hidden;padding:8px 17px 0;display:flex;flex-direction:column;}
   .tabs{display:flex;justify-content:space-around;padding:11px 0 24px;margin-top:auto;font-size:9.5px;font-weight:600;font-family:var(--rounded);}
@@ -69,13 +70,13 @@
   /* results */
   .hero-name{font-family:var(--rounded);font-weight:800;font-size:30px;letter-spacing:-.02em;margin-top:4px;}
   .hero-meta{font-size:12.5px;color:var(--muted);margin-top:6px;}
-  .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;margin-top:10px;background:rgba(107,143,113,.22);color:#9ec3a4;}
+  .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;margin-top:10px;background:rgba(47,168,102,.22);color:#7fdca8;}
   .thc{margin:16px 0 4px;}
   .thc .num{font-family:var(--rounded);font-weight:800;font-size:64px;letter-spacing:-.03em;line-height:.95;color:var(--amber);}
   .thc .lbl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.7;}
   .thc .sub{font-family:var(--mono);font-size:11px;margin-top:6px;opacity:.85;}
   .chips{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 4px;}
-  .chip{font-size:10.5px;font-weight:700;padding:6px 10px;border-radius:999px;background:rgba(255,176,32,.14);color:var(--amber);border:1px solid rgba(255,176,32,.22);}
+  .chip{font-size:10.5px;font-weight:700;padding:6px 10px;border-radius:999px;background:rgba(47,168,102,.15);color:#6fd49e;border:1px solid rgba(47,168,102,.26);}
   .chip .v{opacity:.6;margin-left:4px;font-family:var(--mono);}
   .prov{display:flex;flex-direction:column;gap:3px;margin:14px 2px 0;font-size:11.5px;}
   .prov .line{display:flex;justify-content:space-between;} .prov .k{opacity:.55;}
@@ -107,7 +108,7 @@
   .search{background:rgba(255,255,255,.07);border-radius:12px;padding:9px 12px;font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;margin-bottom:14px;}
   .search svg{width:14px;height:14px;}
   .lbcard{background:#15151a;border:1px solid var(--line);border-radius:16px;padding:11px;display:flex;gap:11px;align-items:center;margin-bottom:9px;}
-  .lbthumb{width:44px;height:44px;border-radius:12px;background:linear-gradient(150deg,#FFB020,#E08600);flex:none;overflow:hidden;}
+  .lbthumb{width:44px;height:44px;border-radius:12px;background:linear-gradient(150deg,#34B06E,#1C6E45);flex:none;overflow:hidden;}
   .lbname{font-family:var(--rounded);font-weight:700;font-size:14px;}
   .lbmeta{font-size:10.5px;color:var(--muted);margin-top:2px;}
   .lbthc{margin-left:auto;text-align:right;} .lbthc .n{font-family:var(--rounded);font-weight:800;font-size:16px;color:var(--amber);} .lbthc .d{font-size:9px;color:#6b6772;}
@@ -155,7 +156,7 @@
 <section id="icon"><div class="wrap">
   <div class="eyebrow">App Icon</div>
   <h2>Leaf in Pocket</h2>
-  <p class="lead">A stylized cannabis leaf rising from a pocket — cannabis and privacy in one mark, on an amber tile that pops against a dark home screen. Legible from the App Store down to a settings row.</p>
+  <p class="lead">A stylized cannabis leaf rising from a pocket — cannabis and privacy in one mark, on a fresh-green tile with an amber seam for warmth. Legible from the App Store down to a settings row.</p>
   <div class="icon-grid">
     <div class="icon-big" id="iconbig"></div>
     <div class="sizes" id="sizes"></div>
@@ -173,7 +174,7 @@
 <section id="color"><div class="wrap">
   <div class="eyebrow">Color</div>
   <h2>Palette</h2>
-  <p class="lead">Amber is the load-bearing brand color; sage is the muted cannabis nod; twilight-ink carries the privacy-as-night mood. Warm cream for light mode.</p>
+  <p class="lead">Green is the brand — fresh and herbal without going neon-stoner. Amber is the warm accent that makes key numbers and actions pop. Deep green-ink surfaces carry the privacy-as-night mood; warm cream for light mode.</p>
   <div class="palette" id="palette"></div>
 </div></section>
 
@@ -201,12 +202,12 @@ function leaf(color,s,cx,cy){
 }
 function icon(px){
   return `<svg width="${px}" height="${px}" viewBox="0 0 1024 1024">
-    <defs><linearGradient id="amb${px}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB020"/><stop offset="1" stop-color="#E08600"/></linearGradient></defs>
-    <rect width="1024" height="1024" fill="url(#amb${px})"/>
-    ${leaf('#13111c',.92,512,560)}
-    <path d="M150 560 h724 v210 a90 90 0 0 1-90 90 H240 a90 90 0 0 1-90-90 Z" fill="#13111c"/>
-    <path d="M150 560 C320 470 704 470 874 560" stroke="#13111c" stroke-width="54" fill="none" stroke-linecap="round"/>
-    <path d="M150 560 h724" stroke="#FFB020" stroke-width="20" opacity=".55"/></svg>`;
+    <defs><linearGradient id="grn${px}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34B06E"/><stop offset="1" stop-color="#1C6E45"/></linearGradient></defs>
+    <rect width="1024" height="1024" fill="url(#grn${px})"/>
+    ${leaf('#F7F3EC',.92,512,560)}
+    <path d="M150 560 h724 v210 a90 90 0 0 1-90 90 H240 a90 90 0 0 1-90-90 Z" fill="#0E3A24"/>
+    <path d="M150 560 C320 470 704 470 874 560" stroke="#0E3A24" stroke-width="54" fill="none" stroke-linecap="round"/>
+    <path d="M150 560 h724" stroke="#FFB020" stroke-width="20" opacity=".7"/></svg>`;
 }
 document.getElementById('heroicon').innerHTML=icon(124);
 document.getElementById('iconbig').innerHTML=icon(200);
@@ -221,7 +222,7 @@ const TABS=(on)=>`<div class="tabs">
  <div class="tab ${on==1?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Log Book</div>
  <div class="tab ${on==2?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>About</div></div>`;
 const LOCK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
-const thumb=`<svg width="44" height="44" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#FFB020"/><g transform="translate(512 540) scale(.7)"><path d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#13111c"/></g><path d="M150 560 h724 v210 a90 90 0 0 1-90 90 H240 a90 90 0 0 1-90-90 Z" fill="#13111c"/></svg>`;
+const thumb=`<svg width="44" height="44" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#1C6E45"/><g transform="translate(512 540) scale(.7)"><path d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#F7F3EC"/></g><path d="M150 560 h724 v210 a90 90 0 0 1-90 90 H240 a90 90 0 0 1-90-90 Z" fill="#0E3A24"/></svg>`;
 
 const camera=`<div class="notch"></div><div class="camfeed"></div>
   <div class="labelcard"><b>Blue Candy Rain</b><br>THCA: 29.73%<br>Total THC: 32.25%<br>Myrcene 1.83%<br>Fresh Grow LLC</div>
@@ -270,7 +271,7 @@ const phones=[
 document.getElementById('phones').innerHTML=phones.map(p=>`<div class="pcol"><div class="pcap">${p.cap}<span>${p.sub}</span></div><div class="phone"><div class="screen">${p.html}</div></div></div>`).join('');
 
 // ---- palette ----
-const pal=[{nm:'Amber Bright',hx:'#FFB020'},{nm:'Honey Amber',hx:'#F5A623'},{nm:'Sage',hx:'#6B8F71'},{nm:'Twilight Ink',hx:'#0E0D13'},{nm:'Indigo Surface',hx:'#1B1A24'},{nm:'Card',hx:'#15151A'},{nm:'Warm Cream',hx:'#F7F3EC'},{nm:'Ink Charcoal',hx:'#1A1A1F'}];
+const pal=[{nm:'Leaf Green',hx:'#2FA866'},{nm:'Green Bright',hx:'#3FBE7D'},{nm:'Deep Green',hx:'#1C6E45'},{nm:'Sage',hx:'#6B8F71'},{nm:'Amber (accent)',hx:'#FFB020'},{nm:'Green-Ink',hx:'#0C120E'},{nm:'Card',hx:'#121814'},{nm:'Warm Cream',hx:'#F7F3EC'}];
 document.getElementById('palette').innerHTML=pal.map(s=>`<div class="sw"><div class="c" style="background:${s.hx}"></div><div class="nm">${s.nm}</div><div class="hx">${s.hx}</div></div>`).join('');
 </script>
 </body></html>
