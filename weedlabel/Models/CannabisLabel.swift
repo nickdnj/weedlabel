@@ -449,7 +449,16 @@ extension CannabisLabel {
         let window = String(tail.prefix(10))
         guard let re = try? NSRegularExpression(pattern: #"\d+(?:\.\d+)?"#) else { return nil }
         let ns = window as NSString
+        func isLetter(at idx: Int) -> Bool {
+            guard idx >= 0, idx < ns.length, let s = UnicodeScalar(ns.character(at: idx)) else { return false }
+            return CharacterSet.letters.contains(s)
+        }
         for m in re.matches(in: window, range: NSRange(location: 0, length: ns.length)) {
+            // Reject a number embedded inside a letter-token — the "9" in "d9thc",
+            // digits in "c000067"/"1a4…". A real value is delimited by ':'/space/
+            // '%', never flanked by letters on BOTH sides. This stops `thca` from
+            // grabbing the 9 in a clustered "thca:d9thc:28.20%" row.
+            if isLetter(at: m.range.location - 1) && isLetter(at: m.range.location + m.range.length) { continue }
             if let v = Double(ns.substring(with: m.range)), v >= minV, v <= maxV { return v }
         }
         return nil
@@ -482,5 +491,32 @@ extension CannabisLabel {
         clampTerpene(&myrcene); clampTerpene(&limonene); clampTerpene(&linalool)
         clampTerpene(&betaCaryophyllene); clampTerpene(&pinene)
         clampTerpene(&humulene); clampTerpene(&totalTerpenes)
+    }
+
+    /// Final guard on the THC trio for flower/pre-roll, where Δ9-THC is only a
+    /// few percent at most. When OCR row-grouping desyncs the potency columns
+    /// ACROSS rows, THCa's large value can land in the Δ9 slot (observed:
+    /// Permanent Gas Δ9=28.2, Lollipopz Δ9=29.05 — physically impossible, and the
+    /// reconciler can't pair them because the two values sit on different lines).
+    ///
+    /// Anchored on Total THC, which is printed plainly and read reliably: on
+    /// flower THCa ≈ Total THC / 0.877. If the bogus Δ9 is a better THCa estimate
+    /// than the current THCa, promote it; then null Δ9 — its real (small) value
+    /// isn't recoverable from a desynced column, and a blank beats a wrong 28%.
+    /// Runs AFTER reconcile so it has the last word. Flower/pre-roll only:
+    /// distillate vapes/concentrates legitimately have high Δ9.
+    mutating func fixImpossibleThc() {
+        guard [.flower, .preRoll].contains(productType) else { return }
+        guard let d9 = delta9thc, d9 > 5 else { return }   // plausible Δ9 → leave alone
+        if let total = totalThc, total >= 10, total <= 45 {
+            let expectedThca = total / 0.877
+            if abs(d9 - expectedThca) < abs((thca ?? 0) - expectedThca) {
+                thca = d9
+            }
+        } else if thca == nil || (thca ?? 0) < d9 {
+            // No reliable Total THC anchor — but Δ9 still can't exceed THCa.
+            thca = d9
+        }
+        delta9thc = nil
     }
 }

@@ -533,6 +533,10 @@ final class ScanModel {
                     String(describing: withQRs.cbg)))
                 withQRs.reconcileCannabinoids(ocrText: ocr)
                 withQRs.reconcileTerpenes(ocrText: ocr)
+                // Final flower/pre-roll guard: an impossible Δ9 (column desync
+                // across rows dropped THCa's value into the Δ9 slot) — promote it
+                // back to THCa and null the bogus Δ9. Last word, after reconcile.
+                withQRs.fixImpossibleThc()
                 LabelCamera.diag(String(format: "POST-reconcile thca=%@ d9=%@ totalThc=%@ cbd=%@ cbg=%@",
                     String(describing: withQRs.thca), String(describing: withQRs.delta9thc),
                     String(describing: withQRs.totalThc), String(describing: withQRs.cbd),

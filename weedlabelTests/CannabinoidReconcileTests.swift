@@ -71,6 +71,48 @@ import Testing
         #expect(label.cbg == 0.29)
     }
 
+    // Cross-row column desync (Permanent Gas #15, real device trace): the potency
+    // columns split across two rows so THCa's value lands beside Δ9, and valueAfter
+    // grabbed the "9" inside "d9thc" for thca (=9.0). The fixes: valueAfter ignores
+    // the token-internal digit, and fixImpossibleThc promotes the impossible Δ9
+    // (28.2) back to THCa, anchored on Total THC.
+    @Test func permanentGasCrossRowDesyncRecoversThca() {
+        var label = Self.jetFuelMisSlotted()
+        label.reconcileCannabinoids(ocrText: """
+        Kynd Permanent Gas #15 (S) Flower 3.5g  Total THC:  25.08%  Limonene: 1.08
+        High THC, Low CBD  THCa:  D9T HC:  28.20%  Beta lycene: 0.88
+        Lic Number: C000067  Grow Method: Indoor  0.35 /  AlphaPinene: 0.16
+        CBG:  0.59%
+        """)
+        label.fixImpossibleThc()
+        #expect(label.thca == 28.2)
+        #expect(label.delta9thc == nil)   // bogus 28.x nulled
+        #expect(label.totalThc == 25.08)
+    }
+
+    // Lollipopz (real device trace): THCa's value (29.05) desynced onto the Δ9 row.
+    @Test func lollipopzCrossRowDesyncRecoversThca() {
+        var label = Self.jetFuelMisSlotted()
+        label.reconcileCannabinoids(ocrText: """
+        Kynd Lollipopz (l) Flower 3.5g  Limonene: 0.66
+        High THC, Low CBD  Total THC:  THCa:  25.65%  Betacaryophyllene: 0.64
+        Grow Method: Indoor  D9THC:  29.05%  0.17%  Beta Mycene: 0.17
+        CBG:  0.35%
+        """)
+        label.fixImpossibleThc()
+        #expect(label.thca == 29.05)
+        #expect(label.delta9thc == nil)
+    }
+
+    // A correctly-read flower must be untouched by fixImpossibleThc (Δ9 plausible).
+    @Test func fixImpossibleThcLeavesGoodFlowerAlone() {
+        var label = Self.jetFuelMisSlotted()
+        label.thca = 28.36; label.delta9thc = 0.87; label.totalThc = 25.74
+        label.fixImpossibleThc()
+        #expect(label.thca == 28.36)
+        #expect(label.delta9thc == 0.87)
+    }
+
     // Interleaved "label: value  label: value" rows must NOT be disturbed by the
     // clustered pairing — valueAfter already reads them correctly, and clustering
     // would mis-handle a terpene value sharing the row.
