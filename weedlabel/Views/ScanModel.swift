@@ -444,19 +444,14 @@ final class ScanModel {
     func saveToLogBook() {
         guard case .ready(let label, let summary, _, let insight) = phase else { return }
         let text = summary?.text ?? SummaryService.buildFallback(label, strainInsight: insight)
-        // Persist the scan image(s) alongside the entry (deleted with it in
-        // FileLogStore.delete), keyed by the entry id. When the label was
-        // isolated, the deskewed crop is the primary image and the full photo is
-        // kept as the original; otherwise the full photo is the primary.
+        // The Log Book image is always the full captured photo (the label in its
+        // package context), so every entry is consistent and upright. We no longer
+        // save the deskewed crop: post-OI-0 it's OCR-irrelevant, LabelIsolator's
+        // tightness is inconsistent (sometimes the whole bag, sometimes a tight
+        // crop), and it was the source of the 180° rotation bug. `save` writes
+        // both the detail-size image and the list thumbnail from this one photo.
         let id = UUID()
-        var primaryName: String?
-        var originalName: String?
-        if let isolated = isolatedImage {
-            primaryName = LogImageStore.save(isolated, id: id)
-            originalName = capturedImage.flatMap { LogImageStore.saveOriginal($0, id: id) }
-        } else {
-            primaryName = capturedImage.flatMap { LogImageStore.save($0, id: id) }
-        }
+        let primaryName = capturedImage.flatMap { LogImageStore.save($0, id: id) }
         let entry = LogEntry(
             id: id,
             label: label,
@@ -465,7 +460,7 @@ final class ScanModel {
             strainLean: insight?.lean,
             strainSourceNote: insight?.sourceNote,
             imageFilename: primaryName,
-            originalImageFilename: originalName
+            originalImageFilename: nil
         )
         logStore.add(entry)
         cancel()
@@ -574,6 +569,7 @@ final class ScanModel {
                     withQRs.productType = savedType
                 }
                 label = withQRs
+                LabelCamera.diag("STRAIN final='\(withQRs.strainName)' type=\(withQRs.productType.storageKey)")
                 #if DEBUG
                 canaryLog("FM extract OK")
                 canaryLog("Parsed label JSON ===\n\(label.diagnosticJSON)\n=== Parsed label JSON end")
