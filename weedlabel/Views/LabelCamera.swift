@@ -257,7 +257,8 @@ final class LabelCamera: NSObject, @unchecked Sendable {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return docs.appendingPathComponent("camdiag.log")
     }()
-    private static var diagLines: [String] = []
+    // Only ever touched inside diagQueue, so the serialized access is safe.
+    nonisolated(unsafe) private static var diagLines: [String] = []
     private static let diagQueue = DispatchQueue(label: "com.demarconet.weedlabel.camdiag")
 
     /// Append a diagnostic line (timestamped) to Documents/camdiag.log, keeping
@@ -289,7 +290,7 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
         let lens = device?.lensPosition ?? -1
         let zoom = device?.videoZoomFactor ?? -1
         // Which physical lens is active now (shows the macro/ultra-wide handoff).
-        let activeLens = (device?.activePrimaryConstituentDevice?.deviceType.rawValue ?? "n/a")
+        let activeLens = (device?.activePrimaryConstituent?.deviceType.rawValue ?? "n/a")
             .replacingOccurrences(of: "AVCaptureDeviceTypeBuiltIn", with: "")
 
         // Auto-torch: light up when the scene is dark (helps focus + contrast).
