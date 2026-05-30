@@ -7,6 +7,15 @@
 This is the single source of truth for known issues. Cross-referenced from the
 [PRD](./PRD-v1.md), [SAD](./SAD-v1.md), and [execution log](./EXECUTION-LOG-2026-05.md).
 
+> **2026-05-30 — extraction-refinement work paused; next up is the rebrand.** See
+> [`HANDOFF-REBRAND-2026-05-30.md`](./HANDOFF-REBRAND-2026-05-30.md). The strain-name
+> (OI-1) and cannabinoid-value (OI-2/OI-4) errors are now **user-correctable in one
+> tap** via pick-from-label lists (Phase 1 `9421525`, Phase 2 `88267d2`): even when
+> auto-extraction grabs the wrong line/number, the right one is offered straight
+> from the OCR. The deterministic guards still fix the common cases; the picker is
+> the net for the rest. `docs/SPEC-confidence-check.md` proposes the next step
+> (per-field confidence → auto-open these pickers) — not yet built.
+
 ---
 
 ## ✅ RESOLVED (2026-05-30)
