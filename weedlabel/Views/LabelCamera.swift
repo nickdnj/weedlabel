@@ -292,7 +292,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
         diagQueue.async {
             let t = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 100000)
             diagLines.append(String(format: "%.1f %@", t, line))
-            if diagLines.count > 120 { diagLines.removeFirst(diagLines.count - 120) }
+            if diagLines.count > 400 { diagLines.removeFirst(diagLines.count - 400) }
             try? diagLines.joined(separator: "\n").write(to: diagURL, atomically: true, encoding: .utf8)
         }
     }

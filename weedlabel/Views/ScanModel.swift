@@ -263,18 +263,23 @@ final class ScanModel {
         // Detection is CPU-bound Vision work — keep it off the main actor.
         let isolated = await Task.detached { LabelIsolator.isolate(original) }.value
         guard let isolated else {
-            return (try? await StaticImageOCR.recognize(in: original), nil)
+            let r = try? await StaticImageOCR.recognize(in: original)
+            LabelCamera.diag("OCR path=FULL(no-crop) chars=\((r?.ocrText ?? "").count)")
+            return (r, nil)
         }
         let cropResult = try? await StaticImageOCR.recognize(in: isolated)
         let cropText = cropResult?.ocrText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if cropText.count >= 20 {
+            LabelCamera.diag("OCR path=CROP chars=\(cropText.count)")
             return (cropResult, isolated)   // deskewed crop is the OCR + saved image
         }
         // Sparse crop → detection likely grabbed the wrong region. Prefer the
         // full image if it OCRs better, and drop the bad crop.
         let fullResult = try? await StaticImageOCR.recognize(in: original)
         let fullText = fullResult?.ocrText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return fullText.count > cropText.count ? (fullResult, nil) : (cropResult, isolated)
+        let useFull = fullText.count > cropText.count
+        LabelCamera.diag("OCR path=\(useFull ? "FULL(crop-sparse)" : "CROP(thin)") cropChars=\(cropText.count) fullChars=\(fullText.count)")
+        return useFull ? (fullResult, nil) : (cropResult, isolated)
     }
 
     /// User rejected the preview — scan again (restarts the camera).
@@ -529,8 +534,17 @@ final class ScanModel {
                 // Post-fix: re-read cannabinoids AND terpenes straight from the
                 // OCR by their printed labels — the model mis-slots them on dense
                 // panels even when OCR is perfect. Deterministic; authoritative.
+                LabelCamera.diag("OCR-TEXT >>>\n\(ocr)\n<<< OCR-TEXT-END")
+                LabelCamera.diag(String(format: "PRE-reconcile thca=%@ d9=%@ totalThc=%@ cbd=%@ cbg=%@",
+                    String(describing: withQRs.thca), String(describing: withQRs.delta9thc),
+                    String(describing: withQRs.totalThc), String(describing: withQRs.cbd),
+                    String(describing: withQRs.cbg)))
                 withQRs.reconcileCannabinoids(ocrText: ocr)
                 withQRs.reconcileTerpenes(ocrText: ocr)
+                LabelCamera.diag(String(format: "POST-reconcile thca=%@ d9=%@ totalThc=%@ cbd=%@ cbg=%@",
+                    String(describing: withQRs.thca), String(describing: withQRs.delta9thc),
+                    String(describing: withQRs.totalThc), String(describing: withQRs.cbd),
+                    String(describing: withQRs.cbg)))
                 // Post-fix: model sometimes picks a terpene/cannabinoid name
                 // as strainName (e.g. "Limonene"). Override with first
                 // plausible OCR line when this happens.
