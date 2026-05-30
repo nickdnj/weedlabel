@@ -1,11 +1,27 @@
 # Open Issues — HighNotes
 
-**Last Updated:** 2026-05-27
+**Last Updated:** 2026-05-30
 **Status:** Consolidated backlog from the spike→v1 work. Severity:
-**P1** = trust/correctness or blocks ship · **P2** = quality/UX · **P3** = nice-to-have/debt.
+**P0** = active blocker · **P1** = trust/correctness or blocks ship · **P2** = quality/UX · **P3** = nice-to-have/debt.
 
 This is the single source of truth for known issues. Cross-referenced from the
 [PRD](./PRD-v1.md), [SAD](./SAD-v1.md), and [execution log](./EXECUTION-LOG-2026-05.md).
+
+---
+
+## ⛔ ACTIVE BLOCKER (2026-05-30)
+
+### OI-0 · Isolated label crop is rotated ~180° → wrecks extraction  **(P0)**
+The capture subsystem was rewritten to an AVFoundation focus-first camera
+(`LabelCamera`); focus, the hold-steady smart shutter, macro auto-switch, and
+torch all work, and captures are sharp. **But `LabelIsolator.isolate()` emits a
+~180°-rotated crop, so OCR reads it value-then-label / reversed and extraction
+stores garbage** (e.g. a sharp Jet Fuel scan stored `thca=0.29`=CBG, `totalThc=1`
+instead of `thca=28.36, totalThc=25.74`). Proven via on-device trace; the
+reconcilers themselves are correct against normally-oriented OCR.
+**Full context + prioritized fix:** [`HANDOFF-CAPTURE-2026-05-30.md`](./HANDOFF-CAPTURE-2026-05-30.md).
+Quick-win fix: OCR the full original (already orientation-corrected by
+`StaticImageOCR`) and keep the crop only as the saved image.
 
 ---
 
