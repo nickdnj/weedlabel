@@ -33,13 +33,18 @@ struct CapturedFrame {
     let qrCodes: [String]
 }
 
-final class LabelCamera: NSObject {
+// @unchecked Sendable: the AVFoundation delegate callbacks arrive on private
+// queues and mutate simple flags (armed/capturing/readyStreak). Those mutations
+// are benign (a missed/extra preview frame at worst) and all session mutation is
+// funnelled through sessionQueue. This lets us hop results to the main actor for
+// the @Observable ScanModel without the compiler flagging `self` capture.
+final class LabelCamera: NSObject, @unchecked Sendable {
     let session = AVCaptureSession()
 
     // Main-actor callbacks set by ScanModel.
-    var onFraming: (@MainActor (CaptureFraming) -> Void)?
-    var onCapture: (@MainActor (CapturedFrame) -> Void)?
-    var onError: (@MainActor (String) -> Void)?
+    var onFraming: (@MainActor @Sendable (CaptureFraming) -> Void)?
+    var onCapture: (@MainActor @Sendable (CapturedFrame) -> Void)?
+    var onError: (@MainActor @Sendable (String) -> Void)?
 
     private let sessionQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.session")
     private let videoQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.video")

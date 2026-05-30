@@ -56,9 +56,12 @@ final class ScanModel {
     /// runs on this, and it's saved as the primary Log Book image; nil falls back
     /// to the full `capturedImage`.
     private(set) var isolatedImage: UIImage?
-    /// Bridge to the live scanner for high-res photo capture. Passed to
-    /// DataScannerView, which populates its weak controller reference.
-    let scannerController = ScannerController()
+    /// AVFoundation capture engine — focus-first, no live AI reading.
+    let labelCamera = LabelCamera()
+    /// Live framing/focus state for the scanning overlay hint.
+    private(set) var framing: CaptureFraming = .searching
+    /// Guidance shown after a rejected (blurry / too-small) capture.
+    private(set) var captureHint: String?
     /// Derived field-presence set; UI reads this to render the chip row and
     /// to decide whether to enable the Capture button.
     var detectedFields: Set<DetectedField> {
@@ -116,12 +119,20 @@ final class ScanModel {
     }
 
     func startScan() {
-        cancelAutoCaptureCountdown()
         lastSeenOcr = ""
         lastSeenQRs = []
         capturedImage = nil
         isolatedImage = nil
+        captureHint = nil
+        framing = .searching
         phase = .scanning
+        labelCamera.onFraming = { [weak self] f in self?.framing = f }
+        labelCamera.onError = { [weak self] msg in
+            guard let self, case .scanning = self.phase else { return }
+            self.phase = .failed(message: msg)
+        }
+        labelCamera.onCapture = { [weak self] frame in self?.handleCapturedFrame(frame) }
+        labelCamera.start()
         let extraction = self.extraction
         let summary = self.summary
         Task.detached(priority: .userInitiated) {
@@ -149,59 +160,46 @@ final class ScanModel {
         }
     }
 
-    /// User tapped the shutter, or the auto-capture timer fired. Capture a
-    /// high-resolution still and OCR THAT (much cleaner than the live preview
-    /// frames), then move to .previewing. Falls back to the live OCR snapshot
-    /// if the still capture or its OCR fails (e.g. in the simulator).
+    /// Manual shutter override — capture now regardless of framing. The result
+    /// arrives asynchronously via labelCamera.onCapture → handleCapturedFrame.
     func confirmCapture() {
         guard case .scanning = phase else { return }
-        cancelAutoCaptureCountdown()
-        let liveOcr = lastSeenOcr.trimmingCharacters(in: .whitespacesAndNewlines)
-        let liveQRs = lastSeenQRs
+        labelCamera.captureNow()
+    }
+
+    /// Handle a sharp still from the camera (smart shutter or manual): isolate +
+    /// OCR, gate on quality, then either preview it or guide the user to retake.
+    private func handleCapturedFrame(_ frame: CapturedFrame) {
+        guard case .scanning = phase else { return }
         phase = .capturing
+        let image = frame.image
+        let frameQRs = frame.qrCodes
         Task { [weak self] in
             guard let self else { return }
-
-            // High-res capture → isolate the label → OCR the deskewed crop.
-            var image: UIImage?
-            var stillResult: StaticImageOCR.Result?
-            var isolated: UIImage?
-            if let captured = await self.scannerController.capturePhoto() {
-                image = captured
-                let (result, iso) = await self.isolateAndOCR(captured)
-                stillResult = result
-                isolated = iso
-            }
-
-            // If the user backed out (rescan/cancel) while we were capturing,
-            // don't clobber the new phase.
+            let (result, isolated) = await self.isolateAndOCR(image)
             guard case .capturing = self.phase else { return }
-
-            if let image { self.capturedImage = image }
-            self.isolatedImage = isolated
-            if let result = stillResult {
-                let text = result.ocrText.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !text.isEmpty {
-                    #if DEBUG
-                    canaryLog("High-res capture OCR — \(text.count) chars, qrs=\(result.qrCodes.count)")
-                    #endif
-                    // Merge QRs from the still with any seen live (the still
-                    // pass is authoritative but live may have caught more).
-                    let qrs = (result.qrCodes + liveQRs).reduced
-                    self.phase = .previewing(ocrText: text, qrCodes: qrs)
-                    return
-                }
-            }
-
-            // Fallback: use the live preview OCR snapshot.
-            #if DEBUG
-            canaryLog("High-res capture unavailable — falling back to live OCR")
-            #endif
-            guard !liveOcr.isEmpty else {
-                self.phase = .failed(message: "No text detected. Hold the label inside the frame.")
+            let text = (result?.ocrText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            // Quality gate: need a detected label crop AND enough legible text.
+            // Otherwise reject and guide the user to retake (re-arm the shutter).
+            guard isolated != nil, text.count >= 40 else {
+                self.captureHint = (isolated == nil)
+                    ? "Center the label so it fills the frame."
+                    : "That looked blurry — hold steady and try again."
+                self.capturedImage = nil
+                self.isolatedImage = nil
+                self.framing = .searching
+                self.phase = .scanning
+                self.labelCamera.rearm()
                 return
             }
-            self.phase = .previewing(ocrText: liveOcr, qrCodes: liveQRs)
+            self.captureHint = nil
+            self.capturedImage = image
+            self.isolatedImage = isolated
+            self.lastSeenOcr = text
+            self.lastSeenQRs = frameQRs
+            self.labelCamera.stop()
+            let qrs = ((result?.qrCodes ?? []) + frameQRs).reduced
+            self.phase = .previewing(ocrText: text, qrCodes: qrs)
         }
     }
 
@@ -262,14 +260,9 @@ final class ScanModel {
         return fullText.count > cropText.count ? (fullResult, nil) : (cropResult, isolated)
     }
 
-    /// User rejected the preview — return to scanning.
+    /// User rejected the preview — scan again (restarts the camera).
     func rescan() {
-        cancelAutoCaptureCountdown()
-        lastSeenOcr = ""
-        lastSeenQRs = []
-        capturedImage = nil
-        isolatedImage = nil
-        phase = .scanning
+        startScan()
     }
 
     // MARK: - Auto-capture
