@@ -57,6 +57,7 @@ struct ContentView: View {
                 case .ready(let label, let summary, let sanityWarning, let strainInsight):
                     PostScanView(
                         label: label,
+                        ocrText: model.lastSeenOcr,
                         summary: summary,
                         sanityWarning: sanityWarning,
                         strainInsight: strainInsight,

@@ -7,6 +7,9 @@ import SwiftUI
 
 struct PostScanView: View {
     let label: CannabisLabel
+    /// The OCR text this label was read from — the source for the strain-name
+    /// "pick from the label" correction list.
+    var ocrText: String = ""
     let summary: SummaryOutcome?
     /// Non-nil when the sanity checker flagged something suspect about the
     /// parsed label (e.g. Total THC formula mismatch). Rendered as a warning
@@ -32,7 +35,16 @@ struct PostScanView: View {
     @State private var editingStrainClass: Bool = false
     @State private var editingProductType: Bool = false
     @State private var editingName: Bool = false
+    @State private var typingName: Bool = false
     @State private var nameDraft: String = ""
+
+    /// Plausible names read straight from the label, for the pick-to-correct list.
+    /// Excludes the currently-shown name (no point offering what's already there).
+    private var nameCandidates: [String] {
+        let current = label.strainName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return StrainNameFixer.candidateNames(ocrText: ocrText, cultivator: label.cultivator)
+            .filter { $0.lowercased() != current }
+    }
 
     var body: some View {
         ScrollView {
@@ -113,7 +125,20 @@ struct PostScanView: View {
             productTypePill
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .alert("Edit strain name", isPresented: $editingName) {
+        // Pick the right name straight from the label — the scanner often grabs
+        // the wrong line, but the real name is almost always in the OCR. Falls
+        // back to free-text. Corrections persist for future scans.
+        .confirmationDialog("Pick the strain name from the label", isPresented: $editingName, titleVisibility: .visible) {
+            ForEach(nameCandidates, id: \.self) { name in
+                Button(name) { onSetStrainName(name) }
+            }
+            Button("Type a different name…") {
+                nameDraft = label.strainName
+                typingName = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Edit strain name", isPresented: $typingName) {
             TextField("Strain name", text: $nameDraft)
             Button("Save") {
                 let trimmed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -174,6 +174,62 @@ struct StrainNameFixerTests {
         #expect(cand?.lowercased().contains("нача") != true)
     }
 
+    // MARK: - candidateNames (tap-to-pick correction list)
+
+    // The exact device OCR where auto-extraction grabbed "AN": the picker list
+    // must surface the real "Zips - warheadz" at the TOP, past the junk lines.
+    static let warheadzGarbageTopOCR = """
+    AN
+    H-HM
+    Zips - warheadz  THCA: 21.74 96  Potency Analysis:  Terpene Contents -
+    - 28g  THC:  22.18 %  BetaCaryophyllene: 1.14 96
+    High THC, LOW CBD  THC9:  CBO:  3.11  0.17  BetaMyrcene: 0.37 %
+    Inhalable Product  Store in a cool, dry place
+    License #  C000186
+    Fresh Grow LLC.  15 World's Fair Drive
+    """
+
+    @Test func candidateNamesSurfacesRealNameTop() {
+        let names = StrainNameFixer.candidateNames(ocrText: Self.warheadzGarbageTopOCR, cultivator: "Fresh Grow LLC")
+        #expect(!names.isEmpty)
+        #expect(names.first?.lowercased().contains("warheadz") == true)
+        // The 2-char specks must not appear at all.
+        #expect(!names.contains { $0.lowercased() == "an" })
+    }
+
+    // The real device case: the picker offered "Warheadz 7725F6 Tota Terpenes:
+    // 3.26" and the user had to re-correct to "Warheadz". Now the lot code +
+    // trailing junk are trimmed so a clean "Warheadz" is offered directly.
+    @Test func candidateNamesTrimsLotCodeAndJunk() {
+        let ocr = """
+        Warheadz 7725F6  Tota Terpenes: 3.26%  25.16 %
+        Fresh Grow LLC.  15 World's Fair Drive
+        """
+        let names = StrainNameFixer.candidateNames(ocrText: ocr, cultivator: "Fresh Grow LLC")
+        #expect(names.contains("Warheadz"))
+        #expect(!names.contains { $0.contains("7725") || $0.lowercased().contains("terpenes") })
+    }
+
+    // Variant tags must survive trimming — "#15" and "(S)" are part of the name.
+    @Test func candidateNamesKeepsVariantTags() {
+        let ocr = "1A41103000003E9000066335  Kynd Permanent Gas #15 (S) Flower 3.5g  Total THC: 25.08%"
+        let names = StrainNameFixer.candidateNames(ocrText: ocr, cultivator: "Garden State Dispensary")
+        #expect(names.contains { $0.contains("Permanent Gas #15") })
+    }
+
+    @Test func candidateNamesRanksClutteredJetFuel() {
+        // Jet Fuel name fused into the cluttered top row → still listed.
+        let names = StrainNameFixer.candidateNames(ocrText: Self.jetFuelClutteredOCR, cultivator: "Garden State Dispensary")
+        #expect(names.contains { $0.lowercased().contains("jet fuel") })
+    }
+
+    @Test func candidateNamesDedupesAndCaps() {
+        let names = StrainNameFixer.candidateNames(ocrText: Self.lollipopzOCR, cultivator: "Kynd", limit: 6)
+        #expect(names.count <= 6)
+        #expect(Set(names.map { $0.lowercased() }).count == names.count)   // no dupes
+        #expect(names.contains { $0.lowercased().contains("lollipopz") })
+    }
+
     @Test func salvagesNameFromClutteredTopRow() {
         // candidateFromOCR alone (every line is metrc/value/boilerplate) must
         // still recover the leading name segment from the top row.

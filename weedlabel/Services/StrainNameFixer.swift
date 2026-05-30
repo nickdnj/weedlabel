@@ -83,39 +83,97 @@ enum StrainNameFixer {
     static func candidateFromOCR(_ ocrText: String, cultivator: String? = nil) -> String? {
         let cult = cultivator?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let lines = ocrText.components(separatedBy: .newlines)
+        // First: a clean, standalone name line.
         for raw in lines {
-            let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-            if line.isEmpty { continue }
-            if isMetrcTagLine(line) { continue }
-            if isLicenseLine(line) { continue }
-            if isDateLine(line) { continue }
-            if isAddressLikeLine(line) { continue }
-            if !containsLetter(line) { continue }
-            if isGibberish(line) { continue }         // OCR of a stylized logo
-            if isSuspicious(line) { continue }
-            if isChemotypeLine(line) { continue }     // "High THC, Low CBD" etc.
-            if isBoilerplateLine(line) { continue }   // warnings, directions, FDA text
-            if isLabeledValueLine(line) { continue }  // "Limonene: 1.08 %", "THCa: 28.73"
-            // Skip a line that's essentially just the cultivator/brand (provenance,
-            // not the strain) — but keep a brand+strain line like "Kynd Lollipopz".
-            if let cult, !cult.isEmpty, isMostlyCultivator(line, cult: cult) { continue }
-            // Strip trailing weight/format markers like " - 28g" or " Flower 3.5g"
-            // to leave a cleaner strain name.
-            let cleaned = stripTrailingFormatMarkers(line)
-            if cleaned.isEmpty { continue }
-            if isFormOnlyLine(cleaned) { continue }   // "Gummies", "Inhalable Product"
-            // A strain name is short; long lines are warning paragraphs / merged
-            // OCR rows. Check AFTER stripping the weight so a normal title like
-            // "Kynd Permanent Gas #15 (S) Flower 3.5g" isn't rejected for length.
-            if cleaned.split(whereSeparator: { $0 == " " }).count > 6 || cleaned.count > 48 { continue }
-            return cleaned
+            if let c = cleanNameCandidate(raw.trimmingCharacters(in: .whitespacesAndNewlines), cult: cult) {
+                return c
+            }
         }
         // Salvage pass: row-grouped OCR can merge the strain name into a cluttered
-        // top row (Metrc tag + name + "Total THC: 25.74%" + terpenes on one line),
-        // so every line is skipped above and the only "clean" line left is the
-        // child-safety warning. Recover the name from the LEADING segment of a top
-        // row — the part before the chemistry block begins.
-        return salvageLeadingName(lines, cultivator: cult)
+        // top row (Metrc tag + name + "Total THC: 25.74%" + terpenes on one line).
+        // Recover the name from the LEADING segment of a top row — the part before
+        // the chemistry block begins.
+        for raw in lines.prefix(4) {
+            if let c = leadingNameSegment(raw, cult: cult) { return c }
+        }
+        return nil
+    }
+
+    /// Ranked list of plausible strain names read straight from the OCR — the
+    /// data source for the tap-to-pick correction UI. The right name is almost
+    /// always ON the label even when auto-extraction grabbed the wrong line
+    /// (e.g. picked "AN" while "Zips - Warheadz" sits a line below). Tries each
+    /// line as a clean name, else its leading segment before the chemistry block;
+    /// drops junk, dedupes, and ranks multi-word names (a strain is rarely one
+    /// short token) ahead of short specks, position as a tiebreak.
+    static func candidateNames(ocrText: String, cultivator: String? = nil, limit: Int = 6) -> [String] {
+        let cult = cultivator?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let lines = ocrText.components(separatedBy: .newlines)
+        struct Cand { let text: String; let index: Int }
+        var cands: [Cand] = []
+        var seen = Set<String>()
+        for (i, raw) in lines.enumerated() {
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let raw0 = cleanNameCandidate(trimmed, cult: cult) ?? leadingNameSegment(raw, cult: cult) else { continue }
+            let c = trimToCleanName(raw0)
+            guard c.filter({ $0.isLetter }).count >= 3 else { continue }   // drop 1-2 char OCR specks
+            if seen.insert(c.lowercased()).inserted { cands.append(Cand(text: c, index: i)) }
+            if cands.count >= limit * 3 { break }
+        }
+        // Rank by cleanliness: reward letters + a mild multi-word bonus, penalize
+        // leftover digits (lot-code clutter) and lower position. Length is NOT a
+        // reward — that's what let "Warheadz 7725F6 Tota Terpenes: 3.26" outrank
+        // the clean "Warheadz".
+        func score(_ c: Cand) -> Double {
+            let letters = c.text.filter { $0.isLetter }.count
+            let digits = c.text.filter { $0.isNumber }.count
+            let words = c.text.split(whereSeparator: { $0 == " " }).filter { $0.contains(where: \.isLetter) }.count
+            return Double(min(letters, 20)) + (words >= 2 ? 8 : 0) - Double(digits) * 5 - Double(c.index)
+        }
+        return cands.sorted { score($0) > score($1) }.prefix(limit).map(\.text)
+    }
+
+    /// Trim a recovered candidate down to the clean name: stop at the first
+    /// "noise" token — a lot code / Metrc fragment (≥4 digits, or digits+letters
+    /// ≥5 chars like "7725F6") or a "Label:" token ("Terpenes:"). Preserves short
+    /// variant tags like "#15" and "(S)".
+    private static func trimToCleanName(_ s: String) -> String {
+        var kept: [String] = []
+        for tok in s.split(separator: " ", omittingEmptySubsequences: true).map(String.init) {
+            let digits = tok.filter { $0.isNumber }.count
+            let letters = tok.filter { $0.isLetter }.count
+            let isNoise = digits >= 4
+                       || (digits >= 2 && letters >= 1 && tok.count >= 5)   // lot code
+                       || tok.hasSuffix(":")                                 // "Terpenes:"
+            if isNoise { break }
+            kept.append(tok)
+        }
+        return kept.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// A single clean, standalone name line, or nil if the line is metadata /
+    /// chemistry / boilerplate / junk. Shared by candidateFromOCR + candidateNames.
+    private static func cleanNameCandidate(_ line: String, cult: String?) -> String? {
+        if line.isEmpty { return nil }
+        if isMetrcTagLine(line) { return nil }
+        if isLicenseLine(line) { return nil }
+        if isDateLine(line) { return nil }
+        if isAddressLikeLine(line) { return nil }
+        if !containsLetter(line) { return nil }
+        if isGibberish(line) { return nil }            // OCR of a stylized logo
+        if isSuspicious(line) { return nil }
+        if isChemotypeLine(line) { return nil }        // "High THC, Low CBD" etc.
+        if isBoilerplateLine(line) { return nil }      // warnings, directions, FDA text
+        if isLabeledValueLine(line) { return nil }     // "Limonene: 1.08 %", "THCa: 28.73"
+        // Skip a line that's essentially just the cultivator/brand — but keep a
+        // brand+strain line like "Kynd Lollipopz".
+        if let cult, !cult.isEmpty, isMostlyCultivator(line, cult: cult) { return nil }
+        let cleaned = stripTrailingFormatMarkers(line)
+        if cleaned.isEmpty { return nil }
+        if isFormOnlyLine(cleaned) { return nil }      // "Gummies", "Inhalable Product"
+        // A strain name is short; long lines are warning paragraphs / merged rows.
+        if cleaned.split(whereSeparator: { $0 == " " }).count > 6 || cleaned.count > 48 { return nil }
+        return cleaned
     }
 
     /// Tokens marking where the chemistry/potency block starts on a row. The
@@ -127,38 +185,34 @@ enum StrainNameFixer {
         "caryophyllene", "pinene", "humulene", "bisabolol", "ocimene", "%"
     ]
 
-    /// Recover a strain name from the leading part of one of the top rows: cut the
-    /// row at the first chemistry marker, strip a leading Metrc tag / license /
-    /// long digit run, drop trailing weight markers, and accept the remainder if
-    /// it reads like a name. Only reached when the normal line scan finds nothing.
-    private static func salvageLeadingName(_ lines: [String], cultivator cult: String?) -> String? {
-        for raw in lines.prefix(4) {
-            let lower = raw.lowercased()
-            // Earliest chemistry marker = where the name segment ends.
-            var cutDistance = lower.count
-            for m in chemistryCutMarkers {
-                if let r = lower.range(of: m) {
-                    cutDistance = min(cutDistance, lower.distance(from: lower.startIndex, to: r.lowerBound))
-                }
+    /// Recover a strain name from the leading part of a row: cut the row at the
+    /// first chemistry marker, strip a leading Metrc tag / license / long digit
+    /// run, drop trailing weight markers, and accept the remainder if it reads
+    /// like a name. Returns nil for junk. Shared by candidateFromOCR (salvage
+    /// pass) + candidateNames.
+    private static func leadingNameSegment(_ raw: String, cult: String?) -> String? {
+        let lower = raw.lowercased()
+        // Earliest chemistry marker = where the name segment ends.
+        var cutDistance = lower.count
+        for m in chemistryCutMarkers {
+            if let r = lower.range(of: m) {
+                cutDistance = min(cutDistance, lower.distance(from: lower.startIndex, to: r.lowerBound))
             }
-            let head = String(raw.prefix(cutDistance))
-            let stripped = stripLeadingTagNoise(head)
-            let cleaned = stripTrailingFormatMarkers(stripped.trimmingCharacters(in: .whitespacesAndNewlines))
-            if cleaned.isEmpty || !containsLetter(cleaned) { continue }
-            if isGibberish(cleaned) { continue }
-            if isSuspicious(cleaned) || isBoilerplateLine(cleaned) || isChemotypeLine(cleaned) { continue }
-            if isFormOnlyLine(stripTrailingFormatMarkers(cleaned)) { continue }
-            if isAddressLikeLine(cleaned) { continue }
-            // Skip only if the candidate is ESSENTIALLY just the brand. A
-            // brand+strain line ("Kynd Lollipopz") keeps its strain — dropping it
-            // would lose the name and let a hallucination survive.
-            if let cult, !cult.isEmpty, isMostlyCultivator(cleaned, cult: cult) { continue }
-            let letters = cleaned.filter { $0.isLetter }.count
-            if letters < 3 { continue }
-            if cleaned.split(whereSeparator: { $0 == " " }).count > 7 || cleaned.count > 48 { continue }
-            return cleaned
         }
-        return nil
+        let head = String(raw.prefix(cutDistance))
+        let stripped = stripLeadingTagNoise(head)
+        let cleaned = stripTrailingFormatMarkers(stripped.trimmingCharacters(in: .whitespacesAndNewlines))
+        if cleaned.isEmpty || !containsLetter(cleaned) { return nil }
+        if isGibberish(cleaned) { return nil }
+        if isSuspicious(cleaned) || isBoilerplateLine(cleaned) || isChemotypeLine(cleaned) { return nil }
+        if isFormOnlyLine(stripTrailingFormatMarkers(cleaned)) { return nil }
+        if isAddressLikeLine(cleaned) { return nil }
+        // Skip only if the candidate is ESSENTIALLY just the brand — a brand+strain
+        // line ("Kynd Lollipopz") keeps its strain.
+        if let cult, !cult.isEmpty, isMostlyCultivator(cleaned, cult: cult) { return nil }
+        if cleaned.filter({ $0.isLetter }).count < 3 { return nil }
+        if cleaned.split(whereSeparator: { $0 == " " }).count > 7 || cleaned.count > 48 { return nil }
+        return cleaned
     }
 
     /// OCR garbage from stylized logos / artwork — e.g. "BLO НАЧАААААААА…" off the
