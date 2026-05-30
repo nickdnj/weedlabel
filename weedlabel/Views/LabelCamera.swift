@@ -27,10 +27,11 @@ private let camLog = Logger(subsystem: "com.demarconet.weedlabel", category: "ca
 
 /// What the framing analysis currently sees — drives the on-screen hint.
 enum CaptureFraming: Equatable {
-    case searching      // no label rectangle found
-    case tooFar         // label found but small — move closer
-    case holdSteady     // framed but not yet sharp / focus settling
-    case ready          // framed + sharp → about to auto-capture
+    case searching            // no label rectangle found
+    case tooFar               // label found but small — move closer
+    case holdSteady           // framed but not yet sharp / focus settling
+    case locking(Double)      // framed + sharp, holding steady (0–1 progress)
+    case ready                // lock complete → about to auto-capture
 }
 
 struct CapturedFrame {
@@ -76,7 +77,6 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     private var configured = false
     private var armed = false                 // smart shutter active
     private var capturing = false             // a still is in flight
-    private var readyStreak = 0               // consecutive "ready" frames
     private var lastAnalysis = Date.distantPast
     private var seenQRCodes: [String] = []
     private var photoContinuation: ((UIImage?) -> Void)?
@@ -87,11 +87,16 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     private let autoTorchLumaCutoff = 70.0
     private var torchIsAuto = true
 
-    // Tuning.
-    private let analysisInterval: TimeInterval = 0.25   // ~4 fps analysis
-    private let minLabelFillFraction: CGFloat = 0.25    // white label must fill ≥25% of frame
-    private let sharpnessThreshold: Double = 9.0        // luma-gradient variance floor
-    private let readyFramesToFire = 2                   // sharp+framed frames before snap
+    // Tuning. Device telemetry: actual sharpness runs 300–560 when too close/
+    // settling and ~900+ when the label is crisp and readable, so the readable
+    // floor is ~850. The label must also fill the frame. Once BOTH hold, a
+    // hold-steady lock (must stay good for `lockDuration`) prevents firing
+    // mid-adjustment — moving or blurring resets the lock.
+    private let analysisInterval: TimeInterval = 0.2    // ~5 fps analysis
+    private let minLabelFillFraction: CGFloat = 0.22    // white label must fill ≥22% of frame
+    private let sharpnessThreshold: Double = 850        // readable-focus floor (telemetry-calibrated)
+    private let lockDuration: TimeInterval = 0.8        // must stay sharp+framed this long before firing
+    private var lockStart: Date?                        // when the current good streak began
 
     // MARK: - Lifecycle
 
@@ -107,7 +112,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
             self.sessionQueue.async {
                 self.configureIfNeeded()
                 if !self.session.isRunning { self.session.startRunning() }
-                self.readyStreak = 0
+                self.lockStart = nil
                 self.armed = true
                 self.capturing = false
                 Self.diag(String(format: "START running=%d armed=%d", self.session.isRunning ? 1 : 0, self.armed ? 1 : 0))
@@ -128,7 +133,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     /// tearing down the session.
     func rearm() {
         sessionQueue.async {
-            self.readyStreak = 0
+            self.lockStart = nil
             self.capturing = false
             self.armed = true
         }
@@ -259,7 +264,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
 
     private func triggerPhoto() {
         guard configured, !capturing else { return }
-        Self.diag(">>> TRIGGER PHOTO (streak hit)")
+        Self.diag(">>> TRIGGER PHOTO (hold-steady lock complete)")
         capturing = true
         armed = false
         let settings = AVCapturePhotoSettings()
@@ -330,19 +335,29 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
         // bright near-white block against a vivid bag; measuring brightness
         // forces the user close to the LABEL (not the bag). Hard gate.
         guard fill >= minLabelFillFraction else {
-            readyStreak = 0
+            lockStart = nil
             report(fill > 0.06 ? .tooFar : .searching)
             return
         }
 
-        let sharp = sharpVal >= sharpnessThreshold
-        if sharp && !focusing {
-            readyStreak += 1
-            report(.ready)
-            if readyStreak >= readyFramesToFire { triggerPhoto() }
-        } else {
-            readyStreak = 0
+        // Hold-steady lock: both framed AND sharp must STAY true for
+        // lockDuration before we fire. Any frame that dips below the sharpness
+        // floor (still moving/settling) resets the lock, so the shutter never
+        // fires mid-adjustment. `focusing` is intentionally NOT gated on — the
+        // ultra-wide macro lens never reports it (telemetry: always 0).
+        guard sharpVal >= sharpnessThreshold else {
+            lockStart = nil
             report(.holdSteady)
+            return
+        }
+        let start = lockStart ?? now
+        if lockStart == nil { lockStart = now }
+        let held = now.timeIntervalSince(start)
+        if held >= lockDuration {
+            report(.ready)
+            triggerPhoto()
+        } else {
+            report(.locking(min(1, held / lockDuration)))
         }
     }
 

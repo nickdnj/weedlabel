@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Pocketbud app icon — white shirt + green pocket-protector, leaf + lit joint. -->
+  <!-- App Store master: render this to a 1024x1024 PNG with NO alpha/transparency. -->
+  <defs>
+    <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBF8F1"/><stop offset="1" stop-color="#EAE3D3"/></linearGradient>
+    <linearGradient id="pkt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0EADC"/><stop offset="1" stop-color="#DED5C0"/></linearGradient>
+    <linearGradient id="flap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#249A63"/><stop offset="1" stop-color="#15623E"/></linearGradient>
+  </defs>
+
+  <!-- white shirt + placket + buttons -->
+  <rect width="1024" height="1024" fill="url(#shirt)"/>
+  <rect x="118" y="0" width="34" height="1024" fill="#D9D1BF" opacity=".7"/>
+  <line x1="123" y1="0" x2="123" y2="1024" stroke="#C7BCA4" stroke-width="3" opacity=".6"/>
+  <circle cx="135" cy="250" r="14" fill="#CFC6B0"/>
+  <circle cx="135" cy="660" r="14" fill="#CFC6B0"/>
+
+  <!-- lit joint (behind pocket front) -->
+  <g transform="rotate(18 700 470)">
+    <path d="M676 648 L686 338 Q700 300 714 338 L724 648 Z" fill="#F6F1E7" stroke="#CFC5B0" stroke-width="6"/>
+    <line x1="700" y1="372" x2="700" y2="610" stroke="#D8D0BD" stroke-width="3" opacity=".7"/>
+    <ellipse cx="700" cy="332" rx="17" ry="10" fill="#FF8A1E"/>
+    <circle cx="700" cy="330" r="6" fill="#FFD489"/>
+  </g>
+  <!-- smoke trail -->
+  <g fill="none" stroke="#A79D88" stroke-linecap="round">
+    <path d="M744 326 C 730 296 764 282 750 252 C 738 226 768 210 754 180" stroke-width="11" opacity=".5"/>
+    <path d="M754 180 C 748 160 768 148 760 126" stroke-width="8" opacity=".34"/>
+  </g>
+  <circle cx="762" cy="132" r="9" fill="#A79D88" opacity=".2"/>
+  <circle cx="752" cy="108" r="6" fill="#A79D88" opacity=".14"/>
+
+  <!-- green cannabis leaf (behind pocket front), sized to sit inside the pocket -->
+  <g transform="translate(496 648) scale(0.78)" fill="#3FBE7D">
+    <path transform="rotate(0) scale(1 1)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
+    <path transform="rotate(-36) scale(1 0.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
+    <path transform="rotate(36) scale(1 0.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
+    <path transform="rotate(-70) scale(1 0.55)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
+    <path transform="rotate(70) scale(1 0.55)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
+    <rect x="-14" y="0" width="28" height="120" rx="14"/>
+  </g>
+
+  <!-- pocket shadow + cream pocket front + stitch -->
+  <path d="M286 588 q0 -28 28 -28 l396 0 q28 0 28 28 l0 200 -50 60 -352 0 -50 -60 Z" fill="#000" opacity=".07" transform="translate(0 14)"/>
+  <path d="M286 576 q0 -28 28 -28 l396 0 q28 0 28 28 l0 200 -50 60 -352 0 -50 -60 Z" fill="url(#pkt)" stroke="#C9BEA4" stroke-width="4"/>
+  <path d="M306 576 l412 0" stroke="#C2B79C" stroke-width="5" opacity=".8"/>
+
+  <!-- green pocket-protector flap with scalloped hem + slots -->
+  <path d="M320 542 l384 0 0 70 q-32 22 -64 0 q-32 -22 -64 0 q-32 22 -64 0 q-32 -22 -64 0 q-32 22 -64 0 q-32 -22 -64 0 Z" fill="url(#flap)"/>
+  <rect x="426" y="560" width="7" height="48" rx="3.5" fill="#0F4F31" opacity=".5"/>
+  <rect x="512" y="556" width="7" height="52" rx="3.5" fill="#0F4F31" opacity=".5"/>
+  <rect x="598" y="560" width="7" height="48" rx="3.5" fill="#0F4F31" opacity=".5"/>
+</svg>

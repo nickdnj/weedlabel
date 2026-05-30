@@ -145,8 +145,9 @@ private struct CaptureHintBanner: View {
     private var message: String {
         switch framing {
         case .searching: return "Point at the label"
-        case .tooFar:    return "Move closer — fill the frame"
-        case .holdSteady: return "Hold steady…"
+        case .tooFar:    return "Move closer — fill the box with the label"
+        case .holdSteady: return "Bring the label into focus…"
+        case .locking:   return "Hold steady…"
         case .ready:     return "Capturing…"
         }
     }
@@ -180,6 +181,12 @@ private struct CaptureControls: View {
     let onCapture: () -> Void
     let onCancel: () -> Void
 
+    private var lockProgress: CGFloat {
+        if case .locking(let p) = framing { return CGFloat(p) }
+        return framing == .ready ? 1 : 0
+    }
+    private var isReady: Bool { framing == .ready }
+
     var body: some View {
         HStack {
             Button(action: onCancel) {
@@ -191,8 +198,15 @@ private struct CaptureControls: View {
 
             Button(action: onCapture) {
                 ZStack {
-                    Circle().strokeBorder(.white, lineWidth: 4).frame(width: 74, height: 74)
-                    Circle().fill(framing == .ready ? Brand.green : Color.white)
+                    Circle().strokeBorder(.white.opacity(0.4), lineWidth: 4).frame(width: 74, height: 74)
+                    // Lock progress ring fills as you hold steady.
+                    Circle()
+                        .trim(from: 0, to: lockProgress)
+                        .stroke(Brand.green, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: 74, height: 74)
+                        .animation(.linear(duration: 0.2), value: lockProgress)
+                    Circle().fill(isReady ? Brand.green : Color.white)
                         .frame(width: 60, height: 60)
                 }
             }

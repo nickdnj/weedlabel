@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#08070b;padding:44px;font-family:ui-rounded,-apple-system,system-ui,sans-serif;color:#F7F3EC;}
+  h2{font-size:15px;font-weight:700;color:#8b8794;text-transform:uppercase;letter-spacing:.08em;margin:8px 0 18px;}
+  .block{margin-bottom:50px;}
+  .flex{display:flex;align-items:flex-end;gap:30px;flex-wrap:wrap;}
+  .sizes{display:flex;align-items:flex-end;gap:22px;}
+  .sz{text-align:center;} .sz .cap{font-size:10px;color:#6b6772;margin-top:8px;}
+  .squircle{display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  /* iOS superellipse-ish radius via high border-radius ratio */
+  .ico{border-radius:22.5%;box-shadow:0 12px 30px rgba(0,0,0,.5);}
+  /* home screen */
+  .home{width:330px;height:540px;border-radius:42px;padding:14px;background:#000;box-shadow:0 0 0 2px #2a2a30;}
+  .home .scr{width:100%;height:100%;border-radius:30px;
+    background:linear-gradient(165deg,#3a2d5a,#1a2340 60%,#0d1226);
+    padding:30px 22px;display:flex;flex-direction:column;}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px 14px;margin-top:14px;}
+  .app{display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .app .t{font-size:9px;color:#fff;opacity:.9;}
+  .app .g{width:52px;height:52px;border-radius:13px;}
+  /* wordmark */
+  .wm{display:flex;align-items:center;gap:16px;}
+  .word{font-size:46px;font-weight:800;letter-spacing:-.02em;}
+  .word .b{color:#FFB020;}
+  .lockup-light{background:#F7F3EC;color:#1A1A1F;padding:22px 28px;border-radius:18px;}
+  .lockup-dark{background:#0E0D13;padding:22px 28px;border-radius:18px;}
+  .tagline{font-size:13px;font-weight:500;color:#8b8794;margin-top:2px;}
+</style></head>
+<body>
+
+<div class="block">
+  <h2>App icon — Leaf in Pocket (refined)</h2>
+  <div class="flex" id="hero"></div>
+</div>
+
+<div class="block">
+  <h2>Legibility at real sizes</h2>
+  <div class="sizes" id="sizes"></div>
+</div>
+
+<div class="block">
+  <h2>On the home screen</h2>
+  <div class="home"><div class="scr">
+    <div class="grid" id="grid"></div>
+  </div></div>
+</div>
+
+<div class="block">
+  <h2>Wordmark + lockup</h2>
+  <div class="flex">
+    <div class="lockup-dark wm">
+      <span id="wmicon"></span>
+      <div><div class="word">Pocket<span class="b">bud</span></div>
+      <div class="tagline">Your AI budtender · lives in your pocket</div></div>
+    </div>
+    <div class="lockup-light wm">
+      <span id="wmicon2"></span>
+      <div><div class="word" style="color:#1A1A1F">Pocket<span class="b">bud</span></div>
+      <div class="tagline" style="color:#7c7768">Your AI budtender · lives in your pocket</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Refined stylized leaf: 5 clean leaflets, bolder, legible small.
+function leaf(color, s=1, cx=512, cy=560){
+  const lf = (rot, len, w=1) =>
+    `<path transform="rotate(${rot}) scale(${w} ${len})" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="${color}"/>`;
+  return `<g transform="translate(${cx} ${cy}) scale(${s})">
+    ${lf(0,1.0)}
+    ${lf(-36,0.82)}${lf(36,0.82)}
+    ${lf(-70,0.55)}${lf(70,0.55)}
+    <rect x="-14" y="0" width="28" height="120" rx="14" fill="${color}"/>
+  </g>`;
+}
+// pocket pouch (1024 grid), top edge a gentle curve; leaf rises behind it
+function pocket(fill, accent){
+  return `<path d="M150 560 h724 v210 a90 90 0 0 1-90 90 H240 a90 90 0 0 1-90-90 Z" fill="${fill}"/>
+          <path d="M150 560 C320 470 704 470 874 560" stroke="${fill}" stroke-width="54" fill="none" stroke-linecap="round"/>
+          <path d="M150 560 h724" stroke="${accent}" stroke-width="20" opacity=".55"/>`;
+}
+// full icon: amber tile (matches Bold Playful C), twilight leaf + pocket
+function icon(px){
+  return `<svg width="${px}" height="${px}" viewBox="0 0 1024 1024">
+    <rect width="1024" height="1024" fill="url(#amb)"/>
+    <defs><linearGradient id="amb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB020"/><stop offset="1" stop-color="#E08600"/></linearGradient></defs>
+    ${leaf('#13111c',0.92)}
+    ${pocket('#13111c','#FFB020')}
+  </svg>`;
+}
+document.getElementById('hero').innerHTML =
+  `<div class="squircle ico" style="width:200px;height:200px">${icon(200)}</div>`+
+  `<div class="squircle ico" style="width:120px;height:120px">${icon(120)}</div>`;
+
+const sizes=[180,120,87,60,40];
+document.getElementById('sizes').innerHTML = sizes.map(s=>`
+  <div class="sz"><div class="squircle ico" style="width:${s}px;height:${s}px">${icon(s)}</div>
+  <div class="cap">${s}px</div></div>`).join('');
+
+// home screen with neighbors
+const neighbors=['#1c7ee8','#34c759','#ff3b30','#5e5ce6','#ff9500','#000','#30b0c7','#ff2d55','#8e8e93','#af52de','#0a84ff'];
+let cells=`<div class="app"><div class="g ico squircle">${icon(52)}</div><div class="t">Pocketbud</div></div>`;
+neighbors.forEach((c,i)=>{cells+=`<div class="app"><div class="g" style="background:${c}"></div><div class="t">App</div></div>`;});
+document.getElementById('grid').innerHTML = cells;
+
+document.getElementById('wmicon').innerHTML = `<div class="squircle ico" style="width:64px;height:64px">${icon(64)}</div>`;
+document.getElementById('wmicon2').innerHTML = `<div class="squircle ico" style="width:64px;height:64px">${icon(64)}</div>`;
+</script>
+</body></html>

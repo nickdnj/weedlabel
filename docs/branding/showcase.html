@@ -26,9 +26,11 @@
   .hero h1{font-family:var(--rounded);font-weight:800;font-size:72px;letter-spacing:-.03em;line-height:1;}
   .hero h1 .b{color:var(--amber);}
   .hero .tag{font-family:var(--rounded);font-weight:600;font-size:22px;margin-top:16px;color:#cfcbd6;}
-  .hero .privacy{display:inline-flex;align-items:center;gap:8px;margin-top:24px;font-size:13px;font-weight:600;
-    padding:9px 16px;border-radius:999px;background:rgba(107,143,113,.16);color:#9ec3a4;border:1px solid rgba(107,143,113,.3);}
-  .hero .privacy svg{width:15px;height:15px;}
+  .pillars{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:38px;}
+  .pillar{display:flex;align-items:center;gap:11px;background:rgba(47,168,102,.13);border:1.5px solid rgba(47,168,102,.42);
+    border-radius:18px;padding:16px 24px;box-shadow:0 8px 28px rgba(47,168,102,.14);}
+  .pillar svg{width:25px;height:25px;color:var(--green-bright);flex:none;}
+  .pillar b{font-family:var(--rounded);font-weight:700;font-size:18px;color:var(--cream);letter-spacing:-.01em;}
   .nav{position:sticky;top:0;z-index:100;background:rgba(8,7,11,.8);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);}
   .nav .wrap{display:flex;align-items:center;gap:24px;height:58px;}
   .nav .brand{font-family:var(--rounded);font-weight:800;font-size:18px;} .nav .brand .b{color:var(--amber);}
@@ -147,16 +149,26 @@
   <div class="icon" id="heroicon"></div>
   <h1>Pocket<span class="b">bud</span></h1>
   <div class="tag">Your AI budtender. Lives in your pocket.</div>
-  <div class="privacy">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-    100% on-device · No internet · Nothing leaves your phone
+  <div class="pillars">
+    <div class="pillar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>
+      <b>100% on-device</b>
+    </div>
+    <div class="pillar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+      <b>No internet</b>
+    </div>
+    <div class="pillar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+      <b>Nothing leaves your phone</b>
+    </div>
   </div>
 </div>
 
 <section id="icon"><div class="wrap">
   <div class="eyebrow">App Icon</div>
   <h2>Leaf in Pocket</h2>
-  <p class="lead">A stylized cannabis leaf rising from a pocket — cannabis and privacy in one mark, on a fresh-green tile with an amber seam for warmth. Legible from the App Store down to a settings row.</p>
+  <p class="lead">A cannabis leaf and a lit joint popping out of a shirt pocket-protector — a literal, playful take on the name. Bright green pops against a clean white shirt; the ember keeps a warm spark. Check the small sizes below for legibility.</p>
   <div class="icon-grid">
     <div class="icon-big" id="iconbig"></div>
     <div class="sizes" id="sizes"></div>
@@ -201,13 +213,42 @@ function leaf(color,s,cx,cy){
   return `<g transform="translate(${cx} ${cy}) scale(${s})">${lf(0,1)}${lf(-36,.82)}${lf(36,.82)}${lf(-70,.55)}${lf(70,.55)}<rect x="-14" y="0" width="28" height="120" rx="14" fill="${color}"/></g>`;
 }
 function icon(px){
+  const id='i'+px;
   return `<svg width="${px}" height="${px}" viewBox="0 0 1024 1024">
-    <defs><linearGradient id="grn${px}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34B06E"/><stop offset="1" stop-color="#1C6E45"/></linearGradient></defs>
-    <rect width="1024" height="1024" fill="url(#grn${px})"/>
-    ${leaf('#F7F3EC',.92,512,560)}
-    <path d="M150 560 h724 v210 a90 90 0 0 1-90 90 H240 a90 90 0 0 1-90-90 Z" fill="#0E3A24"/>
-    <path d="M150 560 C320 470 704 470 874 560" stroke="#0E3A24" stroke-width="54" fill="none" stroke-linecap="round"/>
-    <path d="M150 560 h724" stroke="#FFB020" stroke-width="20" opacity=".7"/></svg>`;
+    <defs>
+      <linearGradient id="shirt${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBF8F1"/><stop offset="1" stop-color="#EAE3D3"/></linearGradient>
+      <linearGradient id="pkt${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0EADC"/><stop offset="1" stop-color="#DED5C0"/></linearGradient>
+      <linearGradient id="flap${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#249A63"/><stop offset="1" stop-color="#15623E"/></linearGradient>
+    </defs>
+    <!-- white shirt + placket + buttons -->
+    <rect width="1024" height="1024" fill="url(#shirt${id})"/>
+    <rect x="118" y="0" width="34" height="1024" fill="#D9D1BF" opacity=".7"/>
+    <line x1="123" y1="0" x2="123" y2="1024" stroke="#C7BCA4" stroke-width="3" opacity=".6"/>
+    <circle cx="135" cy="250" r="14" fill="#CFC6B0"/><circle cx="135" cy="660" r="14" fill="#CFC6B0"/>
+    <!-- joint + green leaf popping out (behind pocket front) -->
+    <g transform="rotate(18 700 470)">
+      <path d="M676 648 L686 338 Q700 300 714 338 L724 648 Z" fill="#F6F1E7" stroke="#CFC5B0" stroke-width="6"/>
+      <line x1="700" y1="372" x2="700" y2="610" stroke="#D8D0BD" stroke-width="3" opacity=".7"/>
+      <ellipse cx="700" cy="332" rx="17" ry="10" fill="#FF8A1E"/>
+      <circle cx="700" cy="330" r="6" fill="#FFD489"/>
+    </g>
+    <!-- smoke trail from the lit ember -->
+    <g fill="none" stroke="#A79D88" stroke-linecap="round">
+      <path d="M744 326 C 730 296 764 282 750 252 C 738 226 768 210 754 180" stroke-width="11" opacity=".5"/>
+      <path d="M754 180 C 748 160 768 148 760 126" stroke-width="8" opacity=".34"/>
+    </g>
+    <circle cx="762" cy="132" r="9" fill="#A79D88" opacity=".2"/>
+    <circle cx="752" cy="108" r="6" fill="#A79D88" opacity=".14"/>
+    ${leaf('#3FBE7D',0.78,496,648)}
+    <!-- pocket shadow + cream pocket front + stitch -->
+    <path d="M286 588 q0 -28 28 -28 l396 0 q28 0 28 28 l0 200 -50 60 -352 0 -50 -60 Z" fill="#000" opacity=".07" transform="translate(0 14)"/>
+    <path d="M286 576 q0 -28 28 -28 l396 0 q28 0 28 28 l0 200 -50 60 -352 0 -50 -60 Z" fill="url(#pkt${id})" stroke="#C9BEA4" stroke-width="4"/>
+    <path d="M306 576 l412 0" stroke="#C2B79C" stroke-width="5" opacity=".8"/>
+    <!-- GREEN pocket-protector flap with scalloped hem + slots -->
+    <path d="M320 542 l384 0 0 70 q-32 22 -64 0 q-32 -22 -64 0 q-32 22 -64 0 q-32 -22 -64 0 q-32 22 -64 0 q-32 -22 -64 0 Z" fill="url(#flap${id})"/>
+    <rect x="426" y="560" width="7" height="48" rx="3.5" fill="#0F4F31" opacity=".5"/>
+    <rect x="512" y="556" width="7" height="52" rx="3.5" fill="#0F4F31" opacity=".5"/>
+    <rect x="598" y="560" width="7" height="48" rx="3.5" fill="#0F4F31" opacity=".5"/></svg>`;
 }
 document.getElementById('heroicon').innerHTML=icon(124);
 document.getElementById('iconbig').innerHTML=icon(200);
@@ -222,7 +263,7 @@ const TABS=(on)=>`<div class="tabs">
  <div class="tab ${on==1?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Log Book</div>
  <div class="tab ${on==2?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>About</div></div>`;
 const LOCK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
-const thumb=`<svg width="44" height="44" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#1C6E45"/><g transform="translate(512 540) scale(.7)"><path d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#F7F3EC"/></g><path d="M150 560 h724 v210 a90 90 0 0 1-90 90 H240 a90 90 0 0 1-90-90 Z" fill="#0E3A24"/></svg>`;
+const thumb=`<svg width="44" height="44" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#EFE9DB"/><g transform="translate(470 600) scale(.62)"><path d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#3FBE7D"/><path transform="rotate(-36) scale(.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#3FBE7D"/><path transform="rotate(36) scale(.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#3FBE7D"/></g><path d="M250 600 h524 v150 a64 64 0 0 1-64 64 H314 a64 64 0 0 1-64-64 Z" fill="#1C6E45"/></svg>`;
 
 const camera=`<div class="notch"></div><div class="camfeed"></div>
   <div class="labelcard"><b>Blue Candy Rain</b><br>THCA: 29.73%<br>Total THC: 32.25%<br>Myrcene 1.83%<br>Fresh Grow LLC</div>
