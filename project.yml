@@ -7,13 +7,21 @@ options:
   createIntermediateGroups: true
   generateEmptyDirectories: true
 
+# Beta is release-optimised but compiles in the #if BETA tester-feedback code.
+# TestFlight archives use Beta; the App Store archive uses Release (no BETA) so
+# the shipping binary collects nothing — see docs/SPEC-beta-feedback.md.
+configs:
+  Debug: debug
+  Release: release
+  Beta: release
+
 settings:
   base:
     SWIFT_VERSION: "6.0"
     IPHONEOS_DEPLOYMENT_TARGET: "26.0"
     GENERATE_INFOPLIST_FILE: YES
-    INFOPLIST_KEY_CFBundleDisplayName: HighNotes
-    INFOPLIST_KEY_NSCameraUsageDescription: "HighNotes uses your camera to read cannabis labels. Everything stays on your phone — nothing is uploaded."
+    INFOPLIST_KEY_CFBundleDisplayName: Pocketbud
+    INFOPLIST_KEY_NSCameraUsageDescription: "Pocketbud uses your camera to read cannabis labels. Everything stays on your phone — nothing is uploaded."
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
     INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
     INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
@@ -39,6 +47,13 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+      configs:
+        # DEBUG inherited from the debug config type; BETA enables tester feedback.
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) BETA"
+        Beta:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) BETA"
+        # Release: no BETA — the feedback feature compiles out of the App Store build.
 
   weedlabelTests:
     type: bundle.unit-test
@@ -73,3 +88,16 @@ schemes:
       config: Debug
     archive:
       config: Release
+
+  # TestFlight scheme: archives the Beta config so #if BETA feedback is included.
+  # Use this for TestFlight uploads; use the `weedlabel` scheme (Release) for the
+  # final App Store submission.
+  weedlabel-Beta:
+    build:
+      targets:
+        weedlabel: all
+    run:
+      config: Debug
+      storeKitConfiguration: TipJar.storekit
+    archive:
+      config: Beta
