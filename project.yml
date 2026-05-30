@@ -28,6 +28,8 @@ settings:
     DEVELOPMENT_TEAM: "5VPR237YHV"
     CODE_SIGN_STYLE: Automatic
     ENABLE_USER_SCRIPT_SANDBOXING: YES
+    # Standard OS encryption only → skip the export-compliance prompt on every upload.
+    INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
 
 targets:
   weedlabel:
