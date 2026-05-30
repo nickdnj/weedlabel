@@ -256,30 +256,27 @@ final class ScanModel {
         }
     }
 
-    /// Isolate the label, OCR the deskewed crop, and fall back to the full image
-    /// when isolation fails or the crop yields too little text. Returns the OCR
-    /// result plus the isolated crop (nil when none was used) for display/saving.
+    /// OCR the full original image, and isolate the label crop only as the image
+    /// to display/save. Returns the OCR result plus the isolated crop (nil when
+    /// isolation failed).
+    ///
+    /// Why OCR the original, not the crop: `LabelIsolator`'s perspective
+    /// correction can emit a ~180°-rotated crop. `StaticImageOCR.recognize`
+    /// tries multiple orientations, but its aspect-ratio score only distinguishes
+    /// 90° rotations (tall vs. wide text boxes) — a 180° flip reads as equally
+    /// "upright," so it can't self-correct. OCR of a reversed crop comes out
+    /// value-then-label with scrambled rows, which wrecks extraction (OI-0). The
+    /// full original is captured upright, so OCRing it sidesteps the rotation bug
+    /// entirely. The deskewed crop is still the nicer image to keep in the Log
+    /// Book, so we compute it purely for display/saving.
     private func isolateAndOCR(_ original: UIImage) async -> (result: StaticImageOCR.Result?, isolated: UIImage?) {
-        // Detection is CPU-bound Vision work — keep it off the main actor.
-        let isolated = await Task.detached { LabelIsolator.isolate(original) }.value
-        guard let isolated else {
-            let r = try? await StaticImageOCR.recognize(in: original)
-            LabelCamera.diag("OCR path=FULL(no-crop) chars=\((r?.ocrText ?? "").count)")
-            return (r, nil)
-        }
-        let cropResult = try? await StaticImageOCR.recognize(in: isolated)
-        let cropText = cropResult?.ocrText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if cropText.count >= 20 {
-            LabelCamera.diag("OCR path=CROP chars=\(cropText.count)")
-            return (cropResult, isolated)   // deskewed crop is the OCR + saved image
-        }
-        // Sparse crop → detection likely grabbed the wrong region. Prefer the
-        // full image if it OCRs better, and drop the bad crop.
-        let fullResult = try? await StaticImageOCR.recognize(in: original)
-        let fullText = fullResult?.ocrText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let useFull = fullText.count > cropText.count
-        LabelCamera.diag("OCR path=\(useFull ? "FULL(crop-sparse)" : "CROP(thin)") cropChars=\(cropText.count) fullChars=\(fullText.count)")
-        return useFull ? (fullResult, nil) : (cropResult, isolated)
+        // Detection is CPU-bound Vision work — keep it off the main actor. Run it
+        // concurrently with OCR since they're independent now.
+        async let isolatedTask = Task.detached { LabelIsolator.isolate(original) }.value
+        let result = try? await StaticImageOCR.recognize(in: original)
+        let isolated = await isolatedTask
+        LabelCamera.diag("OCR path=FULL(orig) chars=\((result?.ocrText ?? "").count) isolated=\(isolated != nil)")
+        return (result, isolated)
     }
 
     /// User rejected the preview — scan again (restarts the camera).

@@ -158,7 +158,10 @@ final class LabelCamera: NSObject, @unchecked Sendable {
 
     /// Manual shutter — capture now regardless of framing (override).
     func captureNow() {
-        sessionQueue.async { self.triggerPhoto() }
+        sessionQueue.async {
+            Self.diag(">>> MANUAL SHUTTER (user tapped)")
+            self.triggerPhoto()
+        }
     }
 
     // MARK: - Configuration
