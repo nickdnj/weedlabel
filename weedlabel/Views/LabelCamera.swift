@@ -198,6 +198,14 @@ final class LabelCamera: NSObject, @unchecked Sendable {
             if cam.isGeometricDistortionCorrectionSupported {
                 cam.isGeometricDistortionCorrectionEnabled = true
             }
+            // CRITICAL: a custom AVCaptureSession defaults to RESTRICTING
+            // constituent-camera switching, so the triple camera never hands off
+            // to the ultra-wide for macro — telemetry showed zoom pinned at 1.0,
+            // lens racked to 0.0, and sharpness collapsing as you got close.
+            // .auto with no restrictions lets the system switch to the macro lens.
+            if cam.activePrimaryConstituentDeviceSwitchingBehavior != .unsupported {
+                cam.setPrimaryConstituentDeviceSwitchingBehavior(.auto, restrictedSwitchingBehaviorConditions: [])
+            }
             cam.unlockForConfiguration()
         } catch { /* best effort */ }
     }
@@ -231,6 +239,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
 
     private func triggerPhoto() {
         guard configured, !capturing else { return }
+        Self.diag(">>> TRIGGER PHOTO (streak hit)")
         capturing = true
         armed = false
         let settings = AVCapturePhotoSettings()
@@ -240,6 +249,26 @@ final class LabelCamera: NSObject, @unchecked Sendable {
 
     private func report(_ framing: CaptureFraming) {
         Task { @MainActor in self.onFraming?(framing) }
+    }
+
+    // MARK: - File-based live diagnostics
+
+    private static let diagURL: URL = {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return docs.appendingPathComponent("camdiag.log")
+    }()
+    private static var diagLines: [String] = []
+    private static let diagQueue = DispatchQueue(label: "com.demarconet.weedlabel.camdiag")
+
+    /// Append a diagnostic line (timestamped) to Documents/camdiag.log, keeping
+    /// only the most recent 120 so the file stays tiny and quick to pull.
+    static func diag(_ line: String) {
+        diagQueue.async {
+            let t = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 100000)
+            diagLines.append(String(format: "%.1f %@", t, line))
+            if diagLines.count > 120 { diagLines.removeFirst(diagLines.count - 120) }
+            try? diagLines.joined(separator: "\n").write(to: diagURL, atomically: true, encoding: .utf8)
+        }
     }
 }
 
@@ -259,6 +288,9 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
         let focusing = device?.isAdjustingFocus ?? false
         let lens = device?.lensPosition ?? -1
         let zoom = device?.videoZoomFactor ?? -1
+        // Which physical lens is active now (shows the macro/ultra-wide handoff).
+        let activeLens = (device?.activePrimaryConstituentDevice?.deviceType.rawValue ?? "n/a")
+            .replacingOccurrences(of: "AVCaptureDeviceTypeBuiltIn", with: "")
 
         // Auto-torch: light up when the scene is dark (helps focus + contrast).
         if torchIsAuto {
@@ -266,10 +298,12 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
             if wantTorch != torchOn { applyTorch(wantTorch) }
         }
 
-        // Live diagnostics — stream with: idevicesyslog | grep camdiag
-        // NSLog (not Logger.notice) so it reliably reaches idevicesyslog.
-        NSLog("camdiag fill=%.2f sharp=%.1f luma=%.0f focusing=%d lens=%.2f zoom=%.1f torch=%d streak=%d",
-              fill, sharpVal, meanLuma, focusing ? 1 : 0, lens, zoom, self.torchOn ? 1 : 0, self.readyStreak)
+        // Live diagnostics. iOS 26 makes os_log/NSLog unreachable via
+        // idevicesyslog and devicectl --console only dumps on exit, so we append
+        // to a file in Documents and pull it live with `devicectl copy` while
+        // scanning. Capped to the last ~120 lines.
+        Self.diag(String(format: "fill=%.2f sharp=%.1f luma=%.0f focusing=%d lens=%.2f zoom=%.1f active=%@ torch=%d streak=%d",
+                         fill, sharpVal, meanLuma, focusing ? 1 : 0, lens, zoom, activeLens, self.torchOn ? 1 : 0, self.readyStreak))
 
         // Framing: how much of the frame the WHITE LABEL fills. The label is a
         // bright near-white block against a vivid bag; measuring brightness
