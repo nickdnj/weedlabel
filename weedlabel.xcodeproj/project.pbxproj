@@ -32,6 +32,7 @@
 		65F1C361CC69987B3FC9EDAF /* StrainNameFixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6F9E8F085BB50271753BB3 /* StrainNameFixer.swift */; };
 		6752F2738636EFB7365AF8C9 /* ProductTypeOverrideStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10EDF9F131951B71C3B0A9B5 /* ProductTypeOverrideStore.swift */; };
 		67A33F65B674FBCEF940D841 /* StrainNameOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C50C9142BF0485CF598D3E81 /* StrainNameOverrideStoreTests.swift */; };
+		715E09B0E60AD5CDFF6D000D /* BetaFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD29ED31A20CA2FF4D6080C /* BetaFeedback.swift */; };
 		7B6DD1EB2F3E1595698F27DF /* ProductLinksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FF994512D20FED9C21B78D6 /* ProductLinksTests.swift */; };
 		7D0493E8E7CDB9A444EBB898 /* FieldDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12ABA423CC39833F39B87ED2 /* FieldDetectorTests.swift */; };
 		7D22C8B5C7D12E8379824BB7 /* LabelSanityCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */; };
@@ -80,6 +81,7 @@
 		12ABA423CC39833F39B87ED2 /* FieldDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldDetectorTests.swift; sourceTree = "<group>"; };
 		1543B6AC44F3A9D66434A274 /* StrainKnowledgeBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainKnowledgeBase.swift; sourceTree = "<group>"; };
 		1B1C4222DB0C0DCE9CF6645C /* LogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogStore.swift; sourceTree = "<group>"; };
+		1BD29ED31A20CA2FF4D6080C /* BetaFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaFeedback.swift; sourceTree = "<group>"; };
 		1C5C3AF5102B27F968BCFBD6 /* LogBookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogBookView.swift; sourceTree = "<group>"; };
 		1F14F572A953D32307C55F81 /* LogEntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntryDetailView.swift; sourceTree = "<group>"; };
 		1F4DE79D3C8B6BA14BAF9D1B /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
@@ -227,6 +229,7 @@
 			isa = PBXGroup;
 			children = (
 				FD84D545BEFA6CC6C807F63F /* AvailabilityGate.swift */,
+				1BD29ED31A20CA2FF4D6080C /* BetaFeedback.swift */,
 				E99D93418105C99800D9CC8F /* ExtractionService.swift */,
 				56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */,
 				4195B83EE20D12BB8D3C4BD2 /* LabelIsolator.swift */,
@@ -345,6 +348,7 @@
 			files = (
 				02EC0A4A5B5A850A7F21CA6C /* AboutView.swift in Sources */,
 				DEFB9A95D843368A33260F60 /* AvailabilityGate.swift in Sources */,
+				715E09B0E60AD5CDFF6D000D /* BetaFeedback.swift in Sources */,
 				39BCAE803B2C2359027379A9 /* Brand.swift in Sources */,
 				88FD7F808E5C385119D82AE0 /* CameraPreviewView.swift in Sources */,
 				9FE4DD4A3C080230DBFE65FE /* CannabisLabel.swift in Sources */,
