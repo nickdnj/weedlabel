@@ -42,10 +42,13 @@ enum StaticImageOCR {
     }
 
     /// Run Vision text recognition + barcode detection against an image. We try
-    /// multiple orientations and pick the one that produces the most "tight"
-    /// text observations — this handles labels photographed on their side or
-    /// upside-down (common with cylindrical containers like Zips tins).
-    /// Observations are then sorted top-to-bottom then left-to-right.
+    /// multiple orientations and pick the upright reading. Two signals choose it:
+    /// the aspect score (`qualityScore`) drops 90°-rotated readings (tall narrow
+    /// boxes), and the anchor score (`anchorOrientationScore`) resolves the 180°
+    /// flip the aspect score CANNOT — Vision reads upside-down rows just as well,
+    /// so only the semantic position of the bottom-of-label boilerplate
+    /// distinguishes upright from inverted. Observations from the chosen
+    /// orientation are sorted top-to-bottom then left-to-right.
     static func recognize(in image: UIImage) async throws -> Result {
         guard let cg = image.cgImage else {
             throw OCRError.noCGImage
@@ -57,8 +60,9 @@ enum StaticImageOCR {
                 var seen = Set<UInt32>()
                 let candidates = [imageOrientation, .right, .left, .down].filter { seen.insert($0.rawValue).inserted }
 
-                var bestObservations: [VNRecognizedTextObservation] = []
-                var bestQuality: Double = -1
+                var allObservations: [[VNRecognizedTextObservation]] = []
+                var aspects: [Double] = []
+                var anchors: [Double?] = []
                 var lastError: Error?
                 for orientation in candidates {
                     let handler = VNImageRequestHandler(cgImage: cg, orientation: orientation, options: [:])
@@ -73,21 +77,19 @@ enum StaticImageOCR {
                         continue
                     }
                     let observations = textRequest.results ?? []
-                    let quality = qualityScore(observations)
-                    if quality > bestQuality {
-                        bestQuality = quality
-                        bestObservations = observations
-                    }
+                    allObservations.append(observations)
+                    aspects.append(qualityScore(observations))
+                    anchors.append(anchorOrientationScore(groupRows(observations)))
                 }
 
                 // If every orientation failed, surface the last error rather than
                 // silently returning an empty result.
-                if bestQuality < 0 {
+                guard let bestIndex = chooseBestOrientation(aspects: aspects, anchors: anchors) else {
                     cont.resume(throwing: OCRError.visionFailed(lastError ?? noOrientationsSucceededError()))
                     return
                 }
 
-                let text = Self.assembleRows(bestObservations)
+                let text = Self.assembleRows(allObservations[bestIndex])
 
                 // Barcodes are orientation-invariant for QR — one pass on the
                 // original orientation is enough. Failure is non-fatal: a label
@@ -109,6 +111,13 @@ enum StaticImageOCR {
     /// them left-to-right, so "Total THC:" rejoins its value on one line — which
     /// is what lets both the model and the cannabinoid reconciler pair them.
     static func assembleRows(_ observations: [VNRecognizedTextObservation]) -> String {
+        groupRows(observations).map(\.text).joined(separator: "\n")
+    }
+
+    /// One assembled visual row plus its vertical center (`yc`, 0 = top, 1 =
+    /// bottom). Shared by `assembleRows` (text) and `anchorOrientationScore`
+    /// (which needs the vertical positions to locate the bottom-of-label block).
+    static func groupRows(_ observations: [VNRecognizedTextObservation]) -> [(text: String, yc: CGFloat)] {
         struct Item { let text: String; let yc: CGFloat; let xMin: CGFloat }
         let items: [Item] = observations.compactMap { obs in
             guard let s = obs.topCandidates(1).first?.string else { return nil }
@@ -125,8 +134,53 @@ enum StaticImageOCR {
             }
         }
         return rows.map { row in
-            row.sorted { $0.xMin < $1.xMin }.map(\.text).joined(separator: "  ")
-        }.joined(separator: "\n")
+            (row.sorted { $0.xMin < $1.xMin }.map(\.text).joined(separator: "  "), row.first?.yc ?? 0)
+        }
+    }
+
+    /// Legal/warning boilerplate that ALWAYS sits in the bottom portion of an NJ
+    /// cannabis label. If these phrases appear near the TOP of the assembled
+    /// rows, the image was read upside-down (180°-flipped).
+    private static let bottomAnchorPhrases = [
+        "not safe for kids", "poison control", "keep out of the reach", "not drive",
+        "this statement", "directions", "storage", "drug administration", "resale",
+        "pregnant", "allergens", "pesticides", "serving", "refrigeration",
+        "inactive ingredient", "do not", "21 years"
+    ]
+
+    /// Mean vertical position (0 = top, 1 = bottom) of rows containing a
+    /// bottom-anchor phrase. Higher = the boilerplate sits low = upright reading.
+    /// `nil` when no anchor phrase is present (e.g. a non-NJ label), so callers
+    /// fall back to the aspect score. This is the only signal that distinguishes
+    /// a 180° flip — Vision recognizes upside-down rows with near-identical
+    /// aspect/confidence/character counts, so statistical scores can't.
+    static func anchorOrientationScore(_ rows: [(text: String, yc: CGFloat)]) -> Double? {
+        let ycs = rows.compactMap { row -> CGFloat? in
+            let l = row.text.lowercased()
+            return bottomAnchorPhrases.contains(where: { l.contains($0) }) ? row.yc : nil
+        }
+        guard !ycs.isEmpty else { return nil }
+        return Double(ycs.reduce(0, +) / CGFloat(ycs.count))
+    }
+
+    /// Pick the upright orientation from per-orientation aspect + anchor scores.
+    /// 1. Keep orientations whose aspect is within half the best (drops the
+    ///    90°-rotated readings, whose tall/narrow boxes score far lower).
+    /// 2. Among those, choose the highest anchor score — the upright reading,
+    ///    since its bottom-of-label boilerplate sits lowest.
+    /// 3. If no kept orientation has an anchor score, fall back to the highest
+    ///    aspect (prior behavior — safe for labels without the NJ boilerplate).
+    /// Returns nil only when there are no successful orientations at all.
+    /// Pure (no Vision) so it's unit-testable with the measured device numbers.
+    static func chooseBestOrientation(aspects: [Double], anchors: [Double?]) -> Int? {
+        guard let maxAspect = aspects.max(), maxAspect >= 0 else { return nil }
+        let threshold = maxAspect * 0.5
+        let kept = aspects.indices.filter { aspects[$0] >= threshold }
+        let anchored = kept.filter { anchors[$0] != nil }
+        if let best = anchored.max(by: { (anchors[$0] ?? 0) < (anchors[$1] ?? 0) }) {
+            return best
+        }
+        return aspects.indices.max(by: { aspects[$0] < aspects[$1] })
     }
 
     private static func noOrientationsSucceededError() -> NSError {

@@ -58,6 +58,7 @@
 		E3422BC37E4D4CA4B13BFC0A /* LogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1C4222DB0C0DCE9CF6645C /* LogStore.swift */; };
 		ECCBCAEC99379DABB86DDAED /* LogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF5066AE5CB7D703DDB3CAE /* LogStoreTests.swift */; };
 		EED37701B1A41554B8EEF995 /* StrainNameFixerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BB79C18425855B7AB67D0B6 /* StrainNameFixerTests.swift */; };
+		F8A83C1959F230F6E1902982 /* StaticImageOCROrientationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C1C00E9A92837651C2D7DE7 /* StaticImageOCROrientationTests.swift */; };
 		FA367F8E468F984BB97ED058 /* ScanModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BD5E4DA48E32745BBDAE20E /* ScanModelTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -94,6 +95,7 @@
 		4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P6ValidatorTests.swift; sourceTree = "<group>"; };
 		5009B08A5116D6385CA5FBCD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldDetector.swift; sourceTree = "<group>"; };
+		5C1C00E9A92837651C2D7DE7 /* StaticImageOCROrientationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticImageOCROrientationTests.swift; sourceTree = "<group>"; };
 		6931CE4F5C707585B52846C9 /* PostScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostScanView.swift; sourceTree = "<group>"; };
 		6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelSanityCheckerTests.swift; sourceTree = "<group>"; };
 		6E2E3B0F92071D4FC7640A4C /* StrainOverrideStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainOverrideStore.swift; sourceTree = "<group>"; };
@@ -189,6 +191,7 @@
 				41AFA1C72E21FB7293A6B2DD /* ProductTypeInferenceTests.swift */,
 				DDED767113EC4C6265A346A3 /* ProductTypeOverrideStoreTests.swift */,
 				0BD5E4DA48E32745BBDAE20E /* ScanModelTests.swift */,
+				5C1C00E9A92837651C2D7DE7 /* StaticImageOCROrientationTests.swift */,
 				7A67F0AADA564CD133E4F413 /* StrainKnowledgeBaseTests.swift */,
 				9BB79C18425855B7AB67D0B6 /* StrainNameFixerTests.swift */,
 				C50C9142BF0485CF598D3E81 /* StrainNameOverrideStoreTests.swift */,
@@ -392,6 +395,7 @@
 				427AEA992DB5DA8C92838EAE /* ProductTypeInferenceTests.swift in Sources */,
 				30FB7933E51E18AB7F499320 /* ProductTypeOverrideStoreTests.swift in Sources */,
 				FA367F8E468F984BB97ED058 /* ScanModelTests.swift in Sources */,
+				F8A83C1959F230F6E1902982 /* StaticImageOCROrientationTests.swift in Sources */,
 				860D65289692E1185199273B /* StrainKnowledgeBaseTests.swift in Sources */,
 				EED37701B1A41554B8EEF995 /* StrainNameFixerTests.swift in Sources */,
 				67A33F65B674FBCEF940D841 /* StrainNameOverrideStoreTests.swift in Sources */,
