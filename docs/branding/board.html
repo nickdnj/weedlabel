@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocketbud — Brand Exploration</title>
+<style>
+  :root{
+    --ink:#0E0D13; --cream:#F7F3EC; --amber:#F5A623; --amber-bright:#FFB020;
+    --sage:#6B8F71; --indigo:#1B1A24; --char:#1A1A1F;
+    --rounded:"SF Pro Rounded", ui-rounded, -apple-system, system-ui, sans-serif;
+    --text:-apple-system, "SF Pro Text", system-ui, sans-serif;
+    --mono:"SF Mono", ui-monospace, "JetBrains Mono", monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#08070b; color:var(--cream); font-family:var(--text);
+    padding:56px 40px 80px; -webkit-font-smoothing:antialiased;
+  }
+  h1.title{font-family:var(--rounded); font-size:40px; font-weight:800; letter-spacing:-.02em;}
+  h1.title .b{color:var(--amber);}
+  .sub{color:#9a96a3; font-size:16px; margin-top:8px; max-width:760px; line-height:1.5;}
+  h2.sec{font-family:var(--rounded); font-size:22px; font-weight:700; margin:64px 0 6px; letter-spacing:-.01em;}
+  .secsub{color:#8b8794; font-size:14px; margin-bottom:26px;}
+
+  /* ---- phone frame ---- */
+  .row{display:flex; gap:38px; flex-wrap:wrap;}
+  .phone-wrap{width:320px;}
+  .phone-label{font-family:var(--rounded); font-weight:700; font-size:16px; margin-bottom:4px;}
+  .phone-label .tag{font-family:var(--text); font-weight:500; font-size:12px; color:#8b8794; display:block; margin-top:2px;}
+  .phone{
+    width:320px; height:660px; border-radius:46px; padding:11px;
+    background:#000; box-shadow:0 24px 70px rgba(0,0,0,.6), 0 0 0 2px #2a2a30;
+    position:relative; margin-top:14px;
+  }
+  .screen{width:100%; height:100%; border-radius:36px; overflow:hidden; position:relative; display:flex; flex-direction:column;}
+  .notch{position:absolute; top:11px; left:50%; transform:translateX(-50%); width:104px; height:26px; background:#000; border-radius:16px; z-index:30;}
+
+  /* status bar */
+  .status{display:flex; justify-content:space-between; align-items:center; padding:13px 26px 0; font-size:13px; font-weight:600; font-family:var(--rounded); z-index:20;}
+  .status .icons{letter-spacing:1px; font-size:11px;}
+
+  /* content */
+  .body{flex:1; overflow:hidden; padding:8px 18px 0; display:flex; flex-direction:column;}
+  .badge{display:inline-flex; align-items:center; gap:6px; align-self:flex-start; font-size:11px; font-weight:600; padding:6px 11px; border-radius:999px; margin:10px 0 16px;}
+  .badge svg{width:12px; height:12px;}
+  .hero-name{font-family:var(--rounded); font-weight:800; letter-spacing:-.02em; line-height:1.02;}
+  .hero-meta{font-size:13px; font-weight:500; margin-top:6px;}
+  .pill-strain{display:inline-block; font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; margin-top:10px;}
+
+  .thc{margin:18px 0 6px;}
+  .thc .num{font-family:var(--rounded); font-weight:800; letter-spacing:-.03em; line-height:.95;}
+  .thc .lbl{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; opacity:.7;}
+  .thc .sub{font-family:var(--mono); font-size:12px; margin-top:6px; opacity:.85;}
+
+  .chips{display:flex; gap:7px; flex-wrap:wrap; margin:16px 0 4px;}
+  .chip{font-size:11px; font-weight:600; padding:6px 10px; border-radius:999px;}
+  .chip .v{font-family:var(--mono); opacity:.7; margin-left:4px;}
+
+  .prov{display:flex; flex-direction:column; gap:3px; margin:16px 2px 0; font-size:12px;}
+  .prov .k{opacity:.55; font-weight:500;}
+  .prov .line{display:flex; justify-content:space-between;}
+
+  .ai{margin-top:16px; border-radius:18px; padding:14px 15px;}
+  .ai .h{display:flex; align-items:center; gap:7px; font-family:var(--rounded); font-weight:700; font-size:13px; margin-bottom:7px;}
+  .ai .h .dot{width:18px;height:18px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
+  .ai p{font-size:12.5px; line-height:1.5; opacity:.9;}
+
+  /* tab bar */
+  .tabs{display:flex; justify-content:space-around; align-items:center; padding:12px 0 26px; margin-top:auto; font-size:10px; font-weight:600; font-family:var(--rounded);}
+  .tab{display:flex; flex-direction:column; align-items:center; gap:4px; opacity:.45;}
+  .tab.on{opacity:1;}
+  .tab svg{width:22px; height:22px;}
+
+  /* ---- THEMES ---- */
+  .twilight .screen{background:radial-gradient(120% 80% at 50% 0%, #1a1826 0%, var(--ink) 55%);}
+  .twilight .status,.twilight .hero-name{color:var(--cream);}
+  .twilight .badge{background:rgba(245,166,35,.14); color:var(--amber); border:1px solid rgba(245,166,35,.25);}
+  .twilight .hero-name{font-size:30px;}
+  .twilight .hero-meta{color:#9a96a3;}
+  .twilight .pill-strain{background:rgba(107,143,113,.2); color:#9ec3a4;}
+  .twilight .thc .num{font-size:54px; color:var(--amber);}
+  .twilight .thc .lbl,.twilight .thc .sub{color:var(--cream);}
+  .twilight .chip{background:rgba(255,255,255,.06); color:var(--cream); border:1px solid rgba(255,255,255,.08);}
+  .twilight .chip .v{color:var(--amber);}
+  .twilight .prov{color:var(--cream);}
+  .twilight .ai{background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.07);}
+  .twilight .ai .dot{background:var(--amber); color:#1a1410;}
+  .twilight .tab{color:var(--cream);} .twilight .tab.on{color:var(--amber);}
+
+  .warm .screen{background:linear-gradient(180deg,#FBF8F1 0%, #F2ECE0 100%); color:var(--char);}
+  .warm .status{color:var(--char);}
+  .warm .badge{background:rgba(245,166,35,.16); color:#9a6500; border:1px solid rgba(245,166,35,.3);}
+  .warm .hero-name{font-size:30px; color:var(--char);}
+  .warm .hero-meta{color:#7c7768;}
+  .warm .pill-strain{background:rgba(107,143,113,.18); color:#4a6b50;}
+  .warm .thc .num{font-size:54px; color:#1a1a1f;}
+  .warm .thc .lbl{color:#9a6500;} .warm .thc .sub{color:#7c7768;}
+  .warm .chip{background:#fff; color:var(--char); border:1px solid #e4ddcd; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .warm .chip .v{color:#9a6500;}
+  .warm .prov{color:var(--char);}
+  .warm .ai{background:#fff; border:1px solid #e9e2d2; box-shadow:0 2px 8px rgba(0,0,0,.04);}
+  .warm .ai .dot{background:var(--amber); color:#fff;}
+  .warm .tab{color:var(--char);} .warm .tab.on{color:#9a6500;}
+
+  .bold .screen{background:#0B0B0E; color:#fff;}
+  .bold .status{color:#fff;}
+  .bold .badge{background:rgba(255,176,32,.16); color:var(--amber-bright); border:1px solid rgba(255,176,32,.3);}
+  .bold .hero-name{font-size:34px; color:#fff;}
+  .bold .hero-meta{color:#8b8794;}
+  .bold .pill-strain{background:rgba(107,143,113,.22); color:#9ec3a4;}
+  .bold .thc .num{font-size:76px; color:var(--amber-bright);}
+  .bold .thc .lbl,.bold .thc .sub{color:#fff;}
+  .bold .chip{background:rgba(255,176,32,.14); color:var(--amber-bright); border:1px solid rgba(255,176,32,.22); font-weight:700;}
+  .bold .chip .v{opacity:.6;}
+  .bold .prov{color:#fff;}
+  .bold .ai{background:#15151a; border:1px solid #26262e;}
+  .bold .ai .dot{background:var(--amber-bright); color:#1a1410;}
+  .bold .tab{color:#fff;} .bold .tab.on{color:var(--amber-bright);}
+
+  /* ---- icons section ---- */
+  .icons-row{display:flex; gap:34px; flex-wrap:wrap; align-items:flex-start;}
+  .icon-card{width:150px; text-align:center;}
+  .squircle{width:150px; height:150px; border-radius:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 34px rgba(0,0,0,.45); position:relative; overflow:hidden;}
+  .icon-name{font-family:var(--rounded); font-weight:700; font-size:13px; margin-top:12px;}
+  .icon-desc{font-size:11px; color:#8b8794; margin-top:3px; line-height:1.4;}
+
+  /* ---- palette ---- */
+  .palette{display:flex; gap:14px; flex-wrap:wrap;}
+  .sw{width:120px;}
+  .sw .chip2{height:80px; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .sw .nm{font-family:var(--rounded); font-weight:700; font-size:12px; margin-top:8px;}
+  .sw .hx{font-family:var(--mono); font-size:11px; color:#8b8794;}
+
+  /* type */
+  .type-spec > div{margin-bottom:14px;}
+  .type-spec .role{font-size:11px; color:#8b8794; text-transform:uppercase; letter-spacing:.08em;}
+</style>
+</head>
+<body>
+  <h1 class="title">Pocket<span class="b">bud</span> — Brand Exploration</h1>
+  <p class="sub">Your AI budtender. Lives in your pocket, never leaves it. Three directions for the signature screen (scan results), app icon concepts, and the core palette. Same content, three moods — pick the one that feels like Pocketbud.</p>
+
+  <h2 class="sec">Scan results screen — three directions</h2>
+  <p class="secsub">A · Twilight Calm (dark, premium)   ·   B · Warm Pocket (light, friendly)   ·   C · Bold Playful (high-contrast)</p>
+  <div class="row" id="phones"></div>
+
+  <h2 class="sec">App icon concepts</h2>
+  <p class="secsub">Privacy + pocket motifs. No cannabis leaf, no neon — premium and ownable.</p>
+  <div class="icons-row" id="icons"></div>
+
+  <h2 class="sec">Core palette</h2>
+  <div class="palette" id="palette"></div>
+
+  <h2 class="sec">Typography</h2>
+  <div class="type-spec">
+    <div><div class="role">Display — SF Pro Rounded, 800</div><div style="font-family:var(--rounded);font-weight:800;font-size:38px;letter-spacing:-.02em;">Blue Candy Rain</div></div>
+    <div><div class="role">Data — SF Mono, tabular</div><div style="font-family:var(--mono);font-size:30px;color:var(--amber);">THCA 29.73% · Total 32.25%</div></div>
+    <div><div class="role">Body — SF Pro Text</div><div style="font-size:16px;max-width:600px;line-height:1.5;">A balanced indica-leaning flower. Expect a calm, body-forward feel from the myrcene, with a soft citrus lift. Everything here was read on your phone — nothing was sent anywhere.</div></div>
+  </div>
+
+<script>
+const screenHTML = (theme) => `
+  <div class="notch"></div>
+  <div class="status">
+    <span>9:41</span>
+    <span class="icons">● ● ● &nbsp; ▮</span>
+  </div>
+  <div class="body">
+    <span class="badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      Private · On your phone
+    </span>
+    <div class="hero-name">Blue Candy Rain</div>
+    <div class="hero-meta">Flower · 28 g · Fresh Grow LLC</div>
+    <span class="pill-strain">Indica-leaning</span>
+    <div class="thc">
+      <div class="num">32.3%</div>
+      <div class="lbl">Total cannabinoids</div>
+      <div class="sub">THCA 29.73% · Δ9-THC 1.45% · CBG 0.49%</div>
+    </div>
+    <div class="chips">
+      <span class="chip">Myrcene<span class="v">1.83%</span></span>
+      <span class="chip">Limonene<span class="v">0.84%</span></span>
+      <span class="chip">Linalool<span class="v">0.84%</span></span>
+    </div>
+    <div class="prov">
+      <div class="line"><span class="k">Harvested</span><span>Dec 10, 2025</span></div>
+      <div class="line"><span class="k">License</span><span>C000186</span></div>
+    </div>
+    <div class="ai">
+      <div class="h"><span class="dot">✦</span> Pocketbud says</div>
+      <p>A mellow, body-forward flower. The myrcene leans relaxing, with a soft citrus lift from limonene. Good for an easy evening.</p>
+    </div>
+    <div class="tabs">
+      <div class="tab on">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><circle cx="12" cy="12" r="3"/></svg>
+        Scan
+      </div>
+      <div class="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>
+        Log Book
+      </div>
+      <div class="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        About
+      </div>
+    </div>
+  </div>`;
+
+const phones = [
+  {cls:'twilight', label:'A · Twilight Calm', tag:'Dark, premium — my lead pick'},
+  {cls:'warm', label:'B · Warm Pocket', tag:'Light cream, airy & friendly'},
+  {cls:'bold', label:'C · Bold Playful', tag:'High-contrast, big type'},
+];
+document.getElementById('phones').innerHTML = phones.map(p=>`
+  <div class="phone-wrap">
+    <div class="phone-label">${p.label}<span class="tag">${p.tag}</span></div>
+    <div class="phone ${p.cls}"><div class="screen">${screenHTML(p.cls)}</div></div>
+  </div>`).join('');
+
+// ---- icons ----
+const icons = [
+  {nm:'1 · Pocket + Lock', desc:'A pouch with a keyhole. Privacy, literal.',
+   bg:'radial-gradient(120% 100% at 30% 0%, #2a2740, #0E0D13)',
+   svg:`<svg width="84" height="84" viewBox="0 0 84 84" fill="none">
+     <path d="M16 30 h52 a4 4 0 0 1 4 4 v26 a8 8 0 0 1-8 8 H20 a8 8 0 0 1-8-8 V34 a4 4 0 0 1 4-4 Z" fill="#F5A623"/>
+     <path d="M16 30 l10-12 a6 6 0 0 1 5-3 h22 a6 6 0 0 1 5 3 l10 12" stroke="#0E0D13" stroke-width="4" fill="none" stroke-linejoin="round"/>
+     <circle cx="42" cy="48" r="6" fill="#0E0D13"/><rect x="40" y="48" width="4" height="9" rx="2" fill="#0E0D13"/>
+   </svg>`},
+  {nm:'2 · Monogram P', desc:'A "P" shaped like a pocket flap.',
+   bg:'linear-gradient(160deg, #1B1A24, #0E0D13)',
+   svg:`<svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+     <path d="M24 64 V20 a4 4 0 0 1 4-4 h20 a18 18 0 0 1 0 36 H32" stroke="#F5A623" stroke-width="11" stroke-linecap="round" fill="none"/>
+     <circle cx="40" cy="34" r="5" fill="#6B8F71"/>
+   </svg>`},
+  {nm:'3 · The Bud', desc:'A single seed/bud dot tucked in a pocket. Minimal.',
+   bg:'linear-gradient(160deg, #F5A623, #E08600)',
+   svg:`<svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+     <path d="M14 34 h52 v22 a8 8 0 0 1-8 8 H22 a8 8 0 0 1-8-8 Z" fill="#0E0D13"/>
+     <path d="M14 34 C24 26 56 26 66 34" stroke="#0E0D13" stroke-width="5" fill="none"/>
+     <circle cx="40" cy="46" r="9" fill="#6B8F71"/>
+     <path d="M40 46 q6 -8 0 -14 q-6 6 0 14" fill="#9ec3a4"/>
+   </svg>`},
+];
+document.getElementById('icons').innerHTML = icons.map(i=>`
+  <div class="icon-card">
+    <div class="squircle" style="background:${i.bg}">${i.svg}</div>
+    <div class="icon-name">${i.nm}</div>
+    <div class="icon-desc">${i.desc}</div>
+  </div>`).join('');
+
+// ---- palette ----
+const pal = [
+  {nm:'Twilight Ink', hx:'#0E0D13'},
+  {nm:'Indigo Surface', hx:'#1B1A24'},
+  {nm:'Honey Amber', hx:'#F5A623'},
+  {nm:'Amber Bright', hx:'#FFB020'},
+  {nm:'Sage', hx:'#6B8F71'},
+  {nm:'Warm Cream', hx:'#F7F3EC'},
+  {nm:'Ink Charcoal', hx:'#1A1A1F'},
+];
+document.getElementById('palette').innerHTML = pal.map(s=>`
+  <div class="sw"><div class="chip2" style="background:${s.hx}"></div><div class="nm">${s.nm}</div><div class="hx">${s.hx}</div></div>`).join('');
+</script>
+</body>
+</html>

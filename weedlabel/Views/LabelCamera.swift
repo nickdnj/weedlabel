@@ -1,8 +1,13 @@
 import AVFoundation
 import CoreMedia
 import CoreVideo
+import os
 import UIKit
 import Vision
+
+/// Live camera diagnostics — stream from a plugged-in device with:
+///   idevicesyslog | grep -i camdiag
+private let camLog = Logger(subsystem: "com.demarconet.weedlabel", category: "camera")
 
 // LabelCamera — the deliberate, focus-first capture engine that replaces the
 // VisionKit DataScanner live-OCR path. There is NO live AI reading: we do not
@@ -45,6 +50,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     var onFraming: (@MainActor @Sendable (CaptureFraming) -> Void)?
     var onCapture: (@MainActor @Sendable (CapturedFrame) -> Void)?
     var onError: (@MainActor @Sendable (String) -> Void)?
+    var onTorchChanged: (@MainActor @Sendable (Bool) -> Void)?
 
     private let sessionQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.session")
     private let videoQueue = DispatchQueue(label: "com.demarconet.weedlabel.camera.video")
@@ -61,9 +67,15 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     private var seenQRCodes: [String] = []
     private var photoContinuation: ((UIImage?) -> Void)?
 
+    // Torch.
+    private(set) var torchOn = false
+    /// Auto-torch: turn on when the scene's mean luma is below this (dark).
+    private let autoTorchLumaCutoff = 70.0
+    private var torchIsAuto = true
+
     // Tuning.
     private let analysisInterval: TimeInterval = 0.25   // ~4 fps analysis
-    private let minLabelFillFraction: CGFloat = 0.32    // white label must fill ≥32% of frame
+    private let minLabelFillFraction: CGFloat = 0.25    // white label must fill ≥25% of frame
     private let sharpnessThreshold: Double = 9.0        // luma-gradient variance floor
     private let readyFramesToFire = 2                   // sharp+framed frames before snap
 
@@ -91,6 +103,8 @@ final class LabelCamera: NSObject, @unchecked Sendable {
     func stop() {
         sessionQueue.async {
             self.armed = false
+            if self.torchOn { self.applyTorch(false) }
+            self.torchIsAuto = true
             if self.session.isRunning { self.session.stopRunning() }
         }
     }
@@ -134,7 +148,14 @@ final class LabelCamera: NSObject, @unchecked Sendable {
         session.beginConfiguration()
         session.sessionPreset = .photo
 
-        guard let cam = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+        // Prefer a virtual multi-camera (triple/dual-wide) — on supported iPhones
+        // the system auto-switches to the ultra-wide for macro when you get
+        // close, which the plain wide-angle can't do (its ~20cm minimum focus
+        // distance is why a small label goes blurry up close). Fall back to wide.
+        let cam = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back)
+            ?? AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back)
+            ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
+        guard let cam,
               let input = try? AVCaptureDeviceInput(device: cam),
               session.canAddInput(input) else {
             session.commitConfiguration()
@@ -144,6 +165,7 @@ final class LabelCamera: NSObject, @unchecked Sendable {
         session.addInput(input)
         device = cam
         configureFocus(cam)
+        camLog.notice("camdiag config: device=\(cam.localizedName, privacy: .public) minFocusDist=\(cam.minimumFocusDistance)mm virtual=\(cam.isVirtualDevice)")
 
         if session.canAddOutput(photoOutput) {
             session.addOutput(photoOutput)
@@ -170,7 +192,38 @@ final class LabelCamera: NSObject, @unchecked Sendable {
             if cam.isAutoFocusRangeRestrictionSupported { cam.autoFocusRangeRestriction = .near }
             if cam.isSmoothAutoFocusSupported { cam.isSmoothAutoFocusEnabled = true }
             if cam.isExposureModeSupported(.continuousAutoExposure) { cam.exposureMode = .continuousAutoExposure }
+            // Let the virtual device auto-switch to ultra-wide for macro; geometric
+            // distortion correction keeps the ultra-wide frame rectilinear so OCR
+            // and the deskew stay accurate.
+            if cam.isGeometricDistortionCorrectionSupported {
+                cam.isGeometricDistortionCorrectionEnabled = true
+            }
             cam.unlockForConfiguration()
+        } catch { /* best effort */ }
+    }
+
+    // MARK: - Torch
+
+    /// Manual torch toggle from the UI (switches off auto mode).
+    func setTorch(_ on: Bool) {
+        sessionQueue.async {
+            self.torchIsAuto = false
+            self.applyTorch(on)
+        }
+    }
+
+    private func applyTorch(_ on: Bool) {
+        guard let device, device.hasTorch, device.isTorchAvailable else { return }
+        do {
+            try device.lockForConfiguration()
+            if on {
+                try? device.setTorchModeOn(level: 0.7)
+            } else {
+                device.torchMode = .off
+            }
+            device.unlockForConfiguration()
+            torchOn = on
+            Task { @MainActor in self.onTorchChanged?(on) }
         } catch { /* best effort */ }
     }
 
@@ -201,21 +254,33 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
         lastAnalysis = now
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
 
-        // Framing: how much of the frame the WHITE LABEL fills. Document/
-        // rectangle detection locks onto the big colored bag, not the small
-        // label inside it, so it let captures fire from too far away. The label
-        // is a bright near-white block against a vivid bag — measure that
-        // directly. Hard gate: the label must fill a large share of the frame.
-        let fill = Self.brightLabelFillFraction(pixelBuffer)
+        let (fill, meanLuma) = Self.fillAndLuma(pixelBuffer)
+        let sharpVal = Self.sharpness(pixelBuffer)
+        let focusing = device?.isAdjustingFocus ?? false
+        let lens = device?.lensPosition ?? -1
+        let zoom = device?.videoZoomFactor ?? -1
+
+        // Auto-torch: light up when the scene is dark (helps focus + contrast).
+        if torchIsAuto {
+            let wantTorch = meanLuma < autoTorchLumaCutoff
+            if wantTorch != torchOn { applyTorch(wantTorch) }
+        }
+
+        // Live diagnostics — stream with: idevicesyslog | grep camdiag
+        // NSLog (not Logger.notice) so it reliably reaches idevicesyslog.
+        NSLog("camdiag fill=%.2f sharp=%.1f luma=%.0f focusing=%d lens=%.2f zoom=%.1f torch=%d streak=%d",
+              fill, sharpVal, meanLuma, focusing ? 1 : 0, lens, zoom, self.torchOn ? 1 : 0, self.readyStreak)
+
+        // Framing: how much of the frame the WHITE LABEL fills. The label is a
+        // bright near-white block against a vivid bag; measuring brightness
+        // forces the user close to the LABEL (not the bag). Hard gate.
         guard fill >= minLabelFillFraction else {
             readyStreak = 0
             report(fill > 0.06 ? .tooFar : .searching)
             return
         }
 
-        // Sharpness on the luma plane.
-        let sharp = Self.sharpness(pixelBuffer) >= sharpnessThreshold
-        let focusing = device?.isAdjustingFocus ?? false
+        let sharp = sharpVal >= sharpnessThreshold
         if sharp && !focusing {
             readyStreak += 1
             report(.ready)
@@ -231,10 +296,10 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
     /// directly measures how close/centered the label is — and forces the user
     /// to fill the frame with the LABEL, not the bag. Photometry only: no text,
     /// no AI reading. Cheap, samples the luma plane on a coarse grid.
-    private static func brightLabelFillFraction(_ pixelBuffer: CVPixelBuffer) -> CGFloat {
+    private static func fillAndLuma(_ pixelBuffer: CVPixelBuffer) -> (fill: CGFloat, meanLuma: Double) {
         CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
-        guard let base = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0) else { return 0 }
+        guard let base = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0) else { return (0, 0) }
         let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0)
         let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, 0)
         let rowBytes = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0)
@@ -242,19 +307,22 @@ extension LabelCamera: AVCaptureVideoDataOutputSampleBufferDelegate {
         let brightCutoff: UInt8 = 170     // label white vs colored bag
         let step = 8
         var bright = 0, total = 0
+        var lumaSum = 0.0
         var y = 0
         while y < height {
             let row = ptr + y * rowBytes
             var x = 0
             while x < width {
-                if row[x] >= brightCutoff { bright += 1 }
+                let v = row[x]
+                if v >= brightCutoff { bright += 1 }
+                lumaSum += Double(v)
                 total += 1
                 x += step
             }
             y += step
         }
-        guard total > 0 else { return 0 }
-        return CGFloat(bright) / CGFloat(total)
+        guard total > 0 else { return (0, 0) }
+        return (CGFloat(bright) / CGFloat(total), lumaSum / Double(total))
     }
 
     /// Sharpness proxy: variance of horizontal luma gradients on a subsampled

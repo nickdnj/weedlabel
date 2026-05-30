@@ -81,3 +81,6 @@ git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git ~/.cl
 Once installed:
 - Use the `/browse` skill for **all** web browsing. Never use `mcp__claude-in-chrome__*` tools.
 - Available skills: `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/setup-gbrain`, `/retro`, `/investigate`, `/document-release`, `/document-generate`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`.
+
+## Design System
+The brand is **Pocketbud** ("Your AI budtender. Lives in your pocket, never leaves it.") — leading name as of 2026-05-30, repo/target rename still deferred. Read `DESIGN.md` before any visual or UI decision; colors, SF Pro Rounded typography, the Bold-Playful dark-first aesthetic, and the Leaf-in-Pocket icon are defined there. Mockups + editable SVG/HTML live in `docs/branding/`. App Store submission requirements (incl. cannabis guideline 1.4.3 and the "No Data Collected" privacy label) are in `docs/APP-STORE-CHECKLIST.md`. Do not deviate from DESIGN.md without explicit user approval.
