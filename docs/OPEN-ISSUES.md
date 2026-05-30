@@ -9,19 +9,27 @@ This is the single source of truth for known issues. Cross-referenced from the
 
 ---
 
-## ⛔ ACTIVE BLOCKER (2026-05-30)
+## ✅ RESOLVED (2026-05-30)
 
-### OI-0 · Isolated label crop is rotated ~180° → wrecks extraction  **(P0)**
-The capture subsystem was rewritten to an AVFoundation focus-first camera
-(`LabelCamera`); focus, the hold-steady smart shutter, macro auto-switch, and
-torch all work, and captures are sharp. **But `LabelIsolator.isolate()` emits a
-~180°-rotated crop, so OCR reads it value-then-label / reversed and extraction
-stores garbage** (e.g. a sharp Jet Fuel scan stored `thca=0.29`=CBG, `totalThc=1`
-instead of `thca=28.36, totalThc=25.74`). Proven via on-device trace; the
-reconcilers themselves are correct against normally-oriented OCR.
-**Full context + prioritized fix:** [`HANDOFF-CAPTURE-2026-05-30.md`](./HANDOFF-CAPTURE-2026-05-30.md).
-Quick-win fix: OCR the full original (already orientation-corrected by
-`StaticImageOCR`) and keep the crop only as the saved image.
+### OI-0 · Isolated label crop is rotated ~180° → wrecks extraction  **(was P0)**
+**FIXED** in three commits, verified end-to-end on device:
+- `54095c7` — OCR the **full original** (captured upright) instead of the
+  deskewed crop; the crop is kept only as the saved Log Book image. The
+  `LabelIsolator` perspective correction emitted a ~180°-rotated crop, and
+  `StaticImageOCR`'s aspect-ratio orientation score can only disambiguate 90°
+  rotations, not a 180° flip.
+- `719de93` — added a **semantic orientation score** so even an original
+  photographed upside-down reads upright. Vision reads 180°-flipped rows with
+  near-identical aspect/confidence/char-count, so the only reliable
+  discriminator is *where the bottom-of-label legal boilerplate sits*
+  (`StaticImageOCR.anchorOrientationScore` → `chooseBestOrientation`). Validated
+  offline on 4 real captures × both flips, unit-tested with the measured numbers.
+- `ad824ef` — clustered two-column potency rows (see OI-2).
+
+A deliberately upside-down Jet Fuel scan that previously stored `thca=0.26`
+(garbage) now extracts `thca=28.36, delta9thc=0.87, totalThc=25.74` correctly,
+as does the normally-held scan. **Full context:**
+[`HANDOFF-CAPTURE-2026-05-30.md`](./HANDOFF-CAPTURE-2026-05-30.md).
 
 ---
 
@@ -37,10 +45,15 @@ Candy Rain"). `StrainNameFixer` only catches names that are *chemical fragments*
 gap. Candidate fix: prefer the top-of-label prominent line; down-rank lines that
 contain digit-dash-digit lot patterns.
 
-### OI-2 · THCA ↔ Total THC assignment swap  **(P2)**
+### OI-2 · THCA ↔ Total THC assignment swap  **(P2, largely mitigated)**
 On dense two-column potency blocks the model still occasionally assigns the
 Total-THC value to `thca` (or vice-versa). The post-fixes catch the common cases;
-the sanity checker flags the rest as a (non-blocking) warning banner. Residual.
+the sanity checker flags the rest as a (non-blocking) warning banner.
+**Improved 2026-05-30 (`ad824ef`):** `reconcileCannabinoids` now positionally
+pairs *clustered* rows where OCR row-grouping emits all labels first then all
+values (`d9thc:thca:0.87%28.36%`) — previously every front label grabbed the
+first value, so THCa read 0.87 instead of 28.36. Covered by
+`CannabinoidReconcileTests`. Interleaved/curved residuals remain (see OI-4).
 
 ### OI-3 · totalCannabinoids fabrication  **(P2)**
 Seen the model emit a round/invented `totalCannabinoids` (e.g. `100`, `29.57`)
@@ -51,8 +64,13 @@ hallucination guard prevents fabricated numbers reaching the AI text, but the
 ### OI-4 · Chemistry unreliable on curved / two-column labels  **(P2, structural)**
 The fundamental limitation behind OI-2/OI-3: OCR de-syncs name↔value on
 two-column potency tables and curved/cylindrical packaging. High-res capture
-(`capturePhoto`) is the mitigation we just shipped; measure whether it closes the
-gap before investing in layout-aware OCR.
+(`capturePhoto`) + the clustered-row pairing (OI-2) close the common cases.
+**Residual seen 2026-05-30:** on one Jet Fuel capture the CBG value column
+drifted to a neighbouring row (`CBG:  BisaDolol: 0.08` while `0.29%` sat on the
+CBN row), so the reconciler read `cbg=0.08` instead of `0.29`. A re-scan of the
+same label read `cbg=0.29` correctly — i.e. this is per-capture OCR row-grouping
+variance, not deterministic. Minor field, non-blocking; the principled fix is
+layout-aware (column-band) OCR, deferred until it bites a major field.
 
 ### OI-5 · Cultivator brand/strain confusion  **(P3)**
 The `cultivator` field sometimes gets the brand+strain string (e.g. "Krnd
