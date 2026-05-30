@@ -78,6 +78,10 @@ final class ScanModel {
     /// True while the auto-capture debounce timer is running. UI uses this to
     /// render the countdown ring around the shutter button.
     private(set) var isAutoCapturePending: Bool = false
+    /// Human-readable corrections the user applied to the current result, in
+    /// order. Reset on each new scan. Read only by the #if BETA tester-feedback
+    /// payload (harmless in-memory list in release builds).
+    private(set) var appliedCorrections: [String] = []
     /// Debounce window before auto-firing the shutter once all fields are
     /// detected. Long enough to ride out brief OCR flicker, short enough to
     /// feel responsive. Exposed for UI animation timing.
@@ -379,6 +383,7 @@ final class ScanModel {
         cancelAutoCaptureCountdown()
         pipelineTask?.cancel()
         captureHint = nil
+        appliedCorrections.removeAll()
         phase = .idle(availability: availability.current())
     }
 
@@ -390,6 +395,7 @@ final class ScanModel {
     func setStrainClass(_ lean: StrainLean) {
         guard case .ready(let label, let summary, let warning, _) = phase else { return }
         strainOverrides.setLean(lean, forStrainName: label.strainName)
+        appliedCorrections.append("strain class → \(lean)")
         let insight = StrainInsight(lean: lean, source: .userOverride)
         phase = .ready(label: label, summary: summary, sanityWarning: warning, strainInsight: insight)
     }
@@ -412,6 +418,7 @@ final class ScanModel {
     func setProductType(_ type: ProductType) {
         guard case .ready(let label, let summary, _, let insight) = phase else { return }
         productTypeOverrides.setProductType(type, forStrainName: label.strainName)
+        appliedCorrections.append("product type → \(type)")
         var updated = label
         updated.productType = type
         let verdict = LabelSanityChecker.check(updated)
@@ -428,6 +435,7 @@ final class ScanModel {
     /// per-batch, so it isn't persisted across scans like the strain name.
     func setCannabinoidValue(_ field: CannabisLabel.CannabinoidField, _ value: Double?) {
         guard case .ready(let label, let summary, _, let insight) = phase else { return }
+        appliedCorrections.append("\(field.rawValue) → \(value.map { String($0) } ?? "cleared")")
         var updated = label
         updated.setCannabinoid(field, value)
         let verdict = LabelSanityChecker.check(updated)
@@ -446,6 +454,7 @@ final class ScanModel {
         guard case .ready(let label, let summary, let warning, let insight) = phase else { return }
         let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed != label.strainName else { return }
+        appliedCorrections.append("strain name “\(label.strainName)” → “\(trimmed)”")
         nameOverrides.setCorrectedName(trimmed, forExtractedName: label.strainName)
         var updated = label
         updated.strainName = trimmed

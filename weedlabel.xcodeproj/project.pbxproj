@@ -10,6 +10,7 @@
 		01F2D240B3CA3DEE50224D43 /* ScanModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C644794E83AC6B1EF2967DF /* ScanModel.swift */; };
 		0250A8E6324AE4DC94A32182 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CBC43ECFC65FC5558775200 /* Assets.xcassets */; };
 		02EC0A4A5B5A850A7F21CA6C /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A7E33B825214CFC29CC6B5 /* AboutView.swift */; };
+		0DBDBA4D2A51A7D3FDA84F87 /* PocketbudMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3CA3CF5FE0A5CC28695B01 /* PocketbudMark.swift */; };
 		109FE728A5D2B682E9D014F6 /* FieldDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E3F3670FB28B85EDC1E37F /* FieldDetector.swift */; };
 		11120B719E3E3F366F971936 /* LabelIsolator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4195B83EE20D12BB8D3C4BD2 /* LabelIsolator.swift */; };
 		1905B5025C51FAD5A0DA4343 /* weedlabelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */; };
@@ -119,6 +120,7 @@
 		9BB79C18425855B7AB67D0B6 /* StrainNameFixerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainNameFixerTests.swift; sourceTree = "<group>"; };
 		9CBC43ECFC65FC5558775200 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A234BCDEEB957DBA226D1EF7 /* weedlabelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = weedlabelApp.swift; sourceTree = "<group>"; };
+		AE3CA3CF5FE0A5CC28695B01 /* PocketbudMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PocketbudMark.swift; sourceTree = "<group>"; };
 		B1F64514D58748BA02013447 /* weedlabel.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = weedlabel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8D7529EFA0E55694A6D2D38 /* StaticImageOCR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticImageOCR.swift; sourceTree = "<group>"; };
 		C1ABE86F4180003809428A8C /* OCRPreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPreprocessor.swift; sourceTree = "<group>"; };
@@ -160,6 +162,7 @@
 				1C5C3AF5102B27F968BCFBD6 /* LogBookView.swift */,
 				1F14F572A953D32307C55F81 /* LogEntryDetailView.swift */,
 				303060CD4222C3426F7446A2 /* OnboardingView.swift */,
+				AE3CA3CF5FE0A5CC28695B01 /* PocketbudMark.swift */,
 				6931CE4F5C707585B52846C9 /* PostScanView.swift */,
 				4C644794E83AC6B1EF2967DF /* ScanModel.swift */,
 				1F4DE79D3C8B6BA14BAF9D1B /* TipJarView.swift */,
@@ -374,6 +377,7 @@
 				37E80C2CA9520B8DCDCA7485 /* OCRPreprocessor.swift in Sources */,
 				8D028793F0D3B04023AC5DB6 /* OnboardingView.swift in Sources */,
 				DBF56BE240DB0B3206C43FFF /* PipelineProtocols.swift in Sources */,
+				0DBDBA4D2A51A7D3FDA84F87 /* PocketbudMark.swift in Sources */,
 				BB27987899A62FA5A9055814 /* PostScanView.swift in Sources */,
 				50C638528C7663A356E1A8E2 /* ProductLinks.swift in Sources */,
 				AEB967DB09B65FA9B30CECE3 /* ProductType+Display.swift in Sources */,

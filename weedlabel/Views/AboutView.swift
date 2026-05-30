@@ -15,6 +15,12 @@ struct AboutView: View {
     @State private var showClearDataConfirm = false
     @State private var showTipJar = false
 
+    #if BETA
+    /// Opt-out switch for beta scan sharing (default ON). Beta builds only —
+    /// compiled out of the App Store build.
+    @AppStorage(BetaFeedback.shareEnabledKey) private var betaShareEnabled = true
+    #endif
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -36,6 +42,10 @@ struct AboutView: View {
                         }
 
                         tipJarButton
+
+                        #if BETA
+                        betaShareSection
+                        #endif
 
                         replayButton
 
@@ -63,6 +73,29 @@ struct AboutView: View {
         }
     }
 
+    #if BETA
+    private var betaShareSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: $betaShareEnabled) {
+                HStack(spacing: 10) {
+                    Image(systemName: "flask.fill").foregroundStyle(Brand.gradient)
+                    Text("Share scans (beta)").font(.headline.weight(.bold))
+                }
+            }
+            Text("Beta only — never in the App Store build. When on, you'll be asked after a scan if you want to share it (label text, the AI's read, your corrections, note, and photo) to help improve the app. Always your explicit tap; nothing is sent automatically.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+    #endif
+
     private var tipJarButton: some View {
         Button {
             showTipJar = true
@@ -81,9 +114,7 @@ struct AboutView: View {
 
     private var header: some View {
         VStack(spacing: 8) {
-            Image(systemName: "music.note")
-                .font(.system(size: 40, weight: .bold))
-                .foregroundStyle(Brand.gradient)
+            PocketbudMark(size: 52)
             Text(Brand.name)
                 .font(.system(size: 38, weight: .heavy, design: .rounded))
                 .foregroundStyle(Brand.gradient)

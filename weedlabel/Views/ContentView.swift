@@ -13,6 +13,17 @@ struct ContentView: View {
     @State private var showLogBookDebug = false
     #endif
 
+    #if BETA
+    // Beta tester-feedback (opt-out, on by default). Prompts after the tester is
+    // done with a result so their corrections are captured. Compiled out of the
+    // App Store build — see docs/SPEC-beta-feedback.md.
+    @AppStorage(BetaFeedback.shareEnabledKey) private var betaShareEnabled = true
+    @AppStorage(BetaFeedback.noticeSeenKey) private var betaNoticeSeen = false
+    @State private var showBetaPrompt = false
+    @State private var showBetaNotice = false
+    @State private var pendingFinish: (() -> Void)?
+    #endif
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -66,8 +77,8 @@ struct ContentView: View {
                         onSetProductType: { model.setProductType($0) },
                         onSetStrainName: { model.setStrainName($0) },
                         onSetCannabinoid: { model.setCannabinoidValue($0, $1) },
-                        onSave: { model.saveToLogBook() },
-                        onReset: { model.cancel() }
+                        onSave: { finishScan(model.saveToLogBook) },
+                        onReset: { finishScan(model.cancel) }
                     )
 
                 case .failed(let message):
@@ -91,7 +102,51 @@ struct ContentView: View {
         #if DEBUG
         .sheet(isPresented: $showLogBookDebug) { LogBookView() }
         #endif
+        #if BETA
+        .sheet(isPresented: $showBetaNotice, onDismiss: {
+            // Swipe-dismissing the notice (without tapping "Got it") shouldn't
+            // strand the finish action; only chain to the prompt when it's queued.
+            if !showBetaPrompt { runPendingFinish() }
+        }) {
+            BetaConsentView {
+                betaNoticeSeen = true
+                showBetaNotice = false
+                showBetaPrompt = true
+            }
+        }
+        .sheet(isPresented: $showBetaPrompt, onDismiss: { runPendingFinish() }) {
+            if case .ready(let label, let summary, _, _) = model.phase {
+                BetaFeedbackPrompt(
+                    ocrText: model.lastSeenOcr,
+                    label: label,
+                    summary: summary,
+                    corrections: model.appliedCorrections,
+                    image: model.capturedImage,
+                    onDismiss: { showBetaPrompt = false }
+                )
+            }
+        }
+        #endif
     }
+
+    #if BETA
+    /// When sharing is enabled, intercept the "done with this result" action to
+    /// first offer the feedback prompt (and a one-time notice). The finish action
+    /// runs once the sheet is dismissed, so the .ready data stays valid meanwhile.
+    private func finishScan(_ action: @escaping () -> Void) {
+        guard betaShareEnabled else { action(); return }
+        pendingFinish = action
+        if betaNoticeSeen { showBetaPrompt = true } else { showBetaNotice = true }
+    }
+
+    private func runPendingFinish() {
+        let action = pendingFinish
+        pendingFinish = nil
+        action?()
+    }
+    #else
+    private func finishScan(_ action: @escaping () -> Void) { action() }
+    #endif
 
 }
 
@@ -445,9 +500,7 @@ private struct IdleView: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
-            Image(systemName: "music.note")
-                .font(.system(size: 52, weight: .bold))
-                .foregroundStyle(Brand.gradient)
+            PocketbudMark(size: 66)
                 .padding(.bottom, 14)
             Text(Brand.name)
                 .font(.system(size: 40, weight: .heavy, design: .rounded))
@@ -534,7 +587,7 @@ private struct IdleView: View {
                     .foregroundStyle(.secondary)
                     .padding(16)
             }
-            .accessibilityLabel("About HighNotes")
+            .accessibilityLabel("About \(Brand.name)")
         }
         .sheet(isPresented: $showAbout) { AboutView(onClearData: onClearData) }
         .sheet(isPresented: $showLogBook) { LogBookView() }
