@@ -59,3 +59,4 @@ Everything needed to ship Pocketbud to the App Store. **The cannabis-specific it
 - [ ] TestFlight internal build installs and runs on a real AI-capable device (iPhone 15 Pro / 16 / 17).
 - [ ] Scan → result → log book → tip purchase (sandbox) all work.
 - [ ] No analytics/network calls on the wire (verify the "no data" claim with a proxy).
+- [ ] ★ **Beta feedback compiled out:** the App Store archive uses the **Release** config (NOT `Beta`/`weedlabel-Beta`), so the `#if BETA` tester-feedback feature is absent. Confirm with `strings <app-binary> | grep -c "scan feedback"` → must be **0**. (TestFlight uploads use the `weedlabel-Beta` scheme; the final submission uses `weedlabel`/Release.) See `docs/SPEC-beta-feedback.md`.
