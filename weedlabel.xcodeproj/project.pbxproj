@@ -16,6 +16,7 @@
 		2276792800A4056CE22831FD /* P6ValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8ADA1051FE622D0466A0D8 /* P6ValidatorTests.swift */; };
 		2360737925292DAEB224437A /* ZoomableImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7DBA2FED8868D693E3BBF3 /* ZoomableImageView.swift */; };
 		288B220A9D089C5D1039EE46 /* DataScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240631CA58BB0C2F38763B93 /* DataScannerView.swift */; };
+		29ED32E9CAAFA2D88011FC7E /* CannabinoidReconcileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77320E7F539562B1249CD4B8 /* CannabinoidReconcileTests.swift */; };
 		2F4C447F91EEB40E68565D1F /* ProductTypeInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 802A72828911CF48B262245C /* ProductTypeInference.swift */; };
 		2FB4B46D19113FA8F911C015 /* StrainOverrideStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2E3B0F92071D4FC7640A4C /* StrainOverrideStore.swift */; };
 		30FB7933E51E18AB7F499320 /* ProductTypeOverrideStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDED767113EC4C6265A346A3 /* ProductTypeOverrideStoreTests.swift */; };
@@ -96,6 +97,7 @@
 		6931CE4F5C707585B52846C9 /* PostScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostScanView.swift; sourceTree = "<group>"; };
 		6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelSanityCheckerTests.swift; sourceTree = "<group>"; };
 		6E2E3B0F92071D4FC7640A4C /* StrainOverrideStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrainOverrideStore.swift; sourceTree = "<group>"; };
+		77320E7F539562B1249CD4B8 /* CannabinoidReconcileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CannabinoidReconcileTests.swift; sourceTree = "<group>"; };
 		77997B91A2FBD0F059307D74 /* LabelSanityChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelSanityChecker.swift; sourceTree = "<group>"; };
 		785D435F364415FE5AF629D6 /* LabelCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelCamera.swift; sourceTree = "<group>"; };
 		7A0E68E5A62C53EEF4BD1ADA /* weedlabelTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = weedlabelTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -177,6 +179,7 @@
 		55BDB1E848555387B5942417 /* weedlabelTests */ = {
 			isa = PBXGroup;
 			children = (
+				77320E7F539562B1249CD4B8 /* CannabinoidReconcileTests.swift */,
 				12ABA423CC39833F39B87ED2 /* FieldDetectorTests.swift */,
 				6C630BD76415B276771B605D /* LabelSanityCheckerTests.swift */,
 				DDF5066AE5CB7D703DDB3CAE /* LogStoreTests.swift */,
@@ -379,6 +382,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				29ED32E9CAAFA2D88011FC7E /* CannabinoidReconcileTests.swift in Sources */,
 				7D0493E8E7CDB9A444EBB898 /* FieldDetectorTests.swift in Sources */,
 				7D22C8B5C7D12E8379824BB7 /* LabelSanityCheckerTests.swift in Sources */,
 				ECCBCAEC99379DABB86DDAED /* LogStoreTests.swift in Sources */,

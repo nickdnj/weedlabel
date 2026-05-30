@@ -307,6 +307,113 @@ extension CannabisLabel {
         // capture the wrong number.
         if let v = read(["cbd"], exclude: ["cbda", "lowcbd", "highcbd", "moderatecbd"]) { cbd = v }
         if let v = read(["cbg"], exclude: ["cbga", "lowcbg", "highcbg", "moderatecbg"]) { cbg = v }
+
+        // Last word: fix CLUSTERED two-column rows. OCR row-grouping can emit a
+        // dense potency row as all labels first, then all values
+        // ("d9thc:thca:0.87%28.36%"). read()/valueAfter grabs the FIRST number
+        // after each label, so every front label captures the first value (thca
+        // → 0.87 instead of 28.36). Here we pair the i-th label with the i-th
+        // value positionally. Narrow by design — fires only on ≥2 adjacent labels
+        // followed by an equal count of values, so single-label and interleaved
+        // "label:value label:value" rows are untouched (valueAfter handles those).
+        for line in lines {
+            for (slot, value) in Self.clusteredCannabinoidPairs(in: line) {
+                assign(slot, value)
+            }
+        }
+    }
+
+    /// Cannabinoid slots the clustered-row pairing can assign.
+    private enum CannabinoidSlot {
+        case thca, delta9thc, cbd, cbg, totalThc, totalCbd, totalCannabinoids
+    }
+
+    private mutating func assign(_ slot: CannabinoidSlot, _ value: Double) {
+        switch slot {
+        case .thca: thca = value
+        case .delta9thc: delta9thc = value
+        case .cbd: cbd = value
+        case .cbg: cbg = value
+        case .totalThc: totalThc = value
+        case .totalCbd: totalCbd = value
+        case .totalCannabinoids: totalCannabinoids = value
+        }
+    }
+
+    /// Detect a clustered potency row — ≥2 known cannabinoid labels sitting
+    /// adjacent (separated only by `:`/`%`), immediately followed by an equal
+    /// number of values — and return positional (slot, value) pairs. Returns []
+    /// for anything else (single label, interleaved label/value, foreign content
+    /// between labels and values), so the caller's per-token `valueAfter` reads
+    /// stay authoritative for the normal cases.
+    ///
+    /// `line` is already normalized (lowercased, spaces/hyphens stripped).
+    private static func clusteredCannabinoidPairs(in line: String) -> [(CannabinoidSlot, Double)] {
+        // Longest-first so "totalthc"/"totalcbd" win over the "thc"/"cbd" tails
+        // and "cbd" never matches inside "totalcbd".
+        let tokens: [(String, CannabinoidSlot)] = [
+            ("totalcannabinoid", .totalCannabinoids),
+            ("totalthc", .totalThc),
+            ("totalcbd", .totalCbd),
+            ("d9thc", .delta9thc),
+            ("thca", .thca),
+            ("cbg", .cbg),
+            ("cbd", .cbd),
+        ].sorted { $0.0.count > $1.0.count }
+
+        let chars = Array(line)
+        let n = chars.count
+
+        func matchToken(at i: Int) -> (slot: CannabinoidSlot, len: Int)? {
+            for (tok, slot) in tokens {
+                let t = Array(tok)
+                if i + t.count <= n && Array(chars[i..<i + t.count]) == t {
+                    return (slot, t.count)
+                }
+            }
+            return nil
+        }
+
+        // Find the first label on the line; the cluster (if any) starts there.
+        var i = 0
+        while i < n && matchToken(at: i) == nil { i += 1 }
+        guard i < n else { return [] }
+
+        // Collect consecutive labels separated only by `:`/`%` — stop at the
+        // first value or foreign character.
+        var slots: [CannabinoidSlot] = []
+        while i < n {
+            if let m = matchToken(at: i) {
+                slots.append(m.slot)
+                i += m.len
+            } else if chars[i] == ":" || chars[i] == "%" {
+                i += 1
+            } else {
+                break
+            }
+        }
+        guard slots.count >= 2 else { return [] }
+
+        // Collect the trailing values — numbers separated only by `:`/`%`. Stop
+        // at any non-numeric, non-separator character (foreign content).
+        var values: [Double] = []
+        while i < n {
+            let c = chars[i]
+            if c == ":" || c == "%" { i += 1; continue }
+            if c.isNumber {
+                var numStr = ""
+                while i < n && (chars[i].isNumber || chars[i] == ".") {
+                    numStr.append(chars[i]); i += 1
+                }
+                if let v = Double(numStr), v >= 0, v <= 100 { values.append(v) }
+                else { return [] }   // implausible magnitude → not a clean cluster
+            } else {
+                break
+            }
+        }
+
+        guard values.count == slots.count else { return [] }
+        return Array(zip(slots, values))
     }
 
     /// Lowercase + strip spaces and hyphens, so a label split across columns by
