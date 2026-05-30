@@ -13,6 +13,10 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
     var dateScanned: Date
     /// The scanned label, exactly as shown on the result screen.
     var label: CannabisLabel
+    /// The OCR text this label was read from — powers the "pick the strain name
+    /// from the label" correction list in the entry detail. Optional so older
+    /// logbook.json decodes unchanged (nil for entries saved before this field).
+    var ocrText: String?
     /// Flattened from SummaryOutcome (a non-Codable enum): the text shown, and
     /// whether it was the deterministic fallback rather than an AI summary.
     var summaryText: String
@@ -36,6 +40,7 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
         id: UUID = UUID(),
         dateScanned: Date = Date(),
         label: CannabisLabel,
+        ocrText: String? = nil,
         summaryText: String,
         summaryDidFallback: Bool,
         strainLean: StrainLean? = nil,
@@ -48,6 +53,7 @@ struct LogEntry: Codable, Identifiable, Sendable, Equatable {
         self.id = id
         self.dateScanned = dateScanned
         self.label = label
+        self.ocrText = ocrText
         self.summaryText = summaryText
         self.summaryDidFallback = summaryDidFallback
         self.strainLean = strainLean

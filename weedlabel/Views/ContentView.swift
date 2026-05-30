@@ -161,11 +161,6 @@ private struct ScanningView: View {
             CameraPreviewView(camera: model.labelCamera)
                 .ignoresSafeArea()
 
-            // Brackets indicate where to place the label.
-            ViewfinderOverlay()
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-
             VStack {
                 CaptureHintBanner(framing: model.framing, hint: model.captureHint)
                     .padding(.top, 24)
@@ -191,18 +186,20 @@ private struct CaptureHintBanner: View {
 
     var body: some View {
         Text(hint ?? message)
-            .font(.subheadline.weight(.semibold))
+            .font(.system(size: 22, weight: .bold, design: .rounded))
             .foregroundStyle(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(.black.opacity(0.55), in: Capsule())
             .multilineTextAlignment(.center)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 14)
+            .background(.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
+            .padding(.horizontal, 24)
     }
 
     private var message: String {
         switch framing {
         case .searching: return "Point at the label"
-        case .tooFar:    return "Move closer — fill the box with the label"
+        case .tooFar:    return "Move closer to the label"
         case .holdSteady: return "Bring the label into focus…"
         case .locking:   return "Hold steady…"
         case .ready:     return "Capturing…"
@@ -498,17 +495,23 @@ private struct IdleView: View {
     @State private var pickedItem: PhotosPickerItem?
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
+            Brand.ink.ignoresSafeArea()
+            VStack(spacing: 0) {
             Spacer()
-            PocketbudMark(size: 66)
-                .padding(.bottom, 14)
-            Text(Brand.name)
-                .font(.system(size: 40, weight: .heavy, design: .rounded))
-                .foregroundStyle(Brand.gradient)
+            PocketbudMark(size: 80)
+                .padding(.bottom, 16)
+            HStack(spacing: 0) {
+                Text("Pocket").foregroundStyle(Brand.cream)
+                Text("bud").foregroundStyle(Brand.amber)
+            }
+            .font(.system(size: 44, weight: .heavy, design: .rounded))
             Text(Brand.tagline)
-                .font(.callout.weight(.medium))
-                .foregroundStyle(.secondary)
-                .padding(.top, 2)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Brand.cream.opacity(0.65))
+                .padding(.top, 4)
+            privacyPillars
+                .padding(.top, 22)
             Spacer()
             if availability != .available {
                 Text(availability.copy)
@@ -527,8 +530,8 @@ private struct IdleView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 14)
                 .frame(maxWidth: .infinity)
-                .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .foregroundStyle(.white)
+                .background(Brand.amber, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .foregroundStyle(Brand.ink)
             }
             .padding(.horizontal, 24)
 
@@ -543,9 +546,10 @@ private struct IdleView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.secondary.opacity(0.12))
+                        .fill(Brand.green.opacity(0.14))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Brand.green.opacity(0.35), lineWidth: 1))
                 )
-                .foregroundStyle(.primary)
+                .foregroundStyle(Brand.cream)
             }
             .padding(.horizontal, 24)
             .padding(.top, 10)
@@ -571,15 +575,18 @@ private struct IdleView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.secondary.opacity(0.12))
+                        .fill(Brand.green.opacity(0.14))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Brand.green.opacity(0.35), lineWidth: 1))
                 )
-                .foregroundStyle(.primary)
+                .foregroundStyle(Brand.cream)
             }
             .padding(.horizontal, 24)
             .padding(.top, 10)
 
             Spacer().frame(height: 32)
+            }
         }
+        .environment(\.colorScheme, .dark)
         .overlay(alignment: .topTrailing) {
             Button { showAbout = true } label: {
                 Image(systemName: "info.circle")
@@ -591,6 +598,28 @@ private struct IdleView: View {
         }
         .sheet(isPresented: $showAbout) { AboutView(onClearData: onClearData) }
         .sheet(isPresented: $showLogBook) { LogBookView() }
+    }
+
+    private var privacyPillars: some View {
+        VStack(spacing: 8) {
+            pill("cpu", "100% on-device")
+            pill("wifi.slash", "No internet")
+            pill("hand.raised.fill", "Nothing leaves your phone")
+        }
+    }
+
+    private func pill(_ symbol: String, _ text: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol).font(.footnote.weight(.bold))
+            Text(text).font(.subheadline.weight(.semibold))
+        }
+        .foregroundStyle(Brand.greenBright)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 9)
+        .background(
+            Capsule().fill(Brand.green.opacity(0.14))
+                .overlay(Capsule().stroke(Brand.green.opacity(0.4), lineWidth: 1))
+        )
     }
 }
 

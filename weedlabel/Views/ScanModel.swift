@@ -480,6 +480,7 @@ final class ScanModel {
         let entry = LogEntry(
             id: id,
             label: label,
+            ocrText: lastSeenOcr,
             summaryText: text,
             summaryDidFallback: summary?.didFallback ?? true,
             strainLean: insight?.lean,

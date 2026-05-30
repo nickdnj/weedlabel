@@ -24,7 +24,7 @@ struct AboutView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Brand.backgroundWash().ignoresSafeArea()
+                Brand.ink.ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 22) {
@@ -70,6 +70,8 @@ struct AboutView: View {
                 }
             }
             .sheet(isPresented: $showTipJar) { TipJarView() }
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .environment(\.colorScheme, .dark)
         }
     }
 
@@ -91,7 +93,7 @@ struct AboutView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Brand.card)
         )
     }
     #endif
@@ -107,17 +109,19 @@ struct AboutView: View {
             .font(.headline)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .foregroundStyle(.white)
+            .background(Brand.amber, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .foregroundStyle(Brand.ink)
         }
     }
 
     private var header: some View {
         VStack(spacing: 8) {
             PocketbudMark(size: 52)
-            Text(Brand.name)
-                .font(.system(size: 38, weight: .heavy, design: .rounded))
-                .foregroundStyle(Brand.gradient)
+            HStack(spacing: 0) {
+                Text("Pocket").foregroundStyle(Brand.cream)
+                Text("bud").foregroundStyle(Brand.amber)
+            }
+            .font(.system(size: 38, weight: .heavy, design: .rounded))
             Text(Brand.tagline)
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.secondary)
@@ -146,7 +150,7 @@ struct AboutView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Brand.card)
         )
     }
 

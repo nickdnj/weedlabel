@@ -91,9 +91,7 @@ struct OnboardingView: View {
 
     private var wordmark: some View {
         VStack(spacing: 8) {
-            Image(systemName: "music.note")
-                .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(Brand.gradient)
+            PocketbudMark(size: 58)
 
             Text(Brand.name)
                 .font(.system(size: 46, weight: .heavy, design: .rounded))

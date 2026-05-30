@@ -91,16 +91,11 @@ struct PostScanView: View {
             .padding(.top, 8)
             .padding(.bottom, 120)
         }
-        .background(
-            ZStack {
-                Color(.systemBackground)
-                Brand.backgroundWash(0.14)
-            }
-            .ignoresSafeArea()
-        )
+        .background(Brand.ink.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) {
             saveButton
         }
+        .environment(\.colorScheme, .dark)
     }
 
     private var productHeader: some View {
@@ -181,12 +176,11 @@ struct PostScanView: View {
             HStack(spacing: 6) {
                 Image(systemName: "sparkles")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.primary.opacity(0.6))
-                Text("AI Summary")
-                    .font(.caption.weight(.semibold))
-                    .textCase(.uppercase)
-                    .tracking(0.6)
-                    .foregroundStyle(.primary.opacity(0.6))
+                    .foregroundStyle(Brand.amber)
+                Text("Pocketbud says")
+                    .font(.caption.weight(.bold))
+                    .tracking(0.4)
+                    .foregroundStyle(Brand.cream.opacity(0.85))
                 if let summary, summary.didFallback {
                     Spacer()
                     Text("Field summary")
@@ -207,10 +201,10 @@ struct PostScanView: View {
         }
         .padding(20)
         .background(
-            Brand.gradient,
-            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Brand.card)
+                .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Brand.line, lineWidth: 1))
         )
-        .shadow(color: Brand.violet.opacity(0.18), radius: 16, x: 0, y: 8)
     }
 
     private var summaryText: String {
@@ -552,9 +546,8 @@ struct PostScanView: View {
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .foregroundStyle(.white)
-                .shadow(color: Brand.violet.opacity(0.22), radius: 8, x: 0, y: 4)
+                .background(Brand.amber, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .foregroundStyle(Brand.ink)
             }
         }
         .padding(.horizontal, 18)
@@ -580,22 +573,9 @@ private extension String {
 enum ChipPalette {
     case lavender, mint, peach, sky
 
-    var fill: Color {
-        switch self {
-        case .lavender: return Color(red: 0.93, green: 0.92, blue: 1.0)
-        case .mint:     return Color(red: 0.84, green: 0.95, blue: 0.89)
-        case .peach:    return Color(red: 0.99, green: 0.91, blue: 0.85)
-        case .sky:      return Color(red: 0.84, green: 0.93, blue: 0.98)
-        }
-    }
-    var text: Color {
-        switch self {
-        case .lavender: return Color(red: 0.26, green: 0.22, blue: 0.79)
-        case .mint:     return Color(red: 0.02, green: 0.47, blue: 0.34)
-        case .peach:    return Color(red: 0.76, green: 0.26, blue: 0.05)
-        case .sky:      return Color(red: 0.01, green: 0.41, blue: 0.63)
-        }
-    }
+    // All terpene/cannabinoid chips share the brand green on the dark theme.
+    var fill: Color { Brand.green.opacity(0.15) }
+    var text: Color { Brand.greenBright }
 }
 
 struct FlowingChips: View {
@@ -612,8 +592,8 @@ struct FlowingChips: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(palette.fill, in: Capsule())
+                    .overlay(Capsule().stroke(palette.text.opacity(0.3), lineWidth: 1))
                     .foregroundStyle(palette.text)
-                    .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
             }
         }
     }

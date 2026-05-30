@@ -1,14 +1,20 @@
 import SwiftUI
 import UIKit
 
-// LogEntryDetailView — a saved scan with the user's own note + star rating
-// ("your HighNotes"). Edits persist immediately via LogBookModel.update. Styled
-// to match the result screen (gradient summary hero, pastel chem chips).
+// LogEntryDetailView — a saved scan with the user's own note + star rating, plus
+// tap-to-correct pickers (strain name, product type, strain type) that mirror the
+// result screen. Edits mutate `entry` and persist immediately via
+// LogBookModel.update. Dark green Pocketbud theme.
 
 struct LogEntryDetailView: View {
     @State private var entry: LogEntry
     @State private var showingOriginal = false
     @State private var zoomItem: ZoomItem?
+    @State private var editingProductType = false
+    @State private var editingStrainClass = false
+    @State private var editingName = false
+    @State private var typingName = false
+    @State private var nameDraft = ""
     let model: LogBookModel
 
     /// Identifiable wrapper so the zoom viewer can be presented via `.fullScreenCover(item:)`.
@@ -19,46 +25,22 @@ struct LogEntryDetailView: View {
         self.model = model
     }
 
+    /// Plausible names read straight from the saved label OCR, for the
+    /// pick-to-correct list. Empty for older entries with no stored OCR — the
+    /// "type a name" path always works as a fallback.
+    private var nameCandidates: [String] {
+        let current = entry.label.strainName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return StrainNameFixer.candidateNames(ocrText: entry.ocrText ?? "", cultivator: entry.label.cultivator)
+            .filter { $0.lowercased() != current }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                if let image = displayedImage {
-                    VStack(spacing: 8) {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity)
-                            .frame(maxHeight: 320)
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .strokeBorder(Color.secondary.opacity(0.15))
-                            )
-                            // Tap to inspect the label up close (pan/zoom) and
-                            // check the extracted values against the print.
-                            .overlay(alignment: .bottomTrailing) {
-                                Image(systemName: "arrow.up.left.and.arrow.down.right.magnifyingglass")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.white)
-                                    .padding(7)
-                                    .background(.black.opacity(0.45), in: Circle())
-                                    .padding(8)
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture { zoomItem = ZoomItem(image: image) }
-                        // Only when a separate original was kept alongside the crop.
-                        if entry.originalImageFilename != nil {
-                            Button { showingOriginal.toggle() } label: {
-                                Label(showingOriginal ? "View label" : "View full photo",
-                                      systemImage: showingOriginal ? "crop" : "photo")
-                                    .font(.caption.weight(.medium))
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Brand.violet)
-                        }
-                    }
-                }
+                if let image = displayedImage { imageBlock(image) }
                 header
+                if editingProductType { productTypePicker }
+                if editingStrainClass { strainClassPicker }
                 ratingEditor
                 noteEditor
                 summaryCard
@@ -67,39 +49,202 @@ struct LogEntryDetailView: View {
             .padding(18)
             .padding(.bottom, 24)
         }
-        .background(
-            ZStack { Color(.systemBackground); Brand.backgroundWash(0.14) }.ignoresSafeArea()
-        )
+        .background(Brand.ink.ignoresSafeArea())
         .navigationTitle(entry.label.strainName)
         .navigationBarTitleDisplayMode(.inline)
-        // Persist note/rating edits. LogEntry is Equatable, so this fires only on
-        // actual change.
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        // Persist every edit (note, rating, and the new corrections). LogEntry is
+        // Equatable, so this fires only on an actual change.
         .onChange(of: entry) { _, updated in model.update(updated) }
         .fullScreenCover(item: $zoomItem) { item in
             ZoomableImageView(image: item.image)
         }
+        // Pick the strain name straight from the label OCR, or type one. Mirrors
+        // the result screen; here the correction is saved to this log entry.
+        .confirmationDialog("Pick the strain name from the label", isPresented: $editingName, titleVisibility: .visible) {
+            ForEach(nameCandidates, id: \.self) { name in
+                Button(name) { entry.label.strainName = name }
+            }
+            Button("Type a different name…") {
+                nameDraft = entry.label.strainName
+                typingName = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Edit strain name", isPresented: $typingName) {
+            TextField("Strain name", text: $nameDraft)
+            Button("Save") {
+                let t = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !t.isEmpty { entry.label.strainName = t }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Fix a name the scanner misread on this entry.")
+        }
+        .environment(\.colorScheme, .dark)
+    }
+
+    @ViewBuilder
+    private func imageBlock(_ image: UIImage) -> some View {
+        VStack(spacing: 8) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity)
+                .frame(maxHeight: 320)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.12))
+                )
+                // Tap to inspect the label up close (pan/zoom).
+                .overlay(alignment: .bottomTrailing) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right.magnifyingglass")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(7)
+                        .background(.black.opacity(0.45), in: Circle())
+                        .padding(8)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { zoomItem = ZoomItem(image: image) }
+            if entry.originalImageFilename != nil {
+                Button { showingOriginal.toggle() } label: {
+                    Label(showingOriginal ? "View label" : "View full photo",
+                          systemImage: showingOriginal ? "crop" : "photo")
+                        .font(.caption.weight(.medium))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Brand.amber)
+            }
+        }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(entry.label.strainName)
-                .font(.title2.weight(.bold))
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text(entry.label.strainName)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(Brand.cream)
+                Button {
+                    nameDraft = entry.label.strainName
+                    editingName = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.subheadline)
+                        .foregroundStyle(Brand.greenBright)
+                }
+                .accessibilityLabel("Edit strain name")
+            }
             Text(entry.label.cultivator)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.cream.opacity(0.6))
+
+            // Tap-to-correct pills: product type + strain type.
             HStack(spacing: 8) {
-                Label(entry.label.productType.displayName, systemImage: entry.label.productType.iconName)
-                    .font(.caption.weight(.medium))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.secondary.opacity(0.12), in: Capsule())
-                Text(entry.dateScanned, format: .dateTime.month().day().year())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                correctionPill(icon: entry.label.productType.iconName,
+                               title: entry.label.productType.displayName) {
+                    withAnimation { editingProductType.toggle(); editingStrainClass = false }
+                }
+                correctionPill(icon: leanIcon(entry.strainLean),
+                               title: entry.strainLean?.shortLabel ?? "Set strain type") {
+                    withAnimation { editingStrainClass.toggle(); editingProductType = false }
+                }
             }
             .padding(.top, 2)
+
+            Text(entry.dateScanned, format: .dateTime.month().day().year())
+                .font(.caption)
+                .foregroundStyle(Brand.cream.opacity(0.5))
+                .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func correctionPill(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                Text(title)
+                Image(systemName: "chevron.down").font(.caption2)
+            }
+            .font(.caption.weight(.medium))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Brand.green.opacity(0.15), in: Capsule())
+            .overlay(Capsule().stroke(Brand.green.opacity(0.35), lineWidth: 1))
+            .foregroundStyle(Brand.greenBright)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var productTypePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("WHAT KIND OF PRODUCT IS THIS?")
+            ForEach(ProductType.allCases, id: \.self) { type in
+                Button {
+                    entry.label.productType = type
+                    withAnimation { editingProductType = false }
+                } label: {
+                    pickerRow(icon: type.iconName, title: type.displayName,
+                              selected: entry.label.productType == type)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(14)
+        .background(Brand.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var strainClassPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("SET STRAIN TYPE")
+            ForEach(StrainLean.allCases, id: \.self) { lean in
+                Button {
+                    entry.strainLean = lean
+                    entry.strainSourceNote = "Set by you"
+                    withAnimation { editingStrainClass = false }
+                } label: {
+                    pickerRow(icon: leanIcon(lean), title: lean.shortLabel,
+                              selected: entry.strainLean == lean)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(14)
+        .background(Brand.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func pickerRow(icon: String, title: String, selected: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.callout)
+                .foregroundStyle(Brand.greenBright)
+                .frame(width: 24)
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Brand.cream)
+            Spacer()
+            if selected {
+                Image(systemName: "checkmark")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Brand.amber)
+            }
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .background(Brand.green.opacity(selected ? 0.16 : 0.06), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func leanIcon(_ lean: StrainLean?) -> String {
+        switch lean {
+        case .sativa: return "sun.max.fill"
+        case .indica: return "moon.fill"
+        case .hybrid: return "circle.lefthalf.filled"
+        case .hybridSativa: return "sun.horizon.fill"
+        case .hybridIndica: return "moon.haze.fill"
+        case nil: return "questionmark.circle"
+        }
     }
 
     private var ratingEditor: some View {
@@ -124,10 +269,11 @@ struct LogEntryDetailView: View {
             sectionLabel("YOUR NOTES")
             TextField("How was it? Aroma, effects, the vibe…", text: $entry.note, axis: .vertical)
                 .lineLimit(3...8)
+                .foregroundStyle(Brand.cream)
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.secondarySystemBackground))
+                        .fill(Brand.card)
                 )
         }
     }
@@ -137,20 +283,24 @@ struct LogEntryDetailView: View {
             HStack(spacing: 6) {
                 Image(systemName: "sparkles")
                     .font(.caption.weight(.semibold))
-                Text(entry.summaryDidFallback ? "FIELD SUMMARY" : "AI SUMMARY")
-                    .font(.caption.weight(.semibold))
-                    .tracking(0.6)
+                    .foregroundStyle(Brand.amber)
+                Text(entry.summaryDidFallback ? "Field summary" : "Pocketbud says")
+                    .font(.caption.weight(.bold))
+                    .tracking(0.4)
+                    .foregroundStyle(Brand.cream.opacity(0.85))
             }
-            .foregroundStyle(.white.opacity(0.9))
             Text(entry.summaryText)
                 .font(.callout)
-                .foregroundStyle(.white)
+                .foregroundStyle(Brand.cream)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: Brand.violet.opacity(0.18), radius: 14, x: 0, y: 6)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Brand.card)
+                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Brand.line, lineWidth: 1))
+        )
     }
 
     private var chipsView: some View {
@@ -162,7 +312,9 @@ struct LogEntryDetailView: View {
                         .font(.caption.weight(.medium))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(Color.secondary.opacity(0.12), in: Capsule())
+                        .background(Brand.green.opacity(0.15), in: Capsule())
+                        .overlay(Capsule().stroke(Brand.greenBright.opacity(0.3), lineWidth: 1))
+                        .foregroundStyle(Brand.greenBright)
                 }
             }
         }
@@ -171,7 +323,7 @@ struct LogEntryDetailView: View {
     private func star(_ i: Int) -> some View {
         Image(systemName: i <= entry.rating ? "star.fill" : "star")
             .font(.title2)
-            .foregroundStyle(i <= entry.rating ? Brand.green : Color.secondary.opacity(0.35))
+            .foregroundStyle(i <= entry.rating ? Brand.amber : Brand.cream.opacity(0.3))
     }
 
     /// Image shown at the top: the isolated label by default, the full original
@@ -187,7 +339,7 @@ struct LogEntryDetailView: View {
         Text(text)
             .font(.caption2.weight(.semibold))
             .tracking(0.6)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Brand.cream.opacity(0.5))
     }
 
     /// Cannabinoid + terpene chips from the saved label.

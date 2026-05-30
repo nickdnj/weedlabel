@@ -184,7 +184,7 @@ final class TipJar {
         TipTier(id: productIDs[0], emoji: emoji(for: productIDs[0]),
                 name: "A little love", blurb: "A little love for the dev who built this.", displayPrice: "$0.99"),
         TipTier(id: productIDs[1], emoji: emoji(for: productIDs[1]),
-                name: "Good vibes", blurb: "Good vibes — thanks for keeping HighNotes going.", displayPrice: "$2.99"),
+                name: "Good vibes", blurb: "Good vibes — thanks for keeping \(Brand.name) going.", displayPrice: "$2.99"),
         TipTier(id: productIDs[2], emoji: emoji(for: productIDs[2]),
                 name: "Big love", blurb: "Big love — this genuinely makes someone's day.", displayPrice: "$4.99"),
     ]

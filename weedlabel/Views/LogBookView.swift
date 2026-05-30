@@ -47,28 +47,31 @@ struct LogBookView: View {
                             } label: {
                                 LogRow(entry: entry)
                             }
+                            .listRowBackground(Brand.card)
                         }
                         .onDelete(perform: model.delete)
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
+            .background(Brand.ink.ignoresSafeArea())
             .navigationTitle("Log Book")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
             }
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear { model.reload() }
+            .environment(\.colorScheme, .dark)
         }
     }
 
     private var emptyState: some View {
         VStack(spacing: 14) {
-            Image(systemName: "music.note.list")
-                .font(.system(size: 52, weight: .light))
-                .foregroundStyle(Brand.gradient)
-            Text("No high notes yet")
+            PocketbudMark(size: 60)
+            Text("Your Log Book is empty")
                 .font(.title3.weight(.semibold))
             Text("Scan a label and tap “Save to Log Book” to start your journal.")
                 .font(.callout)
@@ -77,9 +80,7 @@ struct LogBookView: View {
                 .padding(.horizontal, 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            ZStack { Color(.systemBackground); Brand.backgroundWash(0.14) }.ignoresSafeArea()
-        )
+        .background(Brand.ink.ignoresSafeArea())
     }
 }
 
@@ -151,7 +152,7 @@ struct StarRow: View {
             ForEach(1...5, id: \.self) { i in
                 Image(systemName: i <= rating ? "star.fill" : "star")
                     .font(.caption2)
-                    .foregroundStyle(i <= rating ? Brand.green : Color.secondary.opacity(0.35))
+                    .foregroundStyle(i <= rating ? Brand.amber : Color.secondary.opacity(0.35))
             }
         }
     }
