@@ -55,6 +55,22 @@ import Testing
         #expect(label.cbd == 0.00)
     }
 
+    // Clustered row PREFIXED by the chemotype descriptor ("High THC, Low CBD")
+    // — the `cbd` in "Low CBD" must not be counted as a value label, or the
+    // cluster fails to pair. Real device trace (Jet Fuel, second orientation).
+    @Test func clusteredRowWithChemotypePrefixStillPairs() {
+        var label = Self.jetFuelMisSlotted()
+        label.reconcileCannabinoids(ocrText: """
+        High THC, Low CBD  Total THC:  THCa:  25.74%  28.36%  Beta Mycene: 0.38 46
+        D9T HC:  0.87 %
+        CBG:  0.29%
+        """)
+        #expect(label.totalThc == 25.74)
+        #expect(label.thca == 28.36)
+        #expect(label.delta9thc == 0.87)
+        #expect(label.cbg == 0.29)
+    }
+
     // Interleaved "label: value  label: value" rows must NOT be disturbed by the
     // clustered pairing — valueAfter already reads them correctly, and clustering
     // would mis-handle a terpene value sharing the row.

@@ -59,6 +59,10 @@ enum StrainNameFixer {
             "potential allergen", "requires refriger", "inactive ingredient",
             "this statement", "evaluated", "food and", "pkg date", "exp date",
             "storage", "serving size", "servings per",
+            // The bold child-safety warning. Its own line on every NJ label, with
+            // no chemistry/percent nearby, so none of the other classifiers catch
+            // it — the model grabbed it as the strain on a cluttered top-row scan.
+            "safe for kids", "not safe", "keep away from children",
         ]
         return markers.contains { lower.contains($0) }
     }
@@ -98,7 +102,63 @@ enum StrainNameFixer {
             if cleaned.split(whereSeparator: { $0 == " " }).count > 6 || cleaned.count > 48 { continue }
             return cleaned
         }
+        // Salvage pass: row-grouped OCR can merge the strain name into a cluttered
+        // top row (Metrc tag + name + "Total THC: 25.74%" + terpenes on one line),
+        // so every line is skipped above and the only "clean" line left is the
+        // child-safety warning. Recover the name from the LEADING segment of a top
+        // row — the part before the chemistry block begins.
+        return salvageLeadingName(lines, cultivator: cult)
+    }
+
+    /// Tokens marking where the chemistry/potency block starts on a row. The
+    /// strain name, when merged into a cluttered top row, sits BEFORE the first
+    /// of these. Ordered so "total thc"/"total cbd" cut earlier than bare "thc".
+    private static let chemistryCutMarkers = [
+        "total thc", "total cbd", "total cannabinoid", "thca", "thc", "cbd", "cbg",
+        "cbn", "terpinolene", "myrcene", "marcene", "limonene", "linalool",
+        "caryophyllene", "pinene", "humulene", "bisabolol", "ocimene", "%"
+    ]
+
+    /// Recover a strain name from the leading part of one of the top rows: cut the
+    /// row at the first chemistry marker, strip a leading Metrc tag / license /
+    /// long digit run, drop trailing weight markers, and accept the remainder if
+    /// it reads like a name. Only reached when the normal line scan finds nothing.
+    private static func salvageLeadingName(_ lines: [String], cultivator cult: String?) -> String? {
+        for raw in lines.prefix(4) {
+            let lower = raw.lowercased()
+            // Earliest chemistry marker = where the name segment ends.
+            var cutDistance = lower.count
+            for m in chemistryCutMarkers {
+                if let r = lower.range(of: m) {
+                    cutDistance = min(cutDistance, lower.distance(from: lower.startIndex, to: r.lowerBound))
+                }
+            }
+            let head = String(raw.prefix(cutDistance))
+            let stripped = stripLeadingTagNoise(head)
+            let cleaned = stripTrailingFormatMarkers(stripped.trimmingCharacters(in: .whitespacesAndNewlines))
+            if cleaned.isEmpty || !containsLetter(cleaned) { continue }
+            if isSuspicious(cleaned) || isBoilerplateLine(cleaned) || isChemotypeLine(cleaned) { continue }
+            if isFormOnlyLine(stripTrailingFormatMarkers(cleaned)) { continue }
+            if isAddressLikeLine(cleaned) { continue }
+            if let cult, !cult.isEmpty, cleaned.lowercased().contains(cult) { continue }
+            let letters = cleaned.filter { $0.isLetter }.count
+            if letters < 3 { continue }
+            if cleaned.split(whereSeparator: { $0 == " " }).count > 7 || cleaned.count > 48 { continue }
+            return cleaned
+        }
         return nil
+    }
+
+    /// Strip a leading Metrc tag (1A4…), license code (C000067), or long digit run
+    /// off the front of a row so a salvaged name doesn't start with the tag.
+    private static func stripLeadingTagNoise(_ s: String) -> String {
+        var out = s
+        for pattern in [#"^\s*1A4\w{12,}\s*"#, #"^\s*C\d{5,7}\s*"#, #"^\s*\d{6,}\s*"#] {
+            if let r = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                out = r.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: "")
+            }
+        }
+        return out
     }
 
     /// If the FM-extracted strain looks suspicious, try to replace it from
@@ -234,7 +294,13 @@ enum StrainNameFixer {
                      "north", "south", "blvd", "suite", "route", "lane"]
         if words.contains(where: { lower.contains($0) }) { return true }
         // "City ST, ZIP" e.g. "Woodbridge NJ, 07095" — state abbrev + 5-digit zip.
-        if let re = try? NSRegularExpression(pattern: #"\b[a-z]{2},?\s*\d{5}\b"#),
+        // Allow a period for the comma (OCR reads "NJ," as "NJ.").
+        if let re = try? NSRegularExpression(pattern: #"\b[a-z]{2}[.,]?\s*\d{5}\b"#),
+           re.firstMatch(in: lower, range: NSRange(lower.startIndex..., in: lower)) != nil {
+            return true
+        }
+        // A phone number "(848) 999-2005" — provenance, never a strain.
+        if let re = try? NSRegularExpression(pattern: #"\(?\d{3}\)?\s*-?\s*\d{3}\s*-\s*\d{4}"#),
            re.firstMatch(in: lower, range: NSRange(lower.startIndex..., in: lower)) != nil {
             return true
         }

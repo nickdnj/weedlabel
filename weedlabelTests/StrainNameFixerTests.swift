@@ -50,6 +50,45 @@ struct StrainNameFixerTests {
         #expect(cand == "Kynd Lollipopz (I)")
     }
 
+    // Real on-device capture (Jet Fuel, 2026-05-30): row-grouped OCR merged the
+    // strain name into the top row with the Metrc tag, Total THC, and terpenes,
+    // and the model picked the bold "NOT SAFE FOR KIDS" warning as the strain.
+    // The fixer must (a) reject the warning and (b) salvage "Kynd Jet Fuel" from
+    // the cluttered top row rather than fall back to the warning line.
+    static let jetFuelClutteredOCR = """
+    1A41103000003E9000067952  Kynd Jet Fuel (S) Flower 3.5g  Total THC:  25.74%  Terpinolene: 0.76 46  Beta Marcene: 0.38 5b
+    High THC, Low CBD  THCa:  28.36  Betacano phyllene: 0.36 40  Limonene: 0.32 40
+    Lic Number: C000067  Grow Method: Indoor  D9THC:  0.87  0.00%  Lina 1001: 0.14 4t  getaPinene: 0.12 8b
+    Garden State Dispensary  CBN:  CBD:  0.00  AlphaPinene: 0.09 46
+    950 US Highway 1 North  CBG:  0.29%  Bisa Dolol: 0.08 46  Humulene: 0.09 40
+    Woodbridge NJ. 07095  (848) 999-2005
+    PKG Date:  04/28/2026  Drug Administration. This product is not intended to
+    EXP Date:  10/25/2026  diagnose, treat, cure, or prevent any disease.
+    Requires Refrigeration: No  inactive ingredients: None
+    Pesticides Used: None
+    NOT SAFE FOR KIDS
+    """
+
+    @Test func rejectsNotSafeForKidsWarningAsStrain() {
+        #expect(StrainNameFixer.isBoilerplateLine("NOT SAFE FOR KIDS"))
+        let result = StrainNameFixer.fix(
+            strain: "NOT SAFE FOR KIDS",
+            cultivator: "Garden State Dispensary",
+            ocrText: Self.jetFuelClutteredOCR
+        )
+        #expect(result.didFix)
+        #expect(result.strain.lowercased().contains("jet fuel"))
+        #expect(!result.strain.lowercased().contains("safe for kids"))
+    }
+
+    @Test func salvagesNameFromClutteredTopRow() {
+        // candidateFromOCR alone (every line is metrc/value/boilerplate) must
+        // still recover the leading name segment from the top row.
+        let cand = StrainNameFixer.candidateFromOCR(Self.jetFuelClutteredOCR, cultivator: "Garden State Dispensary")
+        #expect(cand != nil)
+        #expect(cand?.lowercased().contains("jet fuel") == true)
+    }
+
     @Test func skipsMetrcTagLine() {
         let ocr = """
         1A41103000003E9000064032

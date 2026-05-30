@@ -367,9 +367,18 @@ extension CannabisLabel {
         func matchToken(at i: Int) -> (slot: CannabinoidSlot, len: Int)? {
             for (tok, slot) in tokens {
                 let t = Array(tok)
-                if i + t.count <= n && Array(chars[i..<i + t.count]) == t {
-                    return (slot, t.count)
+                guard i + t.count <= n, Array(chars[i..<i + t.count]) == t else { continue }
+                // Skip chemotype-context CBD/CBG ("High THC, Low CBD") — a
+                // descriptor, not a value label. Otherwise the `cbd` in `lowcbd`
+                // inflates the label count and the cluster fails to pair (observed
+                // on a Jet Fuel row "lowcbdtotalthc:thca:25.74%28.36%").
+                if slot == .cbd || slot == .cbg {
+                    let pre = String(chars[max(0, i - 8)..<i]).lowercased()
+                    if pre.hasSuffix("low") || pre.hasSuffix("high") || pre.hasSuffix("moderate") {
+                        continue
+                    }
                 }
+                return (slot, t.count)
             }
             return nil
         }
