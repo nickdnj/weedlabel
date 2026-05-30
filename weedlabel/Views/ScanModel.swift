@@ -171,7 +171,29 @@ final class ScanModel {
     /// arrives asynchronously via labelCamera.onCapture → handleCapturedFrame.
     func confirmCapture() {
         guard case .scanning = phase else { return }
+        // A manual tap supersedes any pending auto-capture countdown.
+        cancelAutoCaptureCountdown()
         labelCamera.captureNow()
+        scheduleLiveOcrFallback()
+    }
+
+    /// When no real camera frame arrives — unit tests, or a capture session that
+    /// never delivers a still — advance from the live OCR after a short grace
+    /// period so the flow doesn't stall. No-op on device: a real captured frame
+    /// moves us to `.capturing` well within this window, so the `.scanning` guard
+    /// skips it. With no OCR text either, route to `.failed`.
+    private func scheduleLiveOcrFallback() {
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard let self, case .scanning = self.phase else { return }
+            let ocr = self.lastSeenOcr.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !ocr.isEmpty else {
+                self.phase = .failed(message: "No label text detected. Move closer to the label and try again.")
+                return
+            }
+            self.labelCamera.stop()
+            self.phase = .previewing(ocrText: ocr, qrCodes: self.lastSeenQRs)
+        }
     }
 
     /// True when the OCR text contains a cannabinoid label immediately followed
