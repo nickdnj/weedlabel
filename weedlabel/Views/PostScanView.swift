@@ -27,6 +27,8 @@ struct PostScanView: View {
     var onSetProductType: (ProductType) -> Void = { _ in }
     /// Apply a user correction to the strain name (worst-case OCR misreads).
     var onSetStrainName: (String) -> Void = { _ in }
+    /// Apply a user correction to a cannabinoid value (OCR column-desyncs).
+    var onSetCannabinoid: (CannabisLabel.CannabinoidField, Double?) -> Void = { _, _ in }
     /// Persist the current scan to the Log Book, then reset.
     var onSave: () -> Void = {}
     let onReset: () -> Void
@@ -513,7 +515,7 @@ struct PostScanView: View {
 
     private var sourceDataDisclosure: some View {
         DisclosureGroup(isExpanded: $sourceDataExpanded) {
-            ParsedFieldsList(label: label)
+            ParsedFieldsList(label: label, ocrText: ocrText, onSetCannabinoid: onSetCannabinoid)
                 .padding(.top, 12)
         } label: {
             Text("Source data")

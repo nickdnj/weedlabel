@@ -520,3 +520,83 @@ extension CannabisLabel {
         delta9thc = nil
     }
 }
+
+// MARK: - Cannabinoid value correction (tap-to-pick)
+
+extension CannabisLabel {
+    /// The user-correctable potency fields. Cannabinoid values, unlike the strain
+    /// name, are NOT persisted across scans — a percentage is specific to this
+    /// product/batch, so re-scanning re-reads it.
+    enum CannabinoidField: String, CaseIterable, Sendable {
+        case thca, delta9thc, totalThc, cbd, cbg
+
+        var displayName: String {
+            switch self {
+            case .thca: return "THCA"
+            case .delta9thc: return "Δ9-THC"
+            case .totalThc: return "Total THC"
+            case .cbd: return "CBD"
+            case .cbg: return "CBG"
+            }
+        }
+
+        /// Normalized OCR tokens that label this field (matches the reconciler).
+        var tokens: [String] {
+            switch self {
+            case .thca: return ["thca"]
+            case .delta9thc: return ["d9thc", "delta9thc", "delta9", "δ9thc", "δ9", "09thc"]
+            case .totalThc: return ["totalthc"]
+            case .cbd: return ["cbd"]
+            case .cbg: return ["cbg"]
+            }
+        }
+    }
+
+    func cannabinoidValue(_ field: CannabinoidField) -> Double? {
+        switch field {
+        case .thca: return thca
+        case .delta9thc: return delta9thc
+        case .totalThc: return totalThc
+        case .cbd: return cbd
+        case .cbg: return cbg
+        }
+    }
+
+    mutating func setCannabinoid(_ field: CannabinoidField, _ value: Double?) {
+        switch field {
+        case .thca: thca = value
+        case .delta9thc: delta9thc = value
+        case .totalThc: totalThc = value
+        case .cbd: cbd = value
+        case .cbg: cbg = value
+        }
+    }
+
+    /// Candidate percentage values for a field, read straight from the OCR — the
+    /// data source for the tap-to-pick value correction. The right number is on
+    /// the label even when extraction mis-slotted it (the cross-row desyncs). The
+    /// field's own direct read leads, then every printed "NN.NN %" percentage
+    /// ordered big-first for THCA/Total THC (small-first otherwise), so the user
+    /// picks off the label instead of typing.
+    static func candidatePotencyValues(for field: CannabinoidField, ocrText: String, limit: Int = 12) -> [Double] {
+        var seen = Set<Double>()
+        var vals: [Double] = []
+        func add(_ v: Double) { if v >= 0, v <= 100, seen.insert(v).inserted { vals.append(v) } }
+
+        // The field's own direct read(s) first — most likely correct.
+        for line in ocrText.components(separatedBy: .newlines).map(Self.normalizeOCRLine) {
+            for t in field.tokens {
+                if let v = Self.valueAfter(token: t, in: line, minV: 0, maxV: 100) { add(v) }
+            }
+        }
+        // Then every printed percentage on the label, ordered for the field.
+        if let re = try? NSRegularExpression(pattern: #"(\d+(?:\.\d+)?)\s*%"#) {
+            let ns = ocrText as NSString
+            let nums = re.matches(in: ocrText, range: NSRange(location: 0, length: ns.length))
+                .compactMap { Double(ns.substring(with: $0.range(at: 1))) }
+            let bigFirst = field == .thca || field == .totalThc
+            for v in nums.sorted(by: { bigFirst ? $0 > $1 : $0 < $1 }) { add(v) }
+        }
+        return Array(vals.prefix(limit))
+    }
+}

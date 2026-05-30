@@ -420,6 +420,22 @@ final class ScanModel {
         phase = .ready(label: updated, summary: summary, sanityWarning: warning, strainInsight: insight)
     }
 
+    // MARK: - Cannabinoid value correction
+
+    /// Apply a user correction to a cannabinoid percentage (the OCR de-syncs
+    /// name↔value on dense potency tables). Re-runs the sanity check so the
+    /// Total-THC cross-check banner updates. In-session only — a percentage is
+    /// per-batch, so it isn't persisted across scans like the strain name.
+    func setCannabinoidValue(_ field: CannabisLabel.CannabinoidField, _ value: Double?) {
+        guard case .ready(let label, let summary, _, let insight) = phase else { return }
+        var updated = label
+        updated.setCannabinoid(field, value)
+        let verdict = LabelSanityChecker.check(updated)
+        let warning: String?
+        if case .verifyHint(let reason) = verdict { warning = reason } else { warning = nil }
+        phase = .ready(label: updated, summary: summary, sanityWarning: warning, strainInsight: insight)
+    }
+
     // MARK: - Strain-name correction
 
     /// Apply a user correction to the strain name (the model can mis-read names

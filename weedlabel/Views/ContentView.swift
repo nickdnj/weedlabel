@@ -65,6 +65,7 @@ struct ContentView: View {
                         onClearStrainClass: { model.clearStrainClass() },
                         onSetProductType: { model.setProductType($0) },
                         onSetStrainName: { model.setStrainName($0) },
+                        onSetCannabinoid: { model.setCannabinoidValue($0, $1) },
                         onSave: { model.saveToLogBook() },
                         onReset: { model.cancel() }
                     )
@@ -697,6 +698,14 @@ private struct FailedView: View {
 
 struct ParsedFieldsList: View {
     let label: CannabisLabel
+    /// OCR the label was read from — source for the potency value pick-list.
+    var ocrText: String = ""
+    /// Apply a user correction to a cannabinoid value (nil clears it).
+    var onSetCannabinoid: (CannabisLabel.CannabinoidField, Double?) -> Void = { _, _ in }
+
+    @State private var editingField: CannabisLabel.CannabinoidField?
+    @State private var typingField: CannabisLabel.CannabinoidField?
+    @State private var valueDraft: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -710,11 +719,14 @@ struct ParsedFieldsList: View {
                 if let v = label.expirationDate { row("Expires", v) }
             }
             Divider()
+            // Tap a potency value to pick the right number straight off the label
+            // — fixes the OCR column-desyncs without typing.
             Group {
-                if let v = label.thca { row("THCA", "\(v)%") }
-                if let v = label.delta9thc { row("Δ9-THC", "\(v)%") }
-                if let v = label.cbg { row("CBG", "\(v)%") }
-                if let v = label.cbd { row("CBD", "\(v)%") }
+                potencyRow(.thca)
+                potencyRow(.delta9thc)
+                potencyRow(.totalThc)
+                potencyRow(.cbg)
+                potencyRow(.cbd)
                 if let v = label.totalCannabinoids { row("Total cannabinoids", "\(v)%") }
                 if let v = label.computedTotalThc { row("Computed Total THC", String(format: "%.2f%%", v)) }
             }
@@ -731,6 +743,49 @@ struct ParsedFieldsList: View {
                 row("QR codes", "\(label.qrCodes.count) detected")
             }
         }
+        .confirmationDialog(
+            "Pick the value from the label",
+            isPresented: Binding(get: { editingField != nil }, set: { if !$0 { editingField = nil } }),
+            titleVisibility: .visible,
+            presenting: editingField
+        ) { field in
+            ForEach(CannabisLabel.candidatePotencyValues(for: field, ocrText: ocrText), id: \.self) { v in
+                Button(String(format: "%.2f%%", v)) { onSetCannabinoid(field, v) }
+            }
+            Button("Type a value…") {
+                valueDraft = label.cannabinoidValue(field).map { String($0) } ?? ""
+                typingField = field
+            }
+            Button("Clear", role: .destructive) { onSetCannabinoid(field, nil) }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Edit value", isPresented: Binding(get: { typingField != nil }, set: { if !$0 { typingField = nil } })) {
+            TextField("Percent", text: $valueDraft)
+                .keyboardType(.decimalPad)
+            Button("Save") {
+                if let f = typingField {
+                    let cleaned = valueDraft.replacingOccurrences(of: "%", with: "").trimmingCharacters(in: .whitespaces)
+                    onSetCannabinoid(f, Double(cleaned))
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    /// A tappable cannabinoid value row — shows "—" when unread so the user can
+    /// add it. Opens the pick-from-label dialog.
+    private func potencyRow(_ field: CannabisLabel.CannabinoidField) -> some View {
+        Button { editingField = field } label: {
+            HStack {
+                Text(field.displayName).font(.footnote).foregroundStyle(.secondary).frame(width: 140, alignment: .leading)
+                Text(label.cannabinoidValue(field).map { String(format: "%.2f%%", $0) } ?? "—")
+                    .font(.callout).foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "pencil").font(.caption2).foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func row(_ key: String, _ value: String) -> some View {

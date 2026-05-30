@@ -124,6 +124,37 @@ import Testing
         #expect(label.totalThc == 25.74)
     }
 
+    // MARK: - Value pick-list (Phase 2 tap-to-correct)
+
+    private static let cleanPotencyOCR = """
+    Total THC:  25.74%
+    THCa:  28.36%
+    D9THC:  0.87%
+    CBG:  0.29%
+    CBD:  0.00%
+    Limonene: 0.22%
+    """
+
+    @Test func candidateValuesForThcaBigFirst() {
+        let vals = CannabisLabel.candidatePotencyValues(for: .thca, ocrText: Self.cleanPotencyOCR)
+        #expect(vals.first == 28.36)            // direct read leads
+        #expect(vals.contains(25.74))
+    }
+
+    @Test func candidateValuesForDelta9IncludesSmall() {
+        let vals = CannabisLabel.candidatePotencyValues(for: .delta9thc, ocrText: Self.cleanPotencyOCR)
+        #expect(vals.contains(0.87))
+        #expect(vals.contains(0.29))
+    }
+
+    @Test func setCannabinoidUpdatesField() {
+        var label = Self.jetFuelMisSlotted()
+        label.setCannabinoid(.thca, 28.36)
+        label.setCannabinoid(.delta9thc, nil)
+        #expect(label.thca == 28.36)
+        #expect(label.delta9thc == nil)
+    }
+
     // A single cannabinoid label followed by an unrelated number (e.g. a license
     // number bleeding into a row-grouped line) must not be positionally paired —
     // the cluster needs ≥2 adjacent labels, so this falls through to valueAfter's
