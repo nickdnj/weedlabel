@@ -43,7 +43,10 @@ enum StrainNameFixer {
     /// is scrambled away from the top — warnings, directions, regulatory text.
     /// These appear on every NJ-CRC label and are never a strain name.
     static func isBoilerplateLine(_ line: String) -> Bool {
+        // Collapse runs of whitespace so OCR double-spacing ("THIS  PRODUCT IS
+        // NOT INTEN") still matches a marker ("this product").
         let lower = line.lowercased()
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
         let markers = [
             "psychosis", "high potency", "intoxicating effects", "poison control",
             "keep out of the reach", "out of reach of children", "not for resale",
@@ -59,6 +62,9 @@ enum StrainNameFixer {
             "potential allergen", "requires refriger", "inactive ingredient",
             "this statement", "evaluated", "food and", "pkg date", "exp date",
             "storage", "serving size", "servings per",
+            // The FDA disclaimer "...diagnose, treat, cure, or prevent any
+            // disease." — the model grabbed "DISEASE. T" off the end of it.
+            "disease", "diagnose", "prevent any",
             // The bold child-safety warning. Its own line on every NJ label, with
             // no chemistry/percent nearby, so none of the other classifiers catch
             // it — the model grabbed it as the strain on a cluttered top-row scan.
@@ -85,12 +91,14 @@ enum StrainNameFixer {
             if isDateLine(line) { continue }
             if isAddressLikeLine(line) { continue }
             if !containsLetter(line) { continue }
+            if isGibberish(line) { continue }         // OCR of a stylized logo
             if isSuspicious(line) { continue }
             if isChemotypeLine(line) { continue }     // "High THC, Low CBD" etc.
             if isBoilerplateLine(line) { continue }   // warnings, directions, FDA text
             if isLabeledValueLine(line) { continue }  // "Limonene: 1.08 %", "THCa: 28.73"
-            // Skip the cultivator/brand line — it's provenance, not the strain.
-            if let cult, !cult.isEmpty, line.lowercased().contains(cult) { continue }
+            // Skip a line that's essentially just the cultivator/brand (provenance,
+            // not the strain) — but keep a brand+strain line like "Kynd Lollipopz".
+            if let cult, !cult.isEmpty, isMostlyCultivator(line, cult: cult) { continue }
             // Strip trailing weight/format markers like " - 28g" or " Flower 3.5g"
             // to leave a cleaner strain name.
             let cleaned = stripTrailingFormatMarkers(line)
@@ -137,10 +145,14 @@ enum StrainNameFixer {
             let stripped = stripLeadingTagNoise(head)
             let cleaned = stripTrailingFormatMarkers(stripped.trimmingCharacters(in: .whitespacesAndNewlines))
             if cleaned.isEmpty || !containsLetter(cleaned) { continue }
+            if isGibberish(cleaned) { continue }
             if isSuspicious(cleaned) || isBoilerplateLine(cleaned) || isChemotypeLine(cleaned) { continue }
             if isFormOnlyLine(stripTrailingFormatMarkers(cleaned)) { continue }
             if isAddressLikeLine(cleaned) { continue }
-            if let cult, !cult.isEmpty, cleaned.lowercased().contains(cult) { continue }
+            // Skip only if the candidate is ESSENTIALLY just the brand. A
+            // brand+strain line ("Kynd Lollipopz") keeps its strain — dropping it
+            // would lose the name and let a hallucination survive.
+            if let cult, !cult.isEmpty, isMostlyCultivator(cleaned, cult: cult) { continue }
             let letters = cleaned.filter { $0.isLetter }.count
             if letters < 3 { continue }
             if cleaned.split(whereSeparator: { $0 == " " }).count > 7 || cleaned.count > 48 { continue }
@@ -149,16 +161,57 @@ enum StrainNameFixer {
         return nil
     }
 
-    /// Strip a leading Metrc tag (1A4…), license code (C000067), or long digit run
-    /// off the front of a row so a salvaged name doesn't start with the tag.
-    private static func stripLeadingTagNoise(_ s: String) -> String {
-        var out = s
-        for pattern in [#"^\s*1A4\w{12,}\s*"#, #"^\s*C\d{5,7}\s*"#, #"^\s*\d{6,}\s*"#] {
-            if let r = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                out = r.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: "")
-            }
+    /// OCR garbage from stylized logos / artwork — e.g. "BLO НАЧАААААААА…" off the
+    /// WARHEADZ wordmark. Two signals: a run of 4+ identical letters (no real
+    /// strain has that), or mostly non-Latin letters (these labels are English).
+    static func isGibberish(_ s: String) -> Bool {
+        if s.range(of: #"([a-zA-Zа-яА-Я])\1{3,}"#, options: .regularExpression) != nil { return true }
+        let letters = s.filter { $0.isLetter }
+        guard !letters.isEmpty else { return false }
+        let nonLatin = letters.filter { !$0.isASCII }.count
+        return Double(nonLatin) / Double(letters.count) > 0.4
+    }
+
+    /// A bare potency-descriptor fragment ("High", "Low", "High THC", "Low CBD")
+    /// the model sometimes grabs off the chemotype line "High THC, Low CBD". Never
+    /// a strain name. (isChemotypeLine needs both qualifier AND cannabinoid on the
+    /// line; this catches the lone leftover word.)
+    static func isChemotypeQualifierOnly(_ name: String) -> Bool {
+        let n = name.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: ".,:")))
+            .lowercased()
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+        return ["high", "low", "moderate",
+                "high thc", "low thc", "high cbd", "low cbd",
+                "moderate thc", "moderate cbd"].contains(n)
+    }
+
+    /// True when `text` is essentially just the cultivator/brand — i.e. removing
+    /// the cultivator substring leaves fewer than 3 letters. "Garden State
+    /// Dispensary" → true; "Kynd Lollipopz" (cult "Kynd") → false (keeps the
+    /// strain). Used so brand+strain lines survive name recovery.
+    private static func isMostlyCultivator(_ text: String, cult: String) -> Bool {
+        let lower = text.lowercased()
+        guard lower.contains(cult) else { return false }
+        let remainder = lower.replacingOccurrences(of: cult, with: "")
+        return remainder.filter { $0.isLetter }.count < 3
+    }
+
+    /// Strip leading Metrc-tag / license / number fragments off the front of a
+    /// name or row. Token-based so it survives however OCR mangles the tag —
+    /// contiguous ("1841103000003E9000067952", where 1A4 read as 184), split into
+    /// pieces ("1A411 03000003E9 000064 032"), or a leftover fragment
+    /// ("E9000067952"). Drops leading tokens that are digit-dominant; stops at the
+    /// first wordy token so real names (incl. "9 Pound Hammer") are preserved.
+    static func stripLeadingTagNoise(_ s: String) -> String {
+        var tokens = s.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+        while let first = tokens.first {
+            let digits = first.filter { $0.isNumber }.count
+            let letters = first.filter { $0.isLetter }.count
+            let isTagNoise = (digits >= 4 && digits > letters && letters <= 4 && first.count >= 5)  // tag/license fragment
+                          || (digits >= 3 && letters == 0)                                          // pure number run
+            if isTagNoise { tokens.removeFirst() } else { break }
         }
-        return out
+        return tokens.joined(separator: " ")
     }
 
     /// If the FM-extracted strain looks suspicious, try to replace it from
@@ -167,7 +220,13 @@ enum StrainNameFixer {
     ///   2. It appears in the OCR text adjacent to a percent value — almost
     ///      always a sign the model latched onto a chemical-compound name or
     ///      OCR fragment of one (e.g. "Beicaropa" near "0.64%").
-    static func fix(strain: String, cultivator: String? = nil, ocrText: String) -> (strain: String, didFix: Bool) {
+    static func fix(strain rawStrain: String, cultivator: String? = nil, ocrText: String) -> (strain: String, didFix: Bool) {
+        // Sanitize a leading Metrc-tag / license fragment off the FM name first
+        // ("E9000067952  Kynd Jet Fuel (S)" -> "Kynd Jet Fuel (S)"); OCR splits
+        // tags unpredictably and the fragment otherwise rides along as the name.
+        let trimmedRaw = rawStrain.trimmingCharacters(in: .whitespacesAndNewlines)
+        let strain = stripLeadingTagNoise(trimmedRaw)
+        let didStrip = strain != trimmedRaw
         let cult = cultivator?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let s = strain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let matchesCultivator: Bool = {
@@ -184,6 +243,7 @@ enum StrainNameFixer {
         let tooLong = wordCount > 6 || strain.count > 48
         let badName = isSuspicious(strain)
             || isBoilerplateLine(strain)
+            || isChemotypeQualifierOnly(strain)                    // bare "High" / "Low CBD"
             || isLabeledValueLine(strain)                          // "Limonene: 1.08 %"
             || isAddressLikeLine(strain)                           // "Woodbridge NJ, 07095"
             || tooLong
@@ -191,11 +251,11 @@ enum StrainNameFixer {
             || matchesCultivator
             || looksLikeChemicalFragment(strain, in: ocrText)
             || isAbsentFromOCR(strain, in: ocrText)
-        guard badName else { return (strain, false) }
+        guard badName else { return (strain, didStrip) }
         if let candidate = candidateFromOCR(ocrText, cultivator: cultivator) {
             return (candidate, true)
         }
-        return (strain, false)
+        return (strain, didStrip)
     }
 
     /// True when NONE of the strain name's significant words appear in the OCR

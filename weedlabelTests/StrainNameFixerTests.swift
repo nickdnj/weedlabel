@@ -81,6 +81,99 @@ struct StrainNameFixerTests {
         #expect(!result.strain.lowercased().contains("safe for kids"))
     }
 
+    // MARK: - Real device leak cases (2026-05-30 batch)
+
+    // Boilerplate fragment grabbed as strain: "DISEASE. T" off the disclaimer
+    // "...prevent any disease." on a Zips Warheadz label.
+    static let warheadzOCR = """
+    Zips - warheadz  THCA: 21.74 %%  Potency Analysis: Terpene Contents -
+    - 28g  THC:  22.18 %  Betacaryophyllene: 1.14 96
+    High THC, Low CBD  THC9:  cBO:  3.11 %  0.17  BetaMyrcene: 0.37 9%6
+    Inhalable Product  Store in a cool, dry place HQV:  0.00  Linaool: 0.31
+    License #  C000186  CBD:  0.00  Humuiene: 0.26 %
+    Phone #: (973) 400 - 0188  Bisabolol: 0.16
+    Warheadz 7725F6  1A4110300003C8D000032417  Total Terpenes:  3.26%
+    THIS STATEMENT HAS NOT BEEN
+    diagnose, treat, cure, or prevent any disease. T
+    """
+
+    @Test func rejectsDiseaseDisclaimerFragment() {
+        let r = StrainNameFixer.fix(strain: "DISEASE. T", cultivator: "Fresh Grow LLC", ocrText: Self.warheadzOCR)
+        #expect(r.strain.lowercased() != "disease. t")
+        #expect(r.strain.lowercased().contains("warheadz"))
+    }
+
+    // Metrc tag OCR'd contiguously as "1841103000003E9000067952" (1A4 -> 184),
+    // so a leading "E9000067952" fragment survived on the name.
+    @Test func stripsMetrcFragmentPrefix() {
+        let ocr = "1841103000003E9000067952  Kynd Jet Fuel (S) Flower 3.5g  Total THC:  25.74%"
+        let r = StrainNameFixer.fix(strain: "E9000067952  Kynd Jet Fuel (S)", cultivator: "Garden State Dispensary", ocrText: ocr)
+        #expect(!r.strain.contains("9000067952"))
+        #expect(r.strain.lowercased().contains("jet fuel"))
+    }
+
+    // Pure hallucination: OCR clearly says Kynd Lollipopz; FM emitted the @Guide
+    // example "Blue Candy Rain" (none of those tokens are on the label).
+    static let lollipopzOCR = """
+    1A41103000003E9000063920  Kynd Lollipopz (1) Flower 3.5g  Total THC:  25.65%  Limonene: 0.06 40
+    Grow Method: Indoor  High THC, Low CBD  TH Ca:  29.05 %  Betacaryophyllene: 0.64
+    LIC Number: C000067  D9THC:  CBD:  0.00 %  0.17%  Humulene: 0.14
+    950 US Highway 1 North  Garden State Dispensary  CBN:  0.00 %  BetaPinene: 0.08
+    Woodbridge NJ. 07095  (848) 939-2005  CBG:  0.35
+    NOT SAFE FOR KIDS
+    """
+
+    @Test func rejectsHallucinatedCanaryName() {
+        let r = StrainNameFixer.fix(strain: "Blue Candy Rain", cultivator: "Garden State Dispensary", ocrText: Self.lollipopzOCR)
+        #expect(r.strain.lowercased() != "blue candy rain")
+        #expect(r.strain.lowercased().contains("lollipopz"))
+    }
+
+    // Same hallucination but with the brand ("Kynd") as the extracted cultivator —
+    // the recovered "Kynd Lollipopz" must not be rejected for containing the brand.
+    @Test func rejectsHallucinatedCanaryNameWithBrandCultivator() {
+        let r = StrainNameFixer.fix(strain: "Blue Candy Rain", cultivator: "Kynd", ocrText: Self.lollipopzOCR)
+        #expect(r.strain.lowercased() != "blue candy rain")
+        #expect(r.strain.lowercased().contains("lollipopz"))
+    }
+
+    // OCR double-spacing must not defeat boilerplate matching: "THIS  PRODUCT
+    // IS NOT INTEN" (two spaces) still contains the "this product" marker.
+    @Test func rejectsDoubleSpacedBoilerplate() {
+        #expect(StrainNameFixer.isBoilerplateLine("THIS  PRODUCT IS NOT INTEN"))
+        let r = StrainNameFixer.fix(strain: "THIS  PRODUCT IS NOT INTEN", cultivator: "Fresh Grow LLC", ocrText: Self.warheadzOCR)
+        #expect(!r.strain.lowercased().contains("product is not"))
+        #expect(r.strain.lowercased().contains("warheadz"))
+    }
+
+    // The lone chemotype qualifier "High" (off "High THC, Low CBD") is never a strain.
+    @Test func rejectsBareChemotypeQualifier() {
+        #expect(StrainNameFixer.isChemotypeQualifierOnly("High"))
+        #expect(StrainNameFixer.isChemotypeQualifierOnly("Low CBD"))
+        #expect(!StrainNameFixer.isChemotypeQualifierOnly("Highlighter"))
+        let r = StrainNameFixer.fix(strain: "High", cultivator: "Garden State Dispensary", ocrText: Self.lollipopzOCR)
+        #expect(r.strain.lowercased() != "high")
+        #expect(r.strain.lowercased().contains("lollipopz"))
+    }
+
+    // Stylized-logo OCR garbage on the first line ("BLO НАЧАААА…") must be
+    // skipped so recovery reaches the real "Zips - Warheadz" on the next line.
+    static let warheadzLogoGarbageOCR = """
+    BLO НАЧАААААААААААААААААААААААААААААААА
+    Zips - Warheadz  THCA: 21.74 0%  Potency Analysis:  Terpene Contents -
+    - 28g  THC:  22.18%0  BetaCaryophyllene: 1.14 00
+    License #  C000186  CBD:  0.00 %
+    """
+
+    @Test func skipsStylizedLogoGibberish() {
+        #expect(StrainNameFixer.isGibberish("BLO НАЧАААААААААААА"))
+        #expect(!StrainNameFixer.isGibberish("Zips - Warheadz"))
+        #expect(!StrainNameFixer.isGibberish("Kynd Lollipopz (I)"))
+        let cand = StrainNameFixer.candidateFromOCR(Self.warheadzLogoGarbageOCR, cultivator: "Fresh Grow LLC")
+        #expect(cand?.lowercased().contains("warheadz") == true)
+        #expect(cand?.lowercased().contains("нача") != true)
+    }
+
     @Test func salvagesNameFromClutteredTopRow() {
         // candidateFromOCR alone (every line is metrc/value/boilerplate) must
         // still recover the leading name segment from the top row.
