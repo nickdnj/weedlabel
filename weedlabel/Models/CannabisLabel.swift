@@ -321,6 +321,25 @@ extension CannabisLabel {
                 assign(slot, value)
             }
         }
+
+        // Final consistency pass: on flower, THCA must be ≥ Total THC, since
+        // Total THC = 0.877×THCA + Δ9. A THCA materially BELOW a solid Total THC
+        // is physically impossible — it means THCA was missing or mis-read while
+        // Total THC came through cleanly. (Observed on a label printing
+        // "Δ9THC: 0.82%" with the real THCA 31.53% sitting unlabeled by the Metrc
+        // tag: FM put the Δ9 value 0.82 into `thca`, but "Total THC: 28.47%" was
+        // read correctly.) Recover THCA from the regulatory formula. Flower /
+        // pre-roll only — concentrates can decarb to a legitimately low THCA.
+        // Complements fixImpossibleThc(), which handles the mirror case (the big
+        // THCA value landing in the Δ9 slot).
+        if [.flower, .preRoll].contains(productType),
+           let total = totalThc, total > 5,
+           (thca ?? 0) < total * 0.95 {
+            let recovered = (total - (delta9thc ?? 0)) / 0.877
+            if recovered > 0 {
+                thca = (recovered * 100).rounded() / 100
+            }
+        }
     }
 
     /// Cannabinoid slots the clustered-row pairing can assign.
