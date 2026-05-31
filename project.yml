@@ -30,6 +30,9 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     # Standard OS encryption only → skip the export-compliance prompt on every upload.
     INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+    # App version + build. Bump CURRENT_PROJECT_VERSION for each new TestFlight upload.
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
 
 targets:
   weedlabel:
