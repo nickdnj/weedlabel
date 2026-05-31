@@ -15,8 +15,8 @@ import UIKit
 // client. When Mail isn't configured, the view layer falls back to a share sheet.
 
 enum BetaFeedback {
-    /// Where shared scans land.
-    static let recipient = "nickd@demarconet.com"
+    /// Where shared scans land (a dedicated public-facing inbox, not personal mail).
+    static let recipient = "vistter2@gmail.com"
     /// Opt-out switch (default ON in beta). Read via @AppStorage.
     static let shareEnabledKey = "beta.feedback.shareEnabled"
     /// First-run disclosure flag (shown once, not a gate).

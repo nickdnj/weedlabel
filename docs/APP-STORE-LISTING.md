@@ -98,7 +98,7 @@ In-app tips are optional purchases handled entirely by Apple; we never receive y
 
 Because we collect nothing, there is nothing for us to access, correct, or delete on our end — clearing the app's data on your device removes everything.
 
-Questions: [your support email]
+Questions: vistter2@gmail.com
 ```
 
 ---
@@ -120,13 +120,13 @@ Common questions:
 
 • "How do I clear my data?" — About → Clear local data.
 
-Contact: [your support email]
+Contact: vistter2@gmail.com
 ```
 
 ---
 
 ## Notes / TODO before submit
-- Fill `[DATE]` and `[your support email]` in both pages, host them, and put the URLs in App Store Connect (Privacy Policy URL is a required field; Support URL is required).
+- Fill `[DATE]` in both pages (support email is set to vistter2@gmail.com), host them, and put the URLs in App Store Connect (Privacy Policy URL is a required field; Support URL is required).
 - Age rating questionnaire → expect **17+** (cannabis references).
 - App Privacy → **Data Not Collected** across the board (checklist §5). Verify no SDK breaks this.
 - Screenshots: see `docs/branding/screenshots/` (real-app captures) and `docs/branding/showcase.html` (mockups). 6.9" required size is 1320×2868.

@@ -18,7 +18,7 @@ extraction was wrong / here's the scan."
 
 ## Decisions (locked)
 
-- **Transport:** email composer → `nickd@demarconet.com`. Fallback to `UIActivityViewController`
+- **Transport:** email composer → `vistter2@gmail.com` (dedicated public-facing inbox, not personal mail). Fallback to `UIActivityViewController`
   when `MFMailComposeViewController.canSendMail()` is false (no Mail account, or Simulator).
 - **Trigger:** after **every** scan, *only when the tester has opted in*. A lightweight
   "How did we do? 👍 / 👎" sheet with an optional note and a **Share details** button.
