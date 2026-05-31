@@ -135,6 +135,45 @@ platform :ios do
     end
   end
 
+  desc "Create an internal TestFlight group + add the account holder as tester"
+  lane :internal_testing do
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH"))
+    )
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+
+    group = app.get_beta_groups.find(&:is_internal_group)
+    if group
+      UI.message("Internal group already exists: #{group.name} (#{group.id})")
+    else
+      # spaceship's create_beta_group always sends publicLinkLimitEnabled, which
+      # Apple rejects for internal groups. POST a clean body directly instead.
+      Spaceship::ConnectAPI.test_flight_request_client.post("v1/betaGroups", {
+        data: {
+          type: "betaGroups",
+          attributes: { name: "Internal Testers", isInternalGroup: true, hasAccessToAllBuilds: true },
+          relationships: { app: { data: { id: app.id, type: "apps" } } }
+        }
+      })
+      group = app.get_beta_groups.find(&:is_internal_group)
+      UI.success("Created internal group: #{group&.name} (#{group&.id})")
+    end
+
+    begin
+      Spaceship::ConnectAPI.post_beta_tester_assignment(
+        beta_group_ids: [group.id],
+        attributes: { firstName: "Nick", lastName: "DeMarco", email: "nickd@demarconet.com" }
+      )
+      UI.success("Added nickd@demarconet.com to #{group.name} ✓")
+    rescue => e
+      UI.important("Tester add note (may already be a member): #{e.message}")
+    end
+
+    UI.success("Internal testing ready — install TestFlight on your iPhone and accept the invite email.")
+  end
+
   desc "List TestFlight builds + their processing state"
   lane :tf_status do
     Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
@@ -152,6 +191,12 @@ platform :ios do
         ver = b.pre_release_version&.version
         UI.message("  v#{ver} (build #{b.version})  state=#{b.processing_state}")
       end
+    end
+    groups = app.get_beta_groups
+    UI.success("Beta groups (#{groups.count}):")
+    groups.each do |g|
+      kind = g.is_internal_group ? "INTERNAL" : "external"
+      UI.message("  #{g.name} [#{kind}] id=#{g.id}")
     end
   end
 end
