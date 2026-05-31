@@ -10,7 +10,7 @@ WHAT IT DOES
 • Correct it in a tap — when the AI misreads something, fix it; it learns your corrections locally.
 
 PRIVATE BY DESIGN
-Pocketbud uses Apple's on-device intelligence. There's no server, no login, and no analytics. The only thing that ever leaves the app is you tapping a web link (like a COA). That's the whole point: it lives in your pocket and never leaves it.
+Pocketbud uses Apple's on-device intelligence — the AI runs on your iPhone, not in a data center. There's no server, no login, and no analytics. The only thing that ever leaves the app is you tapping a web link (like a COA). That's the whole point: it lives in your pocket and never leaves it.
 
 BUILT FOR NEW JERSEY (FOR NOW)
 This version is tuned for New Jersey dispensary (NJ-CRC) labels. Other formats may read less accurately for now.

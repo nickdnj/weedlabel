@@ -602,7 +602,8 @@ private struct IdleView: View {
 
     private var privacyPillars: some View {
         VStack(spacing: 8) {
-            pill("cpu", "100% on-device")
+            pill("cpu", "AI 100% on-device")
+            pill("icloud.slash", "No data centers")
             pill("wifi.slash", "No internet")
             pill("hand.raised.fill", "Nothing leaves your phone")
         }

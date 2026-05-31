@@ -152,7 +152,11 @@
   <div class="pillars">
     <div class="pillar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>
-      <b>100% on-device</b>
+      <b>AI 100% on-device</b>
+    </div>
+    <div class="pillar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .9-8.9A6 6 0 0 0 7 9"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+      <b>No data centers</b>
     </div>
     <div class="pillar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
@@ -168,7 +172,7 @@
 <section id="icon"><div class="wrap">
   <div class="eyebrow">App Icon</div>
   <h2>Leaf in Pocket</h2>
-  <p class="lead">A cannabis leaf and a lit joint popping out of a shirt pocket-protector — a literal, playful take on the name. Bright green pops against a clean white shirt; the ember keeps a warm spark. Check the small sizes below for legibility.</p>
+  <p class="lead">An unlit joint tucked into a shirt pocket-protector — understated and ambiguous on purpose, with the pocket's contents hidden. Green pocket against a clean white shirt. Check the small sizes below for legibility.</p>
   <div class="icon-grid">
     <div class="icon-big" id="iconbig"></div>
     <div class="sizes" id="sizes"></div>
@@ -225,21 +229,11 @@ function icon(px){
     <rect x="118" y="0" width="34" height="1024" fill="#D9D1BF" opacity=".7"/>
     <line x1="123" y1="0" x2="123" y2="1024" stroke="#C7BCA4" stroke-width="3" opacity=".6"/>
     <circle cx="135" cy="250" r="14" fill="#CFC6B0"/><circle cx="135" cy="660" r="14" fill="#CFC6B0"/>
-    <!-- joint + green leaf popping out (behind pocket front) -->
-    <g transform="rotate(18 700 470)">
-      <path d="M676 648 L686 338 Q700 300 714 338 L724 648 Z" fill="#F6F1E7" stroke="#CFC5B0" stroke-width="6"/>
-      <line x1="700" y1="372" x2="700" y2="610" stroke="#D8D0BD" stroke-width="3" opacity=".7"/>
-      <ellipse cx="700" cy="332" rx="17" ry="10" fill="#FF8A1E"/>
-      <circle cx="700" cy="330" r="6" fill="#FFD489"/>
+    <!-- unlit joint poking out; the pocket conceals the rest (no leaf, no ember/smoke) -->
+    <g transform="rotate(18 540 470)">
+      <path d="M516 648 L526 338 Q540 300 554 338 L564 648 Z" fill="#F6F1E7" stroke="#CFC5B0" stroke-width="6"/>
+      <line x1="540" y1="372" x2="540" y2="610" stroke="#D8D0BD" stroke-width="3" opacity=".7"/>
     </g>
-    <!-- smoke trail from the lit ember -->
-    <g fill="none" stroke="#A79D88" stroke-linecap="round">
-      <path d="M744 326 C 730 296 764 282 750 252 C 738 226 768 210 754 180" stroke-width="11" opacity=".5"/>
-      <path d="M754 180 C 748 160 768 148 760 126" stroke-width="8" opacity=".34"/>
-    </g>
-    <circle cx="762" cy="132" r="9" fill="#A79D88" opacity=".2"/>
-    <circle cx="752" cy="108" r="6" fill="#A79D88" opacity=".14"/>
-    ${leaf('#3FBE7D',0.78,496,648)}
     <!-- pocket shadow + cream pocket front + stitch -->
     <path d="M286 588 q0 -28 28 -28 l396 0 q28 0 28 28 l0 200 -50 60 -352 0 -50 -60 Z" fill="#000" opacity=".07" transform="translate(0 14)"/>
     <path d="M286 576 q0 -28 28 -28 l396 0 q28 0 28 28 l0 200 -50 60 -352 0 -50 -60 Z" fill="url(#pkt${id})" stroke="#C9BEA4" stroke-width="4"/>
@@ -263,7 +257,7 @@ const TABS=(on)=>`<div class="tabs">
  <div class="tab ${on==1?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Log Book</div>
  <div class="tab ${on==2?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>About</div></div>`;
 const LOCK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
-const thumb=`<svg width="44" height="44" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#EFE9DB"/><g transform="translate(470 600) scale(.62)"><path d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#3FBE7D"/><path transform="rotate(-36) scale(.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#3FBE7D"/><path transform="rotate(36) scale(.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z" fill="#3FBE7D"/></g><path d="M250 600 h524 v150 a64 64 0 0 1-64 64 H314 a64 64 0 0 1-64-64 Z" fill="#1C6E45"/></svg>`;
+const thumb=`<svg width="44" height="44" viewBox="0 0 100 100"><rect width="100" height="100" fill="#EFE9DB"/><g transform="rotate(16 54 50)"><rect x="51" y="26" width="6" height="48" rx="3" fill="#F6F1E7" stroke="#CFC5B0" stroke-width="1.4"/></g><rect x="22" y="54" width="56" height="36" rx="8" fill="#1C6E45"/><rect x="20" y="50" width="60" height="12" rx="3" fill="#249A63"/></svg>`;
 
 const camera=`<div class="notch"></div><div class="camfeed"></div>
   <div class="labelcard"><b>Blue Candy Rain</b><br>THCA: 29.73%<br>Total THC: 32.25%<br>Myrcene 1.83%<br>Fresh Grow LLC</div>

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Pocketbud app icon — white shirt + green pocket-protector, leaf + lit joint. -->
+  <!-- Pocketbud app icon — white shirt + green pocket-protector with an unlit joint. Contents concealed (no leaf). -->
   <!-- App Store master: render this to a 1024x1024 PNG with NO alpha/transparency. -->
   <defs>
     <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBF8F1"/><stop offset="1" stop-color="#EAE3D3"/></linearGradient>
@@ -14,29 +14,10 @@
   <circle cx="135" cy="250" r="14" fill="#CFC6B0"/>
   <circle cx="135" cy="660" r="14" fill="#CFC6B0"/>
 
-  <!-- lit joint (behind pocket front) -->
-  <g transform="rotate(18 700 470)">
-    <path d="M676 648 L686 338 Q700 300 714 338 L724 648 Z" fill="#F6F1E7" stroke="#CFC5B0" stroke-width="6"/>
-    <line x1="700" y1="372" x2="700" y2="610" stroke="#D8D0BD" stroke-width="3" opacity=".7"/>
-    <ellipse cx="700" cy="332" rx="17" ry="10" fill="#FF8A1E"/>
-    <circle cx="700" cy="330" r="6" fill="#FFD489"/>
-  </g>
-  <!-- smoke trail -->
-  <g fill="none" stroke="#A79D88" stroke-linecap="round">
-    <path d="M744 326 C 730 296 764 282 750 252 C 738 226 768 210 754 180" stroke-width="11" opacity=".5"/>
-    <path d="M754 180 C 748 160 768 148 760 126" stroke-width="8" opacity=".34"/>
-  </g>
-  <circle cx="762" cy="132" r="9" fill="#A79D88" opacity=".2"/>
-  <circle cx="752" cy="108" r="6" fill="#A79D88" opacity=".14"/>
-
-  <!-- green cannabis leaf (behind pocket front), sized to sit inside the pocket -->
-  <g transform="translate(496 648) scale(0.78)" fill="#3FBE7D">
-    <path transform="rotate(0) scale(1 1)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
-    <path transform="rotate(-36) scale(1 0.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
-    <path transform="rotate(36) scale(1 0.82)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
-    <path transform="rotate(-70) scale(1 0.55)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
-    <path transform="rotate(70) scale(1 0.55)" d="M0 0 C -64 -150 -36 -340 0 -470 C 36 -340 64 -150 0 0 Z"/>
-    <rect x="-14" y="0" width="28" height="120" rx="14"/>
+  <!-- unlit joint (base concealed by the pocket front). No ember, no smoke. -->
+  <g transform="rotate(18 540 470)">
+    <path d="M516 648 L526 338 Q540 300 554 338 L564 648 Z" fill="#F6F1E7" stroke="#CFC5B0" stroke-width="6"/>
+    <line x1="540" y1="372" x2="540" y2="610" stroke="#D8D0BD" stroke-width="3" opacity=".7"/>
   </g>
 
   <!-- pocket shadow + cream pocket front + stitch -->
