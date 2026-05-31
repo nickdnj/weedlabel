@@ -73,10 +73,14 @@ platform :ios do
 
   desc "Verify metadata locally without uploading (lengths, assets)"
   lane :check_metadata do
-    UI.message("name:     #{File.read('fastlane/metadata/en-US/name.txt').length} / 30")
-    UI.message("subtitle: #{File.read('fastlane/metadata/en-US/subtitle.txt').length} / 30")
-    UI.message("keywords: #{File.read('fastlane/metadata/en-US/keywords.txt').length} / 100")
-    UI.message("promo:    #{File.read('fastlane/metadata/en-US/promotional_text.txt').length} / 170")
-    UI.message("desc:     #{File.read('fastlane/metadata/en-US/description.txt').length} / 4000")
+    md = ->(f) { File.read(File.join(__dir__, "metadata/en-US/#{f}")).strip.length }
+    limits = { "name.txt" => 30, "subtitle.txt" => 30, "keywords.txt" => 100,
+               "promotional_text.txt" => 170, "description.txt" => 4000 }
+    limits.each do |file, max|
+      n = md.call(file)
+      UI.message("#{file.ljust(20)} #{n} / #{max}  #{n <= max ? '✓' : '✗ OVER'}")
+    end
+    shots = Dir[File.join(__dir__, "screenshots/en-US/*.png")].count
+    UI.message("screenshots:         #{shots}")
   end
 end
