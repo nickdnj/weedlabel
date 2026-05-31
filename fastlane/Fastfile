@@ -28,67 +28,43 @@ platform :ios do
     ENV["DEVELOPER_DIR"] ||= "/Applications/Xcode.app/Contents/Developer"
   end
 
-  desc "Build the Beta scheme and upload to TestFlight (headless, manual signing)"
+  desc "Build the Beta scheme and upload to TestFlight"
   lane :beta do
+    # ONE-TIME PREREQUISITE (macOS gates codesign on keychain authorization):
+    # authorize the Distribution key for non-interactive signing, once:
+    #   security set-key-partition-list -S apple-tool:,apple:,codesign: -s \
+    #     -k <your-mac-login-password> ~/Library/Keychains/login.keychain-db
+    # After that this lane runs hands-free. (Or be present once and click
+    # "Always Allow" on the keychain prompt the first build triggers.)
     api_key = asc_api_key
+    cert(api_key: api_key, development: false)
+    sigh(api_key: api_key, app_identifier: APP_ID, platform: "ios", force: true)
 
-    # App Manager API keys can't do Apple's *cloud* signing, but they CAN create a
-    # regular Distribution cert + App Store profile. Create a FRESH cert/key into a
-    # password-controlled keychain and ISOLATE the keychain search list to only
-    # that keychain during signing, so codesign never sees the unauthorized
-    # login-keychain key and never shows a UI prompt (critical for unattended runs).
-    kc = "pocketbud-ci.keychain-db"
-    kc_path = File.expand_path("~/Library/Keychains/#{kc}")
-    kc_pw = ENV["MATCH_KEYCHAIN_PASSWORD"] || "pocketbud-ci-#{ENV.fetch('ASC_KEY_ID')}"
-    original_keychains = `security list-keychains -d user`.scan(/"(.*?)"/).flatten
-
-    delete_keychain(name: kc) rescue nil
-    create_keychain(
-      name: kc, password: kc_pw, default_keychain: false, unlock: true,
-      timeout: 3600, lock_when_sleeps: false, add_to_search_list: true
+    # Beta scheme archives the Beta config (includes the #if BETA feedback feature);
+    # the App Store release uses the `weedlabel` scheme / Release.
+    build_app(
+      project: XCODEPROJ,
+      scheme: "weedlabel-Beta",
+      configuration: "Beta",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "Pocketbud-Beta.ipa",
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: { APP_ID => lane_context[SharedValues::SIGH_NAME] }
+      }
     )
-    begin
-      # Isolate: only the CI keychain is searched while signing.
-      sh("security", "list-keychains", "-d", "user", "-s", kc_path)
-      sh("security", "unlock-keychain", "-p", kc_pw, kc_path)
 
-      # force: a brand-new cert+key generated INTO this keychain (not the login one).
-      cert(api_key: api_key, development: false, force: true,
-           keychain_path: kc_path, keychain_password: kc_pw, output_path: "build/certs")
-      profile_path = sigh(api_key: api_key, app_identifier: APP_ID, platform: "ios",
-                          output_path: "build/profiles", force: true)
-      profile_name = lane_context[SharedValues::SIGH_NAME]
-
-      # The Beta scheme archives the Beta config (includes the #if BETA feedback
-      # feature). The App Store release uses the `weedlabel` scheme / Release.
-      build_app(
-        project: XCODEPROJ,
-        scheme: "weedlabel-Beta",
-        configuration: "Beta",
-        export_method: "app-store",
-        output_directory: "build",
-        output_name: "Pocketbud-Beta.ipa",
-        export_options: {
-          signingStyle: "manual",
-          provisioningProfiles: { APP_ID => profile_name }
-        }
-      )
-
-      upload_to_testflight(
-        api_key: api_key,
-        app_identifier: APP_ID,
-        skip_waiting_for_build_processing: true,
-        # "What to Test" — keep in sync with docs/TESTFLIGHT-RECRUITING.md §3.
-        changelog: "Refreshed app icon + a cleaner look, sharper privacy messaging, " \
-                   "and a fix for mis-read THCA on some flower labels. Scan a few real " \
-                   "NJ labels, correct any misreads in a tap, and share the scan when " \
-                   "prompted. Tell me anything off."
-      )
-    ensure
-      # Restore the user's original keychain search list, then drop the CI keychain.
-      sh(["security", "list-keychains", "-d", "user", "-s", *original_keychains]) unless original_keychains.empty?
-      delete_keychain(name: kc) rescue nil
-    end
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_ID,
+      skip_waiting_for_build_processing: true,
+      # "What to Test" — keep in sync with docs/TESTFLIGHT-RECRUITING.md §3.
+      changelog: "Refreshed app icon + a cleaner look, sharper privacy messaging, " \
+                 "and a fix for mis-read THCA on some flower labels. Scan a few real " \
+                 "NJ labels, correct any misreads in a tap, and share the scan when " \
+                 "prompted. Tell me anything off."
+    )
   end
 
   desc "Push App Store listing metadata + screenshots (no binary)"
