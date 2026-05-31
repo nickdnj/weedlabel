@@ -32,7 +32,7 @@ settings:
     INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
     # App version + build. Bump CURRENT_PROJECT_VERSION for each new TestFlight upload.
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "2"
 
 targets:
   weedlabel:
