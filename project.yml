@@ -53,12 +53,14 @@ targets:
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
       configs:
-        # DEBUG inherited from the debug config type; BETA enables tester feedback.
+        # DEBUG inherited from the debug config type. BETA = tester feedback feature.
+        # TIPJAR = the StoreKit tip jar (Debug-only for now: not in TestFlight or the
+        # App Store build until the Paid Apps agreement + IAPs are set up).
         Debug:
-          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) BETA"
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) BETA TIPJAR"
         Beta:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) BETA"
-        # Release: no BETA — the feedback feature compiles out of the App Store build.
+        # Release: no BETA, no TIPJAR — feedback feature and tip jar both compile out.
 
   weedlabelTests:
     type: bundle.unit-test

@@ -13,7 +13,9 @@ struct AboutView: View {
     /// Wipe locally-saved corrections (strain lean + product type).
     var onClearData: () -> Void = {}
     @State private var showClearDataConfirm = false
+    #if TIPJAR
     @State private var showTipJar = false
+    #endif
 
     #if BETA
     /// Opt-out switch for beta scan sharing (default ON). Beta builds only —
@@ -41,7 +43,9 @@ struct AboutView: View {
                                     detail: "Apple Intelligence reads labels on-device. When it slips up, correct it in a tap — it only gets better.")
                         }
 
+                        #if TIPJAR
                         tipJarButton
+                        #endif
 
                         #if BETA
                         betaShareSection
@@ -69,7 +73,9 @@ struct AboutView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            #if TIPJAR
             .sheet(isPresented: $showTipJar) { TipJarView() }
+            #endif
             .toolbarColorScheme(.dark, for: .navigationBar)
             .environment(\.colorScheme, .dark)
         }
@@ -98,6 +104,7 @@ struct AboutView: View {
     }
     #endif
 
+    #if TIPJAR
     private var tipJarButton: some View {
         Button {
             showTipJar = true
@@ -113,6 +120,7 @@ struct AboutView: View {
             .foregroundStyle(Brand.ink)
         }
     }
+    #endif
 
     private var header: some View {
         VStack(spacing: 8) {
