@@ -165,4 +165,31 @@ import Testing
         label.reconcileCannabinoids(ocrText: "D9THC:  Lic Number: C000067")
         #expect(label.delta9thc == nil)
     }
+
+    // Impossible-THCA recovery (beta, Kynd Mandarin Diesel): the label prints
+    // "Δ9THC: 0.82%" and "Total THC: 28.47%", with the real THCA (31.53%) sitting
+    // unlabeled by the Metrc tag. FM put 0.82 into `thca`; reconcile reads Total
+    // THC correctly but finds no "THCA" token, leaving thca implausibly below
+    // Total THC. The final consistency pass recovers it from the regulatory
+    // formula Total THC = 0.877×THCA + Δ9.
+    @Test func impossibleThcaRecoveredFromTotalThc() {
+        var label = Self.jetFuelMisSlotted()
+        label.thca = 0.82
+        label.delta9thc = 0.82
+        label.totalThc = 28.47
+        label.reconcileCannabinoids(ocrText: "Total THC:  28.47%  09THC:  0.82%")
+        #expect(label.thca == 31.53)   // (28.47 − 0.82) / 0.877
+        #expect(label.totalThc == 28.47)
+    }
+
+    // The recovery must NOT fire when THCA is already consistent (≥ Total THC) —
+    // the normal flower case. Don't rewrite good data.
+    @Test func consistentThcaNotRewritten() {
+        var label = Self.jetFuelMisSlotted()
+        label.thca = 28.36
+        label.delta9thc = 0.87
+        label.totalThc = 25.74
+        label.reconcileCannabinoids(ocrText: "Total THC:  25.74%")
+        #expect(label.thca == 28.36)
+    }
 }
