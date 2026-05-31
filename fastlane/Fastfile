@@ -134,4 +134,24 @@ platform :ios do
       UI.important("No app record for #{APP_ID} yet — create it, or `fastlane beta` can.")
     end
   end
+
+  desc "List TestFlight builds + their processing state"
+  lane :tf_status do
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH"))
+    )
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    UI.success("App: #{app.name} (#{app.bundle_id})")
+    builds = app.get_builds(includes: "preReleaseVersion")
+    if builds.empty?
+      UI.important("No builds yet — an upload can take a few minutes to appear/ingest.")
+    else
+      builds.first(5).each do |b|
+        ver = b.pre_release_version&.version
+        UI.message("  v#{ver} (build #{b.version})  state=#{b.processing_state}")
+      end
+    end
+  end
 end
