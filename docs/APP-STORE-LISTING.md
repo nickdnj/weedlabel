@@ -84,7 +84,7 @@ To test the AI read: use an Apple-Intelligence-capable device (iPhone 15 Pro / 1
 
 ```
 Pocketbud — Privacy Policy
-Last updated: [DATE]
+Last updated: May 31, 2026
 
 Pocketbud collects no data.
 
