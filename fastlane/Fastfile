@@ -83,4 +83,47 @@ platform :ios do
     shots = Dir[File.join(__dir__, "screenshots/en-US/*.png")].count
     UI.message("screenshots:         #{shots}")
   end
+
+  desc "Register the bundle ID via API (the app RECORD must be made in the web UI)"
+  lane :make_app do
+    # Apple's API allows registering a bundle ID but NOT creating an app record
+    # (POST /apps is forbidden: GET/UPDATE only). So this registers the bundle ID;
+    # the New App step is a manual one in App Store Connect (the bundle ID will
+    # already appear in the dropdown).
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH"))
+    )
+    bundle = Spaceship::ConnectAPI::BundleId.all.find { |b| b.identifier == APP_ID }
+    if bundle
+      UI.success("Bundle ID registered: #{bundle.identifier} (#{bundle.id}) ✓")
+    else
+      bundle = Spaceship::ConnectAPI::BundleId.create(
+        name: "Pocketbud", identifier: APP_ID, platform: "IOS"
+      )
+      UI.success("Registered bundle ID #{bundle.identifier} (#{bundle.id}) ✓")
+    end
+    UI.important("Now create the app record (one-time, web UI):")
+    UI.important("  App Store Connect → Apps → + → New App → bundle ID #{APP_ID}")
+    UI.important("Then run: fastlane auth_check")
+  end
+
+  desc "Verify the API key authenticates and report whether the app record exists"
+  lane :auth_check do
+    token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH"))
+    )
+    Spaceship::ConnectAPI.token = token
+    apps = Spaceship::ConnectAPI::App.all
+    UI.success("✅ Authenticated. #{apps.count} app record(s):")
+    apps.each { |a| UI.message("   #{a.bundle_id}  (#{a.name})") }
+    if apps.any? { |a| a.bundle_id == APP_ID }
+      UI.success("Pocketbud app record EXISTS for #{APP_ID} ✓")
+    else
+      UI.important("No app record for #{APP_ID} yet — create it, or `fastlane beta` can.")
+    end
+  end
 end
