@@ -28,39 +28,56 @@ platform :ios do
     ENV["DEVELOPER_DIR"] ||= "/Applications/Xcode.app/Contents/Developer"
   end
 
-  desc "Build the Beta scheme and upload to TestFlight"
+  desc "Build the Beta scheme and upload to TestFlight (headless, manual signing)"
   lane :beta do
     api_key = asc_api_key
 
-    # Pass the API key to xcodebuild so it can create the Distribution cert +
-    # App Store profile headlessly (no Apple ID / 2FA) on first run.
-    auth = "-allowProvisioningUpdates " \
-           "-authenticationKeyPath #{ENV.fetch('ASC_KEY_PATH')} " \
-           "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID')} " \
-           "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID')}"
-
-    # The Beta scheme archives the Beta config, which includes the #if BETA
-    # tester-feedback feature. (The App Store release uses the `weedlabel` scheme.)
-    build_app(
-      project: XCODEPROJ,
-      scheme: "weedlabel-Beta",
-      configuration: "Beta",
-      export_method: "app-store",
-      output_directory: "build",
-      output_name: "Pocketbud-Beta.ipa",
-      xcargs: auth,
-      export_options: { signingStyle: "automatic" }
+    # App Manager API keys can't do Apple's *cloud* signing, but they CAN create a
+    # regular Distribution cert + App Store profile. Do that into a dedicated
+    # keychain with a known password so codesign never triggers a UI popup
+    # (the standard CI pattern — critical for unattended runs).
+    kc = "pocketbud-ci.keychain-db"
+    kc_pw = ENV["MATCH_KEYCHAIN_PASSWORD"] || "pocketbud-ci-#{ENV.fetch('ASC_KEY_ID')}"
+    create_keychain(
+      name: kc, password: kc_pw, default_keychain: false, unlock: true,
+      timeout: 3600, lock_when_sleeps: false, add_to_search_list: true
     )
+    begin
+      cert(api_key: api_key, development: false,
+           keychain_path: File.expand_path("~/Library/Keychains/#{kc}"),
+           keychain_password: kc_pw, output_path: "build/certs")
+      profile_path = sigh(api_key: api_key, app_identifier: APP_ID, platform: "ios",
+                          output_path: "build/profiles", force: true)
+      profile_name = lane_context[SharedValues::SIGH_NAME]
 
-    upload_to_testflight(
-      api_key: api_key,
-      app_identifier: APP_ID,
-      skip_waiting_for_build_processing: true,
-      # "What to Test" — keep in sync with docs/TESTFLIGHT-RECRUITING.md §3.
-      changelog: "Scan a few real NJ labels (flower/vape/edible). Check the strain, " \
-                 "THC%, and terpenes against the print. Correct any misreads in a tap, " \
-                 "and share the scan when prompted. Tell me anything confusing or broken."
-    )
+      # The Beta scheme archives the Beta config (includes the #if BETA feedback
+      # feature). The App Store release uses the `weedlabel` scheme / Release.
+      build_app(
+        project: XCODEPROJ,
+        scheme: "weedlabel-Beta",
+        configuration: "Beta",
+        export_method: "app-store",
+        output_directory: "build",
+        output_name: "Pocketbud-Beta.ipa",
+        export_options: {
+          signingStyle: "manual",
+          provisioningProfiles: { APP_ID => profile_name }
+        }
+      )
+
+      upload_to_testflight(
+        api_key: api_key,
+        app_identifier: APP_ID,
+        skip_waiting_for_build_processing: true,
+        # "What to Test" — keep in sync with docs/TESTFLIGHT-RECRUITING.md §3.
+        changelog: "Build 2: refreshed app icon + a cleaner look, sharper privacy " \
+                   "messaging, and a fix for mis-read THCA on some flower labels. " \
+                   "Scan a few real NJ labels, correct any misreads in a tap, and " \
+                   "share the scan when prompted. Tell me anything off."
+      )
+    ensure
+      delete_keychain(name: kc) rescue nil
+    end
   end
 
   desc "Push App Store listing metadata + screenshots (no binary)"
@@ -172,6 +189,14 @@ platform :ios do
     end
 
     UI.success("Internal testing ready — install TestFlight on your iPhone and accept the invite email.")
+  end
+
+  desc "Create/fetch a Distribution cert + App Store profile for manual signing (CI)"
+  lane :signing do
+    api_key = asc_api_key
+    cert(api_key: api_key, development: false, output_path: "build/certs")
+    sigh(api_key: api_key, app_identifier: APP_ID, platform: "ios",
+         output_path: "build/profiles", force: true)
   end
 
   desc "List TestFlight builds + their processing state"
