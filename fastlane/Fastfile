@@ -67,6 +67,35 @@ platform :ios do
     )
   end
 
+  desc "Build the App Store (Release) binary and upload it for review"
+  lane :release do
+    # The App Store build uses the `weedlabel` scheme / Release config: NO #if BETA
+    # tester-feedback and NO #if TIPJAR, so the shipping binary collects nothing and
+    # offers no IAP. (TestFlight beta uses the `weedlabel-Beta` scheme — see `beta`.)
+    # Requires the one-time codesign authorization noted on the `beta` lane.
+    api_key = asc_api_key
+    cert(api_key: api_key, development: false)
+    sigh(api_key: api_key, app_identifier: APP_ID, platform: "ios", force: true)
+    build_app(
+      project: XCODEPROJ,
+      scheme: "weedlabel",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "Pocketbud.ipa",
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: { APP_ID => lane_context[SharedValues::SIGH_NAME] }
+      }
+    )
+    # Uploads to App Store Connect; the build becomes selectable for the 1.0 version.
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_ID,
+      skip_waiting_for_build_processing: true
+    )
+  end
+
   desc "Push App Store listing metadata + screenshots (no binary)"
   lane :metadata do
     upload_to_app_store(
